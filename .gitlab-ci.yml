@@ -1,0 +1,22 @@
+variables:
+  PY_VERSION: "3.10"
+  REPO_PACKAGE_API: ${CI_API_V4_URL}/projects/netyce%2fpypi/packages
+  NETYCE_PYPI: ${REPO_PACKAGE_API}/pypi
+  PYPI: ${REPO_PACKAGE_API}/pypi/simple/
+  PO3: registry.gitlab.com/netyce/poe3
+
+#lint:
+#  image: alpine/flake8
+#  stage: build
+#  script:
+#    - flake8 backmiko tests
+#
+
+build:
+  image: $PO3
+  variables:
+    TOKEN: $PYPI_TOKEN
+  script:
+    - remove-pypi
+    - poetry config repositories.netyce $NETYCE_PYPI
+    - poetry publish --build --repository netyce -u "gitlab-ci-token" -p "${CI_JOB_TOKEN}"

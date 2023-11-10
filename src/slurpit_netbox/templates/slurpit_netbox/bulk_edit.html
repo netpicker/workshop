@@ -1,0 +1,6 @@
+{% extends 'generic/bulk_edit.html' %}
+{% load i18n %}
+
+{% block title %}
+  {% trans "Onboarding" %} {{ table.rows|length }} {{ model|meta:"verbose_name_plural"|bettertitle }}
+{% endblock %}
