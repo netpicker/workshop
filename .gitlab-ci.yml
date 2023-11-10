@@ -3,7 +3,6 @@ variables:
   REPO_PACKAGE_API: ${CI_API_V4_URL}/projects/netyce%2fpypi/packages
   NETYCE_PYPI: ${REPO_PACKAGE_API}/pypi
   PYPI: ${REPO_PACKAGE_API}/pypi/simple/
-  PO3: registry.gitlab.com/netyce/poe3
 
 #lint:
 #  image: alpine/flake8
@@ -13,7 +12,7 @@ variables:
 #
 
 build:
-  image: $PO3
+  image: "${PUBLIC_REGISTRY}/poe3:3.11"
   variables:
     TOKEN: $PYPI_TOKEN
   script:
