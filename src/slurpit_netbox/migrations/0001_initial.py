@@ -62,7 +62,7 @@ def add_default_mandatory_objects(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dcim', '0181_rename_device_role_device_role.py'),
+        ('dcim', '0181_rename_device_role_device_role'),
     ]
 
     operations = [
