@@ -2,6 +2,7 @@ from dcim.models import DeviceRole, DeviceType, Manufacturer, Site
 from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
 from extras.models import CustomField, CustomFieldChoiceSet
+from extras.models.tags import Tag
 from netmiko.ssh_dispatcher import CLASS_MAPPER_BASE
 
 from .. import get_config
@@ -17,7 +18,24 @@ netmiko_types = [[t, t] for t in CLASS_MAPPER_BASE]
 oem_name = 'OEM'
 
 
-def add_netmiko_device_type_support():
+def ensure_slurpit_tags(*items):
+    if (tags := getattr(ensure_slurpit_tags, 'cache', None)) is None:
+        name = 'slurpit'
+        defaults = dict(slug=name, description='SlurpIT onboarded', color='F09640')
+        tag, _ = Tag.objects.get_or_create(defaults, name=name)
+
+        applicable_to = 'device', 'devicerole', 'devicetype', 'manufacturer', 'site'
+        tagged_types = ContentType.objects.filter(app_label='dcim',
+                                                  model__in=applicable_to)
+        tag.object_types.set(tagged_types.all())
+        tags = {tag}
+        ensure_slurpit_tags.cache = tags
+    for item in items:
+        item.tags.set(tags)
+    return tags
+
+
+def add_netmiko_device_type_support(tags):
     default_choices = {
         'description': 'NetMiko supported handlers',
         'extra_choices': netmiko_types,
@@ -41,23 +59,28 @@ def add_netmiko_device_type_support():
     cf.content_types.set({device})
 
 
-def add_default_mandatory_objects():
+def add_default_mandatory_objects(tags):
     site_name = get_config('Site')['name']
     site_defs = {'slug': site_name.lower()}
     site, _ = Site.objects.get_or_create(defaults=site_defs, name=site_name)
+    site.tags.set(tags)
 
     manu_defs = {'slug': oem_name.lower()}
     manu, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=oem_name)
+    manu.tags.set(tags)
 
     devtype_model = get_config('DeviceType')['model']
     type_defs = {'manufacturer': manu}
-    type, _ = DeviceType.objects.get_or_create(defaults=type_defs, model=devtype_model)
+    dtype, _ = DeviceType.objects.get_or_create(defaults=type_defs, model=devtype_model)
+    dtype.tags.set(tags)
 
     role_name = get_config('DeviceRole')['name']
     role_defs = {}
     role, _ = DeviceRole.objects.get_or_create(defaults=role_defs, name=role_name)
+    role.tags.set(tags)
 
 
 def ensure_default_instances(sender, **kwargs):
-    add_netmiko_device_type_support()
-    add_default_mandatory_objects()
+    tags = ensure_slurpit_tags()
+    add_netmiko_device_type_support(tags)
+    add_default_mandatory_objects(tags)

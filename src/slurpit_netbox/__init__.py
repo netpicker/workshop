@@ -17,7 +17,8 @@ class SlurpitConfig(PluginConfig):
 
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',
-        'unattended_import': False
+        'unattended_import': False,
+        'devicetype_library': None,
     }
 
     def ready(self):
