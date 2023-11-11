@@ -185,6 +185,7 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
         if device_type := lookup_device_type(staged_type):
             kw.update(device_type=device_type)
     device = Device.objects.create(**kw)
+    ensure_slurpit_tags(device)
     return device
 
 
