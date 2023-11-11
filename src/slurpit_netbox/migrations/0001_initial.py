@@ -34,6 +34,8 @@ def add_netmiko_device_type_support(apps, schema_editor):
                                               name=netmiko_handler)
 
     ContentType = apps.get_model('contenttypes', 'ContentType')
+    for ct in ContentType.objects.all():
+        print(ct)
     device = ContentType.objects.get(app_label='dcim', model='device')
     cf.content_types.set({device})
 
