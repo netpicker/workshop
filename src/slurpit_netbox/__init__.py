@@ -1,3 +1,5 @@
+import os
+
 from django.apps import apps
 from django.db.models.signals import post_migrate
 from extras.plugins import PluginConfig, get_plugin_config
@@ -18,7 +20,7 @@ class SlurpitConfig(PluginConfig):
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',
         'unattended_import': False,
-        'devicetype_library': None,
+        'DEVICETYPE_LIBRARY': os.environ.get('DEVICETYPE_LIBRARY'),
     }
 
     def ready(self):
