@@ -1,3 +1,5 @@
+from django.apps import apps
+from django.db.models.signals import post_migrate
 from extras.plugins import PluginConfig, get_plugin_config
 
 
@@ -17,6 +19,12 @@ class SlurpitConfig(PluginConfig):
         'netmiko_handler': 'netmiko_handler',
         'unattended_import': False
     }
+
+    def ready(self):
+        from .models import ensure_default_instances
+        dcim_app = apps.get_app_config("dcim")
+        post_migrate.connect(ensure_default_instances, sender=dcim_app)
+        super().ready()
 
 
 config = SlurpitConfig

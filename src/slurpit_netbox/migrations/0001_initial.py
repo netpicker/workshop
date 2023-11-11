@@ -71,6 +71,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(add_netmiko_device_type_support),
-        migrations.RunPython(add_default_mandatory_objects),
+        # migrations.RunPython(add_netmiko_device_type_support),
+        # migrations.RunPython(add_default_mandatory_objects),
     ]
