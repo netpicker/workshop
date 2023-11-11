@@ -107,9 +107,11 @@ def import_from_queryset(qs: QuerySet, **extra):
 
 def grep(where: str, what: str, options: str) -> list[str] | None:
     opt = [f"-{options}"] if options else []
-    sub = Popen(['grep', *opt, what, where], stdout=PIPE, stderr=PIPE)
+    needle = rf"{what}\b"
+    sub = Popen(['egrep', *opt, needle, where], stdout=PIPE, stderr=PIPE)
     out, err = sub.communicate()
-    return out.decode().strip().split('\n')
+    lines = out.decode().strip().split('\n')
+    return [ln for ln in lines if ln]
 
 
 def lookup_manufacturer(s: str) -> Manufacturer | None:
@@ -142,9 +144,18 @@ def get_library_devicetype(staged_type: str) -> dict | None:
     if lib is None:
         return None
     found_files = grep(lib, staged_type, 'lri')
-    if not found_files or len(found_files) != 1:
+    cnt = len(found_files)
+    if cnt == 0:
         return None
-    with open(found_files[0]) as f:
+    if cnt == 1:
+        info_file = found_files[0]
+    else:
+        for info_file in found_files:
+            ... # try figure out something
+        else:
+            return None
+
+    with open(info_file) as f:
         devtype = yaml.safe_load(f)
     return devtype
 

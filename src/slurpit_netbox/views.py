@@ -13,9 +13,12 @@ from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
 
+from .models import ImportedDevice
 # from . import filtersets, forms, models, tables
 from . import forms, importer, models, tables
-from .importer import get_dcim, import_from_queryset, run_import
+from .importer import (
+    get_dcim, import_from_queryset, lookup_device_type, run_import
+)
 
 
 class ImportedDeviceListView(generic.ObjectListView):
@@ -96,6 +99,12 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
 
         else:
             defaults = importer.get_defaults()
+            # if the same device type is selected
+            qs = (ImportedDevice.objects.filter(pk__in=initial_data['pk'])
+                  .values_list('device_type').distinct())
+            device_types = list(qs)
+            if len(device_types) == 1 and (dt := lookup_device_type(device_types[0][0])):
+                defaults['device_type'] = dt
             for k, v in defaults.items():
                 initial_data.setdefault(k, str(v.id))
             form = self.form(initial=initial_data)
