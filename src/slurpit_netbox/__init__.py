@@ -23,7 +23,7 @@ class SlurpitConfig(PluginConfig):
     def ready(self):
         from .models import ensure_default_instances
         dcim_app = apps.get_app_config("dcim")
-        post_migrate.connect(ensure_default_instances, sender=dcim_app)
+        post_migrate.connect(ensure_default_instances, sender=dcim_app, weak=False)
         super().ready()
 
 

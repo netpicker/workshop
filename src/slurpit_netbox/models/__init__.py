@@ -58,6 +58,6 @@ def add_default_mandatory_objects():
     role, _ = DeviceRole.objects.get_or_create(defaults=role_defs, name=role_name)
 
 
-def ensure_default_instances():
+def ensure_default_instances(sender, **kwargs):
     add_netmiko_device_type_support()
     add_default_mandatory_objects()
