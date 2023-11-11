@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('dcim', '0181_rename_device_role_device_role'),
+        ('extras', '0098_webhook_custom_field_data_webhook_tags'),
     ]
 
     operations = [
