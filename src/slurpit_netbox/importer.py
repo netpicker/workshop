@@ -14,12 +14,15 @@ from dcim.models import (
 )
 from dcim.choices import DeviceStatusChoices
 from django.db.models import QuerySet
+from django.utils.text import slugify
 
 from . import get_config
 from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest
 
 
 BATCH_SIZE = 128
+fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'disabled',
+          'added', 'last_seen', 'createddate', 'changeddate')
 
 
 def get_devices():
@@ -77,10 +80,6 @@ def handle_parted():
     Device.objects.filter(id__in=parted_qs).update(status=DeviceStatusChoices.STATUS_OFFLINE)
 
 
-fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'disabled',
-          'added', 'last_seen', 'createddate', 'changeddate')
-
-
 def isplit(iter, n):
     while True:
         items = []
@@ -115,7 +114,9 @@ def grep(where: str, what: str, options: str) -> list[str] | None:
 
 
 def lookup_manufacturer(s: str) -> Manufacturer | None:
-    manufacturer, new = Manufacturer.objects.get_or_create(name=s)
+    default = {'name': s}
+    slug = slugify(s)
+    manufacturer, new = Manufacturer.objects.get_or_create(default, slug=slug)
     if new:
         ensure_slurpit_tags(manufacturer)
     return manufacturer
@@ -167,7 +168,9 @@ def lookup_device_type(staged_type: str) -> DeviceType | None:
     descriptor = get_library_devicetype(staged_type)
     if descriptor is None:
         return None
-    return create_devicetype(descriptor)
+    model = descriptor['model']
+    devtype = get_db_devicetype(model) or create_devicetype(descriptor)
+    return devtype
 
 
 def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
@@ -189,19 +192,36 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     return device
 
 
-def get_from_staged(staged: StagedDevice, add_dcim: bool) -> ImportedDevice:
+def get_from_staged(
+        staged: StagedDevice,
+        device_types: dict[str, DeviceType],
+        add_dcim: bool
+) -> ImportedDevice:
     kw = {f: getattr(staged, f) for f in fields}
+    dt = device_types.get(staged.device_type)
     if add_dcim:
-        kw['mapped_device'] = get_dcim(staged)
+        extra = {'device_type': dt} if dt else {}
+        kw['mapped_device'] = get_dcim(staged, **extra)
+    kw['mapped_devicetype'] = dt
     return ImportedDevice(**kw)
 
 
+def map_new_devicetypes(qs):
+    staged = StagedDevice.objects.values('device_type')
+    imported = ImportedDevice.objects.values('device_type')
+    qs = staged.distinct().difference(imported.distinct())
+    result = {dt['device_type']: lookup_device_type(dt['device_type']) for dt in qs}
+    return result
+
+
 def handle_new_comers(unattended: bool):
-    qs = (
+    qs: QuerySet = (
         StagedDevice.objects.only(*fields)
         .difference(ImportedDevice.objects.only(*fields))
     )
-    mapper = partial(get_from_staged, add_dcim=unattended)
+    device_types = map_new_devicetypes(qs)
+    mapper = partial(get_from_staged,
+                     device_types=device_types, add_dcim=unattended)
     data = map(mapper, qs.iterator(BATCH_SIZE))
     for batch in isplit(data, BATCH_SIZE):
         ImportedDevice.objects.bulk_create(batch, batch_size=BATCH_SIZE)

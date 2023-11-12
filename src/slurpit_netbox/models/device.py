@@ -1,6 +1,5 @@
 from django.db import models
-from dcim.models import Device
-
+from dcim.models import Device, DeviceType
 
 """
 "id": "612",
@@ -20,6 +19,7 @@ from netbox.models import NetBoxModel
 
 digest_parts = 'hostname', 'fqdn', 'device_os', 'disabled'
 fmt_digest = '\x01'.join((f"{{{part}}}" for part in digest_parts))
+mapped_in = dict(null=True, on_delete=models.SET_NULL)
 
 
 class StagedDevice(NetBoxModel):
@@ -46,9 +46,8 @@ class ImportedDevice(NetBoxModel):
     last_seen = models.DateTimeField()
     createddate = models.DateTimeField()
     changeddate = models.DateTimeField()
-
-    mapped_device = models.ForeignKey(to=Device, null=True,
-                                      on_delete=models.SET_NULL)
+    mapped_devicetype = models.ForeignKey(to=DeviceType, **mapped_in)
+    mapped_device = models.ForeignKey(to=Device, **mapped_in)
 
     def get_absolute_url(self):
         return '/'
