@@ -8,8 +8,6 @@ import utilities.json
 
 class Migration(migrations.Migration):
 
-    replaces = [('slurpit_netbox', '0001_initial'), ('slurpit_netbox', '0002_importeddevice_mapped_devicetype')]
-
     initial = True
 
     dependencies = [
