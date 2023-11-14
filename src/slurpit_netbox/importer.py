@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from hashlib import md5
 from subprocess import PIPE, Popen
@@ -18,6 +19,9 @@ from django.utils.text import slugify
 
 from . import get_config
 from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest
+
+
+log = logging.getLogger(__name__)
 
 
 BATCH_SIZE = 128
@@ -52,13 +56,14 @@ def import_devices():
     with connection.cursor() as cursor:
         cursor.execute(f"truncate {StagedDevice._meta.db_table} cascade")
     for device in devices:
+        if device.get('device_type') is None:
+            log.warning('Missing device type, cannot import %r', device)
         plain = fmt_digest.format(**device).encode()
         digest = md5(plain).hexdigest()
         for tsf in ('last_seen', 'createddate', 'changeddate'):
             dt = device[tsf]
             device[tsf] = arrow.get(dt).datetime if dt else dt
         StagedDevice.objects.create(digest=digest, **device)
-    return
 
 
 def process_import():
