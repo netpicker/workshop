@@ -1,5 +1,6 @@
 import logging
 
+from dcim.choices import DeviceStatusChoices
 from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
 from django.core.exceptions import FieldDoesNotExist, ValidationError
@@ -107,6 +108,8 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 defaults['device_type'] = dt
             for k, v in defaults.items():
                 initial_data.setdefault(k, str(v.id))
+            if not initial_data.get('status'):
+                initial_data['status'] = DeviceStatusChoices.STATUS_INVENTORY
             form = self.form(initial=initial_data)
             restrict_form_fields(form, request.user)
 

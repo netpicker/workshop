@@ -30,9 +30,9 @@ class StagedDevice(NetBoxModel):
     device_type = models.TextField(max_length=255)
     disabled = models.IntegerField()
     added = models.TextField(max_length=32)
-    last_seen = models.DateTimeField()
+    last_seen = models.DateTimeField(null=True)
     createddate = models.DateTimeField()
-    changeddate = models.DateTimeField()
+    changeddate = models.DateTimeField(null=True)
 
 
 class ImportedDevice(NetBoxModel):
@@ -43,9 +43,9 @@ class ImportedDevice(NetBoxModel):
     device_type = models.TextField(max_length=255)
     disabled = models.IntegerField()
     added = models.TextField(max_length=32)
-    last_seen = models.DateTimeField()
+    last_seen = models.DateTimeField(null=True)
     createddate = models.DateTimeField()
-    changeddate = models.DateTimeField()
+    changeddate = models.DateTimeField(null=True)
     mapped_devicetype = models.ForeignKey(to=DeviceType, **mapped_in)
     mapped_device = models.ForeignKey(to=Device, **mapped_in)
 

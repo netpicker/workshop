@@ -1,6 +1,9 @@
+from dcim.choices import DeviceStatusChoices
 from dcim.models import DeviceRole, DeviceType, Site
 from django.utils.translation import gettext_lazy as _
+from netbox.api.fields import ChoiceField
 from netbox.forms import NetBoxModelBulkEditForm
+from utilities.forms import add_blank_choice
 from utilities.forms.fields import DynamicModelChoiceField
 
 from .models import ImportedDevice
@@ -44,11 +47,11 @@ class OnboardingForm(NetBoxModelBulkEditForm):
     #     queryset=Platform.objects.all(),
     #     required=False
     # )
-    # status = forms.ChoiceField(
-    #     label=_('Status'),
-    #     choices=add_blank_choice(DeviceStatusChoices),
-    #     required=False
-    # )
+    status = ChoiceField(
+        label=_('Status'),
+        choices=add_blank_choice(DeviceStatusChoices),
+        required=False
+    )
     # airflow = forms.ChoiceField(
     #     label=_('Airflow'),
     #     choices=add_blank_choice(DeviceAirflowChoices),

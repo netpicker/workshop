@@ -55,7 +55,8 @@ def import_devices():
         plain = fmt_digest.format(**device).encode()
         digest = md5(plain).hexdigest()
         for tsf in ('last_seen', 'createddate', 'changeddate'):
-            device[tsf] = arrow.get(device[tsf]).datetime
+            dt = devices[tsf]
+            device[tsf] = arrow.get(dt).datetime if dt else dt
         StagedDevice.objects.create(digest=digest, **device)
     return
 
@@ -179,11 +180,11 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     cf.update({get_config('netmiko_handler'): staged.device_os})
     kw.update({
         'name': staged.hostname,
-        'status': DeviceStatusChoices.STATUS_INVENTORY,
         'custom_field_data': cf,
         **extra,
         # 'primary_ip4_id': int(ip_address(staged.fqdn)),
     })
+    kw.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
     if staged_type := staged.device_type:
         if device_type := lookup_device_type(staged_type):
             kw.update(device_type=device_type)
