@@ -55,7 +55,7 @@ def import_devices():
         plain = fmt_digest.format(**device).encode()
         digest = md5(plain).hexdigest()
         for tsf in ('last_seen', 'createddate', 'changeddate'):
-            dt = devices[tsf]
+            dt = device[tsf]
             device[tsf] = arrow.get(dt).datetime if dt else dt
         StagedDevice.objects.create(digest=digest, **device)
     return
