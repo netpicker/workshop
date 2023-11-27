@@ -8,6 +8,7 @@ import requests
 import yaml
 
 from django.db import connection
+from django.contrib import messages
 
 
 from dcim.models import (
@@ -51,8 +52,7 @@ def get_defaults():
     }
 
 
-def import_devices():
-    devices = get_devices()
+def import_devices(devices):
     with connection.cursor() as cursor:
         cursor.execute(f"truncate {StagedDevice._meta.db_table} cascade")
     for device in devices:
@@ -74,7 +74,8 @@ def process_import():
 
 
 def run_import():
-    import_devices()
+    devices = get_devices()
+    import_devices(devices)
     process_import()
 
 

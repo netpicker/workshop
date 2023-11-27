@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from dcim.choices import DeviceStatusChoices
 from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
@@ -205,5 +206,9 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
 
 class ImportDevices(View):
     def get(self, request, *args, **kwargs):
-        run_import()
+        try:
+            run_import()
+        except requests.exceptions.RequestException:
+            messages.error(request, 'An error occured during querying SlurpIt!')
+
         return redirect(reverse('plugins:slurpit_netbox:importeddevice_list'))
