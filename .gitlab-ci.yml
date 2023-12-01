@@ -19,3 +19,10 @@ build:
     - remove-pypi
     - poetry config repositories.netyce $NETYCE_PYPI
     - poetry publish --build --repository netyce -u "gitlab-ci-token" -p "${CI_JOB_TOKEN}"
+
+deploy:
+  needs: [build]
+  trigger:
+    project: netyce/slurpit-netbox-docker
+    branch: release
+
