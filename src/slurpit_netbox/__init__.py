@@ -7,15 +7,15 @@ from extras.plugins import PluginConfig, get_plugin_config
 
 class SlurpitConfig(PluginConfig):
     name = "slurpit_netbox"
-    verbose_name = "SlurpIT Plugin"
-    description = "Sync SlurpIT into NetBox"
+    verbose_name = "Slurp'IT Plugin"
+    description = "Sync Slurp'IT into NetBox"
     version = "0.0.1"
     base_url = "slurpit"
     required_settings = 'API_ENDPOINT', 'API_HEADERS'
     default_settings = {
-        'DeviceType': {'model': 'SlurpIT'},
-        'DeviceRole': {'name': 'SlurpIT'},
-        'Site': {'name': 'SlurpIT'},
+        'DeviceType': {'model': "Slurp'IT"},
+        'DeviceRole': {'name': "Slurp'IT"},
+        'Site': {'name': "Slurp'IT"},
 
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',
