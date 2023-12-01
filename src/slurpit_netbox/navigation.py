@@ -7,14 +7,30 @@ imported_device_buttons = [
         link='plugins:slurpit_netbox:import',
         title='Import',
         icon_class='mdi mdi-download',
-        color=ButtonColorChoices.PURPLE,
+        color=ButtonColorChoices.ORANGE,
     )
 ]
 
 menu_items = (
     PluginMenuItem(
         link='plugins:slurpit_netbox:importeddevice_list',
-        link_text='Imported Devices',
+        link_text='Settings',
+    ),
+    PluginMenuItem(
+        link='plugins:slurpit_netbox:importeddevice_list',
+        link_text='Onboard devices',
         buttons=imported_device_buttons,
+    ),
+    PluginMenuItem(
+        link='plugins:slurpit_netbox:importeddevice_list',
+        link_text='Data mapping',
+    ),
+    PluginMenuItem(
+        link='plugins:slurpit_netbox:importeddevice_list',
+        link_text='Reconcile',
+    ),
+    PluginMenuItem(
+        link='plugins:slurpit_netbox:importeddevice_list',
+        link_text='Logging',
     ),
 )

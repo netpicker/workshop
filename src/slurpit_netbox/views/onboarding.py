@@ -15,10 +15,10 @@ from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
 
-from .models import ImportedDevice
+from ..models import ImportedDevice
 # from . import filtersets, forms, models, tables
-from . import forms, importer, models, tables
-from .importer import (
+from .. import forms, importer, models, tables
+from ..importer import (
     get_dcim, import_from_queryset, lookup_device_type, run_import
 )
 
