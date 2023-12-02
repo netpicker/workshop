@@ -7,7 +7,7 @@ from django_tables2.columns.base import LinkTransform
 from django_tables2.utils import Accessor
 
 from netbox.tables import NetBoxTable, ChoiceFieldColumn, ToggleColumn, columns
-from .models import ImportedDevice
+from .models import ImportedDevice, Source
 
 
 def check_link(**kwargs):
@@ -56,3 +56,24 @@ class ImportedDeviceTable(NetBoxTable):
         model = ImportedDevice
         fields = ('pk', 'id', 'hostname', 'fqdn', 'device_os', 'device_type', 'last_updated')
         default_columns = ('hostname', 'fqdn', 'device_os', 'device_type', 'last_updated')
+
+
+class SourceTable(NetBoxTable):
+    name = tables.Column(linkify=True)
+    status = columns.ChoiceFieldColumn()
+    # snapshot_count = tables.Column(verbose_name="Snapshots")
+    tags = columns.TagColumn(url_name="core:datasource_list")
+
+    class Meta(NetBoxTable.Meta):
+        model = Source
+        fields = (
+            "pk",
+            "id",
+            "name",
+            "status",
+            "description",
+            "comments",
+            "created",
+            "last_updated",
+        )
+        default_columns = ("pk", "name", "status", "description")
