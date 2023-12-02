@@ -76,7 +76,7 @@ def add_default_mandatory_objects(tags):
 
     devtype_model = get_config('DeviceType')['model']
     type_defs = {'manufacturer': manu}
-    dtype, _ = DeviceType.objects.get_or_create(defaults=type_defs, model=devtype_model)
+    dtype, _ = DeviceType.objects.get_or_create(model=devtype_model, **type_defs)
     dtype.tags.set(tags)
 
     role_name = get_config('DeviceRole')['name']

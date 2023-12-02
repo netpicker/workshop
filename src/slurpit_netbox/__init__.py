@@ -13,9 +13,9 @@ class SlurpitConfig(PluginConfig):
     base_url = "slurpit"
     required_settings = 'API_ENDPOINT', 'API_HEADERS'
     default_settings = {
-        'DeviceType': {'model': "Slurp'IT"},
-        'DeviceRole': {'name': "Slurp'IT"},
-        'Site': {'name': "Slurp'IT"},
+        'DeviceType': {'model': "SlurpIT"},
+        'DeviceRole': {'name': "SlurpIT"},
+        'Site': {'name': "SlurpIT"},
 
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',
