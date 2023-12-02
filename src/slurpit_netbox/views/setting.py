@@ -74,6 +74,10 @@ class SourceView(generic.ObjectView):
         return super().get(request, **kwargs)
 
     # def get_extra_context(self, request, instance):
+    #     from ..models import Planning
+    #     planning = Planning.objects.filter(source=instance, disabled=False)
+    #     data = dict(planning=planning)
+    #     return data
     #     related_models = (
     #         (
     #             IPFabricSnapshot.objects.restrict(request.user, "view").filter(

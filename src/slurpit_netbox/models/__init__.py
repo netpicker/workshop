@@ -7,11 +7,12 @@ from netmiko.ssh_dispatcher import CLASS_MAPPER_BASE
 
 from .. import get_config
 from .device import ImportedDevice, StagedDevice, fmt_digest
+from .planning import Planning
 from .setting import Source
 
 
 __all__ = [
-    'ImportedDevice', 'Source', 'StagedDevice',
+    'ImportedDevice', 'Planning', 'Source', 'StagedDevice',
     'ensure_default_instances', 'fmt_digest'
 ]
 

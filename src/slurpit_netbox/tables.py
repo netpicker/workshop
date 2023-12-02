@@ -1,13 +1,12 @@
 import django_tables2 as tables
-from django.forms import MultipleHiddenInput
 from django.utils.safestring import mark_safe
 from django_tables2 import Column
 from django_tables2.columns import BoundColumn
 from django_tables2.columns.base import LinkTransform
 from django_tables2.utils import Accessor
 
-from netbox.tables import NetBoxTable, ChoiceFieldColumn, ToggleColumn, columns
-from .models import ImportedDevice, Source
+from netbox.tables import NetBoxTable, ToggleColumn, columns
+from .models import ImportedDevice, Planning, Source
 
 
 def check_link(**kwargs):
@@ -77,3 +76,21 @@ class SourceTable(NetBoxTable):
             "last_updated",
         )
         default_columns = ("pk", "name", "status", "description")
+
+
+class PlanningTable(NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    name = tables.Column(attrs={"td": {"bgcolor": "red"}})
+    disabled = columns.BooleanColumn()
+
+    class Meta(NetBoxTable.Meta):
+        model = Planning
+        fields = (
+            "id",
+            "name",
+            "description",
+            "selected",
+            "disabled",
+            "comments",
+        )
+        default_columns = ("pk", "name", "description", "selected")
