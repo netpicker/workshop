@@ -2,7 +2,7 @@ from importlib import import_module, reload
 
 from django.shortcuts import get_object_or_404, redirect
 from django.template.defaultfilters import slugify
-from django.urls import reverse
+from django.urls import clear_url_caches, get_resolver, reverse
 from dcim.models import Device
 from netbox.registry import registry
 from netbox.views import generic
@@ -14,6 +14,17 @@ from ..models import Planning
 
 import sys
 from django.conf import settings
+
+
+def reload_urlconf():
+    url_conf = settings.ROOT_URLCONF
+    if sys.modules.get(url_conf):
+        clear_url_caches()
+        del sys.modules[url_conf]
+        # resolver = get_resolver(mod_conf)
+        # resolver.url_patterns[0].url_patterns[7]._populate()
+        # reload(mod_conf)
+    # return import_module(url_conf)
 
 
 @register_model_view(Source, name='planning', path='planning')
