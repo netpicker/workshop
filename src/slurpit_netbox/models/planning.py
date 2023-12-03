@@ -21,6 +21,12 @@ class Planning(PrimaryModel):
     #     return reverse("plugins:slurpit_netbox:source_planning", args=[self.pk])
 
     @classmethod
+    def update_selected_for(cls, source_id, selected: list):
+        qs = Planning.objects.filter(source_id=source_id, disabled=False)
+        qs.exclude(pk__in=selected).update(selected=False)
+        qs.filter(pk__in=selected).update(selected=True)
+
+    @classmethod
     def sync(cls, source: Source):
         session = source.get_session()
         r = session.get('/api/planning')

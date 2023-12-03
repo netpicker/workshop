@@ -6,6 +6,8 @@ from django_tables2.columns.base import LinkTransform
 from django_tables2.utils import Accessor
 
 from netbox.tables import NetBoxTable, ToggleColumn, columns
+
+
 from .models import ImportedDevice, Planning, Source
 
 
@@ -79,13 +81,20 @@ class SourceTable(NetBoxTable):
 
 
 class PlanningTable(NetBoxTable):
+    pk = columns.ToggleColumn(attrs={
+        "td__input": {
+            "onclick": lambda record: mark_safe(f'return {str(not record.disabled).lower()};'),
+            "__x": lambda record: mark_safe('" checked "x__' if record.selected else ''),
+        },
+    })
     actions = columns.ActionsColumn(actions=tuple())
-    name = tables.Column(attrs={"td": {"bgcolor": "red"}})
+    name = tables.Column()
     disabled = columns.BooleanColumn()
 
     class Meta(NetBoxTable.Meta):
         model = Planning
         fields = (
+            "pk",
             "id",
             "name",
             "description",
@@ -93,4 +102,4 @@ class PlanningTable(NetBoxTable):
             "disabled",
             "comments",
         )
-        default_columns = ("pk", "name", "description", "selected")
+        default_columns = ("pk", "name", "description")
