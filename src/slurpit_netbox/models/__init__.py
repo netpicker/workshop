@@ -13,7 +13,7 @@ from .setting import Source
 
 __all__ = [
     'ImportedDevice', 'Planning', 'Source', 'StagedDevice',
-    'ensure_default_instances', 'fmt_digest'
+    'post_migration', 'fmt_digest'
 ]
 
 
@@ -86,7 +86,12 @@ def add_default_mandatory_objects(tags):
     role.tags.set(tags)
 
 
-def ensure_default_instances(sender, **kwargs):
+def post_migration(sender, **kwargs):
+    from .planning import Planning
+    from ..views.planning import make_planning_tabs
+
     tags = ensure_slurpit_tags()
     add_netmiko_device_type_support(tags)
     add_default_mandatory_objects(tags)
+    planning = Planning.get_planning()
+    make_planning_tabs(planning)

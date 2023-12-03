@@ -24,15 +24,10 @@ class SlurpitConfig(PluginConfig):
     }
 
     def ready(self):
-        from .models import ensure_default_instances
-        from .models import Planning
-        from .views.planning import make_planning_tabs
-
+        from .models import post_migration
         dcim_app = apps.get_app_config("dcim")
-        post_migrate.connect(ensure_default_instances, sender=dcim_app, weak=False)
+        post_migrate.connect(post_migration, sender=dcim_app, weak=False)
         super().ready()
-        planning = Planning.get_planning()
-        make_planning_tabs(planning)
 
 
 config = SlurpitConfig
