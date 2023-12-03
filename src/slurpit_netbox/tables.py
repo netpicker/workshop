@@ -81,13 +81,15 @@ class SourceTable(NetBoxTable):
 
 
 class PlanningTable(NetBoxTable):
-    pk = columns.ToggleColumn(attrs={
+    pk = columns.ToggleColumn(visible=True,
+                              attrs={
         "td__input": {
             "onclick": lambda record: mark_safe(f'return {str(not record.disabled).lower()};'),
             "__x": lambda record: mark_safe('" checked "x__' if record.selected else ''),
         },
     })
-    actions = columns.ActionsColumn(actions=tuple())
+    actions = columns.ActionsColumn(actions=[])
+    exempt_columns = {}
     name = tables.Column()
     disabled = columns.BooleanColumn()
 
@@ -97,9 +99,10 @@ class PlanningTable(NetBoxTable):
             "pk",
             "id",
             "name",
+            "external_id",
             "description",
             "selected",
             "disabled",
             "comments",
         )
-        default_columns = ("pk", "name", "description")
+        default_columns = ("pk", "name", "external_id", "description")

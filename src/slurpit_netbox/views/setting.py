@@ -93,7 +93,7 @@ class SourceView(generic.ObjectView):
     #     return data
 
 
-@register_model_view(Source, "sync")
+@register_model_view(Source, "sync", path="sync")
 class SourceSyncView(BaseObjectView):
     queryset = Source.objects.all()
 
@@ -101,15 +101,11 @@ class SourceSyncView(BaseObjectView):
         return "ipfabric_netbox.sync_source"
 
     def get(self, request, pk):
-        ipfabricsource = get_object_or_404(self.queryset, pk=pk)
-        return redirect(ipfabricsource.get_absolute_url())
-
-    def post(self, request, pk):
-        ipfabricsource = get_object_or_404(self.queryset, pk=pk)
-        job = ipfabricsource.enqueue_sync_job(request=request)
-
-        messages.success(request, f"Queued job #{job.pk} to sync {ipfabricsource}")
-        return redirect(ipfabricsource.get_absolute_url())
+        from ..models import Planning
+        source = get_object_or_404(self.queryset, pk=pk)
+        Planning.sync(source)
+        messages.success(request, f"Planning sync'ed")
+        return redirect(source.get_absolute_url())
 
 
 @register_model_view(Source, "delete")

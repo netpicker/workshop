@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.urls import reverse
 from netbox.models import PrimaryModel
 from .setting import Source
 
@@ -17,8 +18,12 @@ class Planning(PrimaryModel):
     def __str__(self):
         return f"{self.name} of {self.source.name}"
 
-    # def get_absolute_url(self):
-    #     return reverse("plugins:slurpit_netbox:source_planning", args=[self.pk])
+    def get_absolute_url(self):
+        return reverse("plugins:slurpit_netbox:source_planning", args=[self.pk])
+
+    @classmethod
+    def get_planning(cls):
+        return list(cls.objects.filter(disabled=False).all())
 
     @classmethod
     def update_selected_for(cls, source_id, selected: list):
@@ -49,5 +54,5 @@ class Planning(PrimaryModel):
                 p = new_planning[q.external_id]
                 q.name = p['name']
                 q.disabled = p['disabled']
-                q.comments = p['description']
+                q.description = p['comment']
                 q.save()
