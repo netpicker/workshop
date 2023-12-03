@@ -71,13 +71,12 @@ class SourceTable(NetBoxTable):
             "pk",
             "id",
             "name",
-            "status",
             "description",
             "comments",
             "created",
             "last_updated",
         )
-        default_columns = ("pk", "name", "status", "description")
+        default_columns = ("pk", "name", "description")
 
 
 class PlanningTable(NetBoxTable):

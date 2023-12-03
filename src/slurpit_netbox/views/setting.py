@@ -73,32 +73,13 @@ class SourceView(generic.ObjectView):
             return HttpResponse(status)
         return super().get(request, **kwargs)
 
-    # def get_extra_context(self, request, instance):
-    #     from ..models import Planning
-    #     planning = Planning.objects.filter(source=instance, disabled=False)
-    #     data = dict(planning=planning)
-    #     return data
-    #     related_models = (
-    #         (
-    #             IPFabricSnapshot.objects.restrict(request.user, "view").filter(
-    #                 source=instance
-    #             ),
-    #             "source_id",
-    #         ),
-    #     )
-    #     job = instance.jobs.order_by("id").last()
-    #     data = {"related_models": related_models, "job": job}
-    #     if job:
-    #         data["job_results"] = job.data
-    #     return data
-
 
 @register_model_view(Source, "sync", path="sync")
 class SourceSyncView(BaseObjectView):
     queryset = Source.objects.all()
 
     def get_required_permission(self):
-        return "ipfabric_netbox.sync_source"
+        return "slurpit_netbox.sync_source"
 
     def get(self, request, pk):
         from ..models import Planning
