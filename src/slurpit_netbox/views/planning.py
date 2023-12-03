@@ -1,7 +1,10 @@
+from importlib import import_module, reload
+
 from django.shortcuts import get_object_or_404, redirect
 from django.template.defaultfilters import slugify
 from django.urls import reverse
 from dcim.models import Device
+from netbox.registry import registry
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 from ..tables import PlanningTable
@@ -9,13 +12,8 @@ from ..models import Source
 from ..models import Planning
 
 
-# import sys
-# from django.conf import settings
-#
-# def reload_urlconf(self):
-#     if settings.ROOT_URLCONF in sys.modules:
-#         reload(sys.modules[settings.ROOT_URLCONF])
-#     return import_module(settings.ROOT_URLCONF)
+import sys
+from django.conf import settings
 
 
 @register_model_view(Source, name='planning', path='planning')
@@ -39,6 +37,8 @@ class PlanningListView(generic.ObjectChildrenView):
         pks = request.POST.getlist('pk')
         source_id = request.resolver_match.kwargs['pk']
         Planning.update_selected_for(source_id, pks)
+        planning = Planning.get_planning()
+        make_planning_tabs(planning)
         return redirect(self.get_return_url(request))
 
     def get_return_url(self, request, obj=None):
@@ -61,9 +61,18 @@ def make_planning_tabs(plannings):
             )
         return SlurpitPlanningView
 
+    app_label = Device._meta.app_label
+    model_name = Device._meta.model_name
+    entry = registry['views'][app_label][model_name]
+    prefix = 'slurit_'
+    if entry:
+        present = [v for v in entry if v['name'].startswith(prefix)]
+        for v in present:
+            entry.remove(v)
     for planning in plannings:
         slug = slugify(planning.name)
-        deco = register_model_view(Device, name=f"slurpit_{slug}", path=slug)
+        name = f"{prefix}{slug}"
+        deco = register_model_view(Device, name=name, path=slug)
         view_class = create_view_class(planning)
         deco(view_class)
 
