@@ -1,5 +1,4 @@
 from extras.plugins import PluginTemplateExtension
-from .models import ImportedDevice
 
 
 class ImportedDeviceContent(PluginTemplateExtension):  # pylint: disable=abstract-method
@@ -9,6 +8,3 @@ class ImportedDeviceContent(PluginTemplateExtension):  # pylint: disable=abstrac
 
     def list_buttons(self):
         return "<div>CHECK</div>"
-
-
-# template_extensions = [ImportedDeviceContent]

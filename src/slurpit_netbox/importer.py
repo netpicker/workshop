@@ -8,7 +8,6 @@ import requests
 import yaml
 
 from django.db import connection
-from django.contrib import messages
 
 
 from dcim.models import (

@@ -16,7 +16,6 @@ from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
 
 from ..models import ImportedDevice
-# from . import filtersets, forms, models, tables
 from .. import forms, importer, models, tables
 from ..importer import (
     get_dcim, import_from_queryset, lookup_device_type, run_import
@@ -184,8 +183,6 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
             if hasattr(device, 'snapshot'):
                 device.snapshot()
 
-            # device.full_clean()
-            # device.save()
             updated_objects.append(device)
 
             # Handle M2M fields after save
