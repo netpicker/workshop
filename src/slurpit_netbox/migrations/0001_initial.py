@@ -40,28 +40,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='Source',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True, null=True)),
-                ('last_updated', models.DateTimeField(auto_now=True, null=True)),
-                ('custom_field_data', models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder)),
-                ('description', models.CharField(blank=True, max_length=200)),
-                ('comments', models.TextField(blank=True)),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('url', models.CharField(max_length=200)),
-                ('status', models.CharField(default='new', editable=False, max_length=50)),
-                ('parameters', models.JSONField(blank=True, null=True)),
-                ('last_synced', models.DateTimeField(blank=True, editable=False, null=True)),
-                ('tags', taggit.managers.TaggableManager(through='extras.TaggedItem', to='extras.Tag')),
-            ],
-            options={
-                'verbose_name': "Slurp'it Setting",
-                'verbose_name_plural': "Slurp'it Settings",
-                'ordering': ('name',),
-            },
-        ),
-        migrations.CreateModel(
             name='ImportedDevice',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
