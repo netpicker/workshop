@@ -30,8 +30,11 @@ class SlurpitConfig(PluginConfig):
         dcim_app = apps.get_app_config("dcim")
         post_migrate.connect(post_migration, sender=dcim_app, weak=False)
         super().ready()
-        planning = Planning.get_planning()
-        make_planning_tabs(planning)
+        try:
+            planning = Planning.get_planning()
+            make_planning_tabs(planning)
+        except:
+            pass
 
 
 config = SlurpitConfig
