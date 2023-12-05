@@ -13,7 +13,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ('virtualization', '0036_virtualmachine_config_template'),
         ('extras', '0098_webhook_custom_field_data_webhook_tags'),
-        ('dcim', '0181_rename_device_role_device_role'),
     ]
 
     operations = [
