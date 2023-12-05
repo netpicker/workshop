@@ -89,9 +89,11 @@ def add_default_mandatory_objects(tags):
 def post_migration(sender, **kwargs):
     from .planning import Planning
     from ..views.planning import make_planning_tabs
-
-    tags = ensure_slurpit_tags()
-    add_netmiko_device_type_support(tags)
-    add_default_mandatory_objects(tags)
-    planning = Planning.get_planning()
-    make_planning_tabs(planning)
+    try:
+        tags = ensure_slurpit_tags()
+        add_netmiko_device_type_support(tags)
+        add_default_mandatory_objects(tags)
+        planning = Planning.get_planning()
+        make_planning_tabs(planning)
+    except:
+        pass
