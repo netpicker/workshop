@@ -26,9 +26,12 @@ class SlurpitConfig(PluginConfig):
     def ready(self):
         try:
             from .models import post_migration
-            dcim_app = apps.get_app_config("dcim")
-            post_migrate.connect(post_migration, sender=dcim_app, weak=False)
+            deps_app = apps.get_app_config("virtualization")
+            post_migrate.connect(post_migration, sender=deps_app, weak=False)
             super().ready()
+        except:
+            pass
+        try:
             from .models.planning import Planning
             from .views.planning import make_planning_tabs
             planning = Planning.get_planning()
