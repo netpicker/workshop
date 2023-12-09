@@ -3,7 +3,7 @@
 We assume to install Netbox on your local virtual environment.
 ## How to install the plugin on the Netbox
 
- - [ ] Activate the Virtual Environment
+ ### Activate the Virtual Environment
  
  To ensure our plugin is accessible to the NetBox installation, we first need to activate the Python virtual environment that was created when we installed NetBox. To do this, determine the virtual environment's path (this will be /opt/netbox/venv/ if you use the documentation's defaults) and activate it:
 
@@ -11,13 +11,14 @@ We assume to install Netbox on your local virtual environment.
 $ source /opt/netbox/venv/bin/activate
  ```
 
- - [ ] Run setup.py
+ ### Run setup.py
 
  ```
 $ python3 setup.py develop
  ```
 
- - [ ] Configure Netbox
+ ### Configure Netbox
+ 
  Finally, we need to configure NetBox to enable our new plugin. Over in the NetBox installation path, open netbox/netbox/configuration.py and look for the PLUGINS parameter
 
  ```
@@ -41,5 +42,5 @@ PLUGINS_CONFIG = {
  Save the file and run the Netbox development server (if not already running):
 
  ```
-$ python manage.py runserver
+$ python3 manage.py runserver
  ```
