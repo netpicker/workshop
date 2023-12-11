@@ -7,7 +7,7 @@ imported_device_buttons = [
         link='plugins:slurpit_netbox:import',
         title='Import',
         icon_class='mdi mdi-sync',
-        color=ButtonColorChoices.GREEN,
+        color=ButtonColorChoices.ORANGE,
     )
 ]
 
