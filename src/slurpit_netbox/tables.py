@@ -55,8 +55,8 @@ class ImportedDeviceTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = ImportedDevice
-        fields = ('pk', 'id', 'hostname', 'fqdn', 'device_os', 'device_type', 'last_updated')
-        default_columns = ('hostname', 'fqdn', 'device_os', 'device_type', 'last_updated')
+        fields = ('pk', 'id', 'hostname', 'fqdn', 'IP', 'device_os', 'device_type', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'IP', 'device_os', 'device_type', 'last_updated')
 
 
 class SourceTable(NetBoxTable):

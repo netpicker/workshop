@@ -7,7 +7,7 @@
 <div class="btn-group" role="group">
   {% bulk_edit_button model query_params=request.GET %}
   <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue btn-sm">
-    <i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Onboard" %}
+    <i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}
   </button>
 </div>
 {% endblock %}
