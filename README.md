@@ -28,13 +28,16 @@ PLUGINS = [
 ]
  ``` 
 
- And we need to set the API_ENDPOINT and API_HEADERS to integrate the Slurpit
+ And we need to set the API_ENDPOINT and API_HEADERS to integrate the Slurpit. eg: http://localhost as API_ENDPOINT
 
  ```
 PLUGINS_CONFIG = {
         'slurpit_netbox':{
-                'API_ENDPOINT': 'http://localhost',
-                'API_HEADERS': 'accept: application/json'
+                'API_ENDPOINT': 'http://localhost', 
+                'API_HEADERS': {
+                        'authorization': YOUR_SLURPIT_API_KEY,
+                        'useragent': 'netbox/requests',
+                }
         }
 }
  ```
