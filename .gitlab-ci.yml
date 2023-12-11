@@ -1,28 +1,24 @@
-variables:
-  PY_VERSION: "3.10"
-  REPO_PACKAGE_API: ${CI_API_V4_URL}/projects/netyce%2fpypi/packages
-  NETYCE_PYPI: ${REPO_PACKAGE_API}/pypi
-  PYPI: ${REPO_PACKAGE_API}/pypi/simple/
+stages:
+  - build
+  - deploy
+image: python:latest
 
-#lint:
-#  image: alpine/flake8
-#  stage: build
-#  script:
-#    - flake8 backmiko tests
-#
+before_script:
+  - pip install poetry
 
 build:
-  image: "${PUBLIC_REGISTRY}/poe3:3.11"
-  variables:
-    TOKEN: $PYPI_TOKEN
+  stage: build
+
   script:
-    - remove-pypi
-    - poetry config repositories.netyce $NETYCE_PYPI
-    - poetry publish --build --repository netyce -u "gitlab-ci-token" -p "${CI_JOB_TOKEN}"
+    - API_ENDPOINT=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages
+    - poetry config repositories.gitlab $API_ENDPOINT/pypi
+    - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
+    - poetry publish --build --repository gitlab
 
 deploy:
+  stage: deploy
   needs: [build]
   trigger:
-    project: netyce/slurpit-netbox-docker
+    project: slurpit.io/slurpit-netbox-docker
     branch: release
 
