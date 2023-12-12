@@ -1,0 +1,65 @@
+{% extends 'generic/object_list.html' %}
+{% load buttons %}
+{% load i18n %}
+
+{% block title %}
+  Onboard Devices
+{% endblock %}
+
+{% block header %}
+  <div class="title-container px-3 pb-3">
+
+    {# Title #}
+    
+    <div id="content-title">
+      <div class="h6" style="color: orange">
+        Slurp'it
+      </div>
+      {# Center-align title in object-edit views #}
+      <h1 class="h2 w-100">Onboard Devices</h1>
+      {% block subtitle %}{% endblock %}
+    </div>
+
+    {# Controls #}
+    {% block controls %}{% endblock controls %}
+
+  </div>
+{% endblock header %}
+
+{% block tabs %}
+  <ul class="nav nav-tabs px-3">
+        
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" href="?tab=new">New</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'migrate' %}active{% endif %}" href="?tab=migrate">Migrate</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link  {% if request.GET.tab == 'onboarded' %}active{% endif %}" href="?tab=onboarded">Onboarded</a>
+    </li>
+    
+  </ul>
+{% endblock tabs %}
+
+{% block content-wrapper %}
+  <div class="tab-content">
+    {% if request.GET.tab == 'new' or request.GET.tab is None %}
+      {% include "slurpit_netbox/onboard/new_device_list.html" %}
+    {% elif request.GET.tab == 'migrate' %}
+      {% include "slurpit_netbox/onboard/migrate_device_list.html" %}
+    {% elif request.GET.tab == 'onboarded' %}
+      {% include "slurpit_netbox/onboard/onboarded_device_list.html" %}
+    {% endif %}
+  </div>
+
+{% endblock content-wrapper %}
+
+
+{% block footer_links %}
+  {# NetDev Slack #}
+  <a type="button" class="nav-link" href="https://slurpit.io" target="_blank">
+    <div class="h6" style="color: black">https://slurpit.io</div>
+  </a>
+{% endblock footer_links %}
+   
