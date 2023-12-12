@@ -10,10 +10,14 @@
         <div class="noprint bulk-buttons">
         <div class="bulk-button-group">
             {% block bulk_buttons %}
-            <div class="btn-group" role="group">
+            <div class="" role="group">
                 {% bulk_edit_button model query_params=request.GET %}
+                <button name="sync"  class="btn btn-blue btn-sm mx-2">
+                  <a href="{% url 'plugins:slurpit_netbox:import' %}" style="color:white;text-decoration: none;"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a>
+                </button>
+
                 <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue btn-sm">
-                <i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}
+                  <i class="mdi" aria-hidden="true"></i> {% trans "Onboard" %}
                 </button>
             </div>
             {% endblock %}
