@@ -23,9 +23,24 @@ from ..importer import (
 
 
 class ImportedDeviceListView(generic.ObjectListView):
-    queryset = models.ImportedDevice.objects
+    
+    queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True)
+    def get(self, request, *args, **kwargs):
+        # Your custom logic for handling GET requests and setting the queryset
+        if request.GET.get('tab') == "new":
+            self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True) # Replace with your specific query
+        elif request.GET.get('tab') == "migrate":
+            self.queryset = models.ImportedDevice.objects.all()  # Replace with your specific query
+        elif request.GET.get('tab') == "onboarded":
+            self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=False)  # Replace with your specific query
+        else:
+            self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True) # Replace with your specific query
+
+        # Call the parent class's get method with the modified queryset
+        return super().get(request, *args, **kwargs)
+    
     table = tables.ImportedDeviceTable
-    template_name = "slurpit_netbox/importeddevice_list.html"
+    template_name = "slurpit_netbox/onboard_device.html"
 
     def post(self, request):
         pks = map(int, request.POST.getlist('pk'))
