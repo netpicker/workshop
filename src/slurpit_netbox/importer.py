@@ -68,7 +68,7 @@ def import_devices(devices):
             device[tsf] = arrow.get(dt).datetime if dt else dt
         StagedDevice.objects.create(digest=digest, **device)
 
-        log_message = f"Created/Updadated device - {device.get('hostname')}."
+        log_message = f"Created/Updated device - {device.get('hostname')}."
         SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
 
 
