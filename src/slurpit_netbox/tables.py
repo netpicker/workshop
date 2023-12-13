@@ -108,7 +108,19 @@ class PlanningTable(NetBoxTable):
 
 class LoggingTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
+    level = tables.Column()
     class Meta(NetBoxTable.Meta):
         model = SlurpitLog
         fields = ( 'pk', 'id', 'log_time', 'level', 'category', 'message', 'last_updated')
         default_columns = ('log_time', 'level', 'category', 'message')
+    
+    def render_level(self, value, record):
+        badge_class = {
+            'Info': 'badge bg-info',
+            'Success': 'badge bg-success',
+            'Failure': 'badge bg-danger',
+            # Add more mappings for other levels as needed
+        }.get(value, 'badge bg-secondary')  # Default to secondary if level is not recognized
+
+        badge_html = f'<span class="{badge_class}">{value}</span>'
+        return mark_safe(badge_html)
