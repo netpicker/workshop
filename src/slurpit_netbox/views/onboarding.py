@@ -15,7 +15,8 @@ from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
 
-from ..models import ImportedDevice
+from ..models import ImportedDevice, SlurpitLog
+from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
     get_dcim, import_from_queryset, lookup_device_type, run_import
@@ -132,6 +133,8 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         table = self.table(self.queryset.filter(pk__in=pk_list, mapped_device_id__isnull=True), orderable=False)
         if not table.rows:
             messages.warning(request, "No onboardable {} were selected.".format(model._meta.verbose_name_plural))
+            log_message = "Failed onboarded since no onboardable device was selected."
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
             return redirect(self.get_return_url(request))
 
         return render(request, self.template_name, {
@@ -194,6 +197,9 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
             obj.mapped_device = device
             obj.save()
             
+            log_message = f"Onboarded device - {obj.hostname} successfully."
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
+
             # Take a snapshot of change-logged models
             if hasattr(device, 'snapshot'):
                 device.snapshot()

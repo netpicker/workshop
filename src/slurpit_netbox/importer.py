@@ -18,8 +18,8 @@ from django.db.models import QuerySet
 from django.utils.text import slugify
 
 from . import get_config
-from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest
-
+from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest, SlurpitLog
+from .management.choices import *
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,8 @@ def get_devices():
     r = requests.get(uri_devices, headers=headers)
     r.raise_for_status()
     data = r.json()
+    log_message = "Syncing the devices from slurp'it in Netbox."
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
     return data
 
 
@@ -57,12 +59,17 @@ def import_devices(devices):
     for device in devices:
         if device.get('device_type') is None:
             log.warning('Missing device type, cannot import %r', device)
+            log_message = f"Missing device type, cannot import device - {device.get('hostname')}"
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
         plain = fmt_digest.format(**device).encode()
         digest = md5(plain).hexdigest()
         for tsf in ('last_seen', 'createddate', 'changeddate'):
             dt = device[tsf]
             device[tsf] = arrow.get(dt).datetime if dt else dt
         StagedDevice.objects.create(digest=digest, **device)
+
+        log_message = f"Created/Updadated device - {device.get('hostname')}."
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
 
 
 def process_import():
@@ -135,6 +142,8 @@ def create_devicetype(descriptor: dict) -> DeviceType | None:
     kw = {k.attname: descriptor[k.attname]
           for k in DeviceType._meta.fields if k.attname in descriptor}
     dev_type = DeviceType.objects.create(manufacturer=manufacturer, **kw)
+    log_message = "Created DeviceType."
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
     ensure_slurpit_tags(dev_type)
     return dev_type
 
@@ -231,6 +240,9 @@ def handle_new_comers(unattended: bool):
     data = map(mapper, qs.iterator(BATCH_SIZE))
     for batch in isplit(data, BATCH_SIZE):
         ImportedDevice.objects.bulk_create(batch, batch_size=BATCH_SIZE)
+
+    log_message = "Sync job completed."
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
 
 
 def handle_changed():
