@@ -1,1 +1,1 @@
-from .serializers import StagedDeviceSerializer  # noqa
+from .serializers import StagedDeviceSerializer, SlurpitLogSerializer  # noqa

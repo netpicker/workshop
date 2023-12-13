@@ -1,7 +1,8 @@
 from netbox.views import generic
-from ..models import ImportedDevice
-from .. import forms, importer, models, tables
+from ..models import SlurpitLog
+from ..tables import LoggingTable
 
-class LoggingView(generic.ObjectListView):
-    queryset = models.ImportedDevice.objects
-    table = tables.ImportedDeviceTable
+class LoggingListView(generic.ObjectListView):
+    queryset = SlurpitLog.objects.all()
+    table = LoggingTable
+    template_name = "slurpit_netbox/slurpitlog_list.html"

@@ -8,7 +8,7 @@ from django_tables2.utils import Accessor
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 
 
-from .models import ImportedDevice, Planning, Source
+from .models import ImportedDevice, Planning, Source, SlurpitLog
 
 
 def check_link(**kwargs):
@@ -105,3 +105,10 @@ class PlanningTable(NetBoxTable):
             "comments",
         )
         default_columns = ("pk", "name", "external_id", "description")
+
+class LoggingTable(NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitLog
+        fields = ( 'pk', 'id', 'log_time', 'level', 'category', 'message', 'last_updated')
+        default_columns = ('log_time', 'level', 'category', 'message')

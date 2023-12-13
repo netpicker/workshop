@@ -1,7 +1,8 @@
 from django.urls import include, path
 from utilities.urls import get_model_urls
-
+from netbox.views.generic import ObjectChangeLogView
 from . import views
+from . import models
 
 
 urlpatterns = (
@@ -26,5 +27,5 @@ urlpatterns = (
     path('reconcile/',          views.ReconcileView.as_view(), name='reconcile_list'),
 
     ## logging ##
-    path('logging/',            views.LoggingView.as_view(), name='logging_list'),
+    path('slurpitlog/',            views.LoggingListView.as_view(), name='slurpitlog_list'),
 )

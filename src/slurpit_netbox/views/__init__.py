@@ -3,4 +3,4 @@ from .setting import SourceListView, SourceEditView, SourceBulkDeleteView, Sourc
 from .planning import PlanningListView
 from .datamapping import DataMappingView
 from .reconcile import ReconcileView
-from .logging import LoggingView
+from .logging import LoggingListView

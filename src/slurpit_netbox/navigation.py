@@ -30,7 +30,7 @@ menu_items = (
         link_text='Reconcile',
     ),
     PluginMenuItem(
-        link='plugins:slurpit_netbox:logging_list',
+        link='plugins:slurpit_netbox:slurpitlog_list',
         link_text='Logging',
     ),
 )

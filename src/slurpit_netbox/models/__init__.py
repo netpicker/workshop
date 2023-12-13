@@ -9,11 +9,11 @@ from .. import get_config
 from .device import ImportedDevice, StagedDevice, fmt_digest
 from .planning import Planning
 from .setting import Source
-
+from .logs import SlurpitLog
 
 __all__ = [
     'ImportedDevice', 'Planning', 'Source', 'StagedDevice',
-    'post_migration', 'fmt_digest'
+    'post_migration', 'fmt_digest', 'SlurpitLog'
 ]
 
 
