@@ -3,7 +3,7 @@ from netbox.api.fields import ChoiceField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
-from slurpit_netbox.models import ImportedDevice, Planning, StagedDevice, Source, SlurpitLog
+from slurpit_netbox.models import ImportedDevice, Planning, StagedDevice, Source, SlurpitLog, Setting
 
 
 class StagedDeviceSerializer(serializers.ModelSerializer):
@@ -46,4 +46,9 @@ class PlanningSerializer(NetBoxModelSerializer):
 class SlurpitLogSerializer(NetBoxModelSerializer):
     class Meta:
         model = SlurpitLog
+        fields = '__all__'
+
+class SettingSerializer(NetBoxModelSerializer):
+    class Meta:
+        model = Setting
         fields = '__all__'

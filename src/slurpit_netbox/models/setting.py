@@ -8,8 +8,6 @@ from django.utils.translation import gettext as _
 from netbox.models import PrimaryModel
 from slurpit_netbox.slurpitch import SlurpitSession
 
-logger = logging.getLogger("slurpit_netbox.models")
-
 
 def apply_tags(object, tags):
     def _apply(object):
@@ -64,3 +62,27 @@ class Source(PrimaryModel):
         super().clean()
 
         self.url = self.url.rstrip("/")
+
+class Setting(PrimaryModel):
+    server_url = models.CharField(max_length=200, verbose_name=_("URL"))
+    api_key = models.CharField(max_length=50,editable=False)
+    last_synced = models.DateTimeField(blank=True, auto_now=True,null=True, editable=False)
+
+    class Meta:
+        verbose_name = "setting"
+        verbose_name_plural = "setting"
+
+    def __str__(self):
+        return f"{self.server_url}"
+
+    def get_absolute_url(self):
+        return '/'
+
+    @property
+    def docs_url(self):
+        # TODO: Add docs url
+        return ""
+
+    def clean(self):
+        super().clean()
+        

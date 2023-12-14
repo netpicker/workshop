@@ -10,9 +10,9 @@ from utilities.views import register_model_view
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm
-from ..models import Source
+from ..models import Source, Setting, SlurpitLog
 from ..tables import SourceTable
-
+from ..management.choices import *
 
 class SourceListView(generic.ObjectListView):
     queryset = Source.objects
@@ -69,8 +69,26 @@ class SourceBulkDeleteView(generic.BulkDeleteView):
 class SettingsView(View):
     
     def get(self, request):
+        setting = Setting.objects.get()
         return render(
             request,
             "slurpit_netbox/settings.html",
-            # {"model": IPFabricSync, "syncs": syncs},
+            {"setting": setting},
         )
+    
+    def post(self, request):
+        id = request.POST.get('setting_id')
+        server_url = request.POST.get('server_url')
+        api_key = request.POST.get('api_key')
+        obj, created = Setting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
+        log_message = "Created the settings parameter successfully."
+        
+        if not created:
+            obj.server_url = server_url
+            obj.api_key = api_key
+            obj.save()
+            log_message = "Updated the settings parameter successfully."
+        
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
+
+        return redirect(request.path)
