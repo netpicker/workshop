@@ -2,28 +2,88 @@
 {% load i18n %}
 
 <div class=" show {% if request.GET.tab == 'source' or request.GET.tab is None %}active{% endif %}">
-   
-    <form method="post" class="form form-horizontal">
-         <!-- sync button -->
-        {# Object table controls #}
-        {# Form buttons #}
-        <div class="noprint bulk-buttons">
-            <div class="bulk-button-group">
-                {% block bulk_buttons %}
-                <div class="" role="group">
-                
-                </div>
-                {% endblock %}
+    <div class="row mb-3">
+        <div class="col col-md-6">
+          <div class="card">
+            
+            <div class="card-header" style="display:flex;justify-content: space-between;">
+                    <h5>Parameters</h5>
+                    <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
+                        {% trans "Edit" %}
+                    </button>
             </div>
+            <div class="card-body">
+              <table class="table table-hover attr-table">
+                <tr>
+                  <th scope="row">Server URL</th>
+                  <td>{{setting.server_url}}</td>
+                </tr>
+                <tr>
+                  <th scope="row">API Key</th>
+                  <td>{{setting.api_key}}</td>
+                </tr>
+                
+              </table>
+            </div>
+          </div>
         </div>
-      {% csrf_token %}
-      {# "Select all" form #}
-     
-      <div class="form form-horizontal">
-        {% csrf_token %}
-       
-        Settings
+        <div class="col col-md-6">
+            <div class="card">
+                <div class="card-header" style="display:flex;justify-content: space-between;">
+                    <h5>Status</h5>
+                    <button name="Edit"  class="btn btn-blue btn-sm mx-3 px-3">
+                        <a href="" style="color:white;text-decoration: none;"> {% trans "Test" %}</a>
+                    </button>
+                </div>
+                <div class="card-body">
+                  <table class="table table-hover attr-table">
+                    <tr>
+                      <th scope="row">Server</th>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Last Synced</th>
+                      <td>{{setting.last_synced}}</td>
+                    </tr>
+                    
+                  </table>
+                </div>
+              </div>
+        </div>
+      </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="settingsEditModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Settings</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+        </div>
+        <form  method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+                <input type="hidden" class="form-control" name="setting_id" value="{{setting.id}}">
+                <div class="form-group">
+                    <label for="server_url">Server URL</label>
+                    <input type="text" class="form-control" name="server_url" placeholder="Enter your slurpit url" value="{{setting.server_url}}" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="api_key">API Key</label>
+                    <input type="text" class="form-control" name="api_key" placeholder="Enter your slurpit API key" value="{{setting.api_key}}" required>
+                  </div>
+            </div>
+    
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-outline-danger" id="edit_setting_btn" >{% trans "Save" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </form>
+        <!-- Modal Body -->
         
       </div>
-    </form>
-  </div>
+    </div>
+</div>
