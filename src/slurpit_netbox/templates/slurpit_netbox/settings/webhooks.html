@@ -1,0 +1,29 @@
+{% load buttons %}
+{% load i18n %}
+
+<div class=" show {% if request.GET.tab == 'webhooks' %}active{% endif %}">
+   
+    <form method="post" class="form form-horizontal">
+         <!-- sync button -->
+        {# Object table controls #}
+        {# Form buttons #}
+        <div class="noprint bulk-buttons">
+            <div class="bulk-button-group">
+                {% block bulk_buttons %}
+                <div class="" role="group">
+                
+                </div>
+                {% endblock %}
+            </div>
+        </div>
+      {% csrf_token %}
+      {# "Select all" form #}
+     
+      <div class="form form-horizontal">
+        {% csrf_token %}
+       
+        Web Hook
+        
+      </div>
+    </form>
+  </div>
