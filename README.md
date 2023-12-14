@@ -42,6 +42,16 @@ PLUGINS_CONFIG = {
 }
  ```
 
+ 
+
+ ### Apply Migrations
+
+ We can apply the migration file using the migrate management command:
+
+```
+python netbox/manage.py migrate slurpit_netbox
+```
+
  Save the file and run the Netbox development server (if not already running):
 
  ```
