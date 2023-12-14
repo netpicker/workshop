@@ -2,10 +2,12 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
+from django.shortcuts import render
 from netbox.views import generic
 from netbox.views.generic.base import BaseObjectView
 from utilities.htmx import is_htmx
 from utilities.views import register_model_view
+from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm
 from ..models import Source
@@ -62,3 +64,13 @@ class SourceBulkDeleteView(generic.BulkDeleteView):
     queryset = Source.objects.all()
     filterset = SourceFilterSet
     table = SourceTable
+
+
+class SettingsView(View):
+    
+    def get(self, request):
+        return render(
+            request,
+            "slurpit_netbox/settings.html",
+            # {"model": IPFabricSync, "syncs": syncs},
+        )

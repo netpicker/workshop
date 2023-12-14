@@ -9,6 +9,9 @@ urlpatterns = (
     path("planning/<int:pk>/",  views.PlanningListView.as_view(), name="planning_list"),
     
     ## setting ##
+    path("settings/",           views.SettingsView.as_view(), name="settings"),
+
+    ## source ##
     path("source/",             views.SourceListView.as_view(), name="source_list"),
     path("source/add/",         views.SourceEditView.as_view(), name="source_add"),
     path("source/delete/",      views.SourceBulkDeleteView.as_view(), name="source_bulk_delete"),
@@ -27,5 +30,5 @@ urlpatterns = (
     path('reconcile/',          views.ReconcileView.as_view(), name='reconcile_list'),
 
     ## logging ##
-    path('slurpitlog/',            views.LoggingListView.as_view(), name='slurpitlog_list'),
+    path('slurpitlog/',         views.LoggingListView.as_view(), name='slurpitlog_list'),
 )

@@ -13,7 +13,7 @@ imported_device_buttons = [
 
 menu_items = (
     PluginMenuItem(
-        link='plugins:slurpit_netbox:source_list',
+        link='plugins:slurpit_netbox:settings',
         link_text='Settings',
     ),
     PluginMenuItem(
