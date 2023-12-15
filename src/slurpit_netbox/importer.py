@@ -2,6 +2,7 @@ import logging
 from functools import partial
 from hashlib import md5
 from subprocess import PIPE, Popen
+from django.core.exceptions import ObjectDoesNotExist
 
 import arrow
 import requests
@@ -18,7 +19,7 @@ from django.db.models import QuerySet
 from django.utils.text import slugify
 
 from . import get_config
-from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest, SlurpitLog
+from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest, SlurpitLog, Setting
 from .management.choices import *
 
 log = logging.getLogger(__name__)
@@ -30,15 +31,26 @@ fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'disab
 
 
 def get_devices():
-    uri_base = get_config('API_ENDPOINT')
-    headers = get_config('API_HEADERS')
-    uri_devices = f"{uri_base}/api/devices"
-    r = requests.get(uri_devices, headers=headers)
-    r.raise_for_status()
-    data = r.json()
-    log_message = "Syncing the devices from slurp'it in Netbox."
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
-    return data
+    try:
+        setting = Setting.objects.get()
+        uri_base = setting.server_url
+        headers = {
+                        'authorization': setting.api_key,
+                        'useragent': 'netbox/requests',
+                        'accept': 'application/json'
+                    }
+        uri_devices = f"{uri_base}/api/devices"
+        r = requests.get(uri_devices, headers=headers)
+        r.raise_for_status()
+        data = r.json()
+        log_message = "Syncing the devices from slurp'it in Netbox."
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
+        return data
+    except ObjectDoesNotExist:
+        setting = None
+        log_message = "Need to set the setting parameter"
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+        return None
 
 
 def get_defaults():
@@ -81,8 +93,12 @@ def process_import():
 
 def run_import():
     devices = get_devices()
-    import_devices(devices)
-    process_import()
+    if devices is not None:
+        import_devices(devices)
+        process_import()
+        return 'done'
+    else:
+        return 'none'
 
 
 def handle_parted():

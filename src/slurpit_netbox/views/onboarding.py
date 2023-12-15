@@ -225,8 +225,13 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
 class ImportDevices(View):
     def get(self, request, *args, **kwargs):
         try:
-            run_import()
+            result = run_import()
+            if result == 'done':
+                messages.info(request, 'Synced the devices from SlurpIt')
+            else:
+                messages.warning(request, 'No setting parameter, You should set the setting paramters!')
         except requests.exceptions.RequestException:
             messages.error(request, 'An error occured during querying SlurpIt!')
-
+            log_message = "An error occured during querying SlurpIt!"
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
         return redirect(reverse('plugins:slurpit_netbox:importeddevice_list'))

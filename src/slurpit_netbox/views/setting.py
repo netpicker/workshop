@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.core.exceptions import ObjectDoesNotExist
 from netbox.views import generic
 from netbox.views.generic.base import BaseObjectView
 from utilities.htmx import is_htmx
@@ -13,6 +14,8 @@ from ..forms import SourceFilterForm, SourceForm
 from ..models import Source, Setting, SlurpitLog
 from ..tables import SourceTable
 from ..management.choices import *
+
+import requests
 
 class SourceListView(generic.ObjectListView):
     queryset = Source.objects
@@ -69,18 +72,35 @@ class SourceBulkDeleteView(generic.BulkDeleteView):
 class SettingsView(View):
     
     def get(self, request):
-        setting = Setting.objects.get()
+        try:
+            setting = Setting.objects.get()
+            server_url = setting.server_url
+            api_key = setting.api_key
+        except ObjectDoesNotExist:
+            setting = None
+            messages.warning(request, 'No setting parameters now. You should set the parameters!')
+        connection_status = ''
+            
+        test_param = request.GET.get('test',None)
+        if test_param =='test':
+            if setting is None:
+                messages.warning(request, 'You can not test. You should set the parameters first.')
+            else:
+                connection_status = self.connection_test(request, server_url, api_key)
         return render(
             request,
             "slurpit_netbox/settings.html",
-            {"setting": setting},
+            {"setting": setting, "connection_status": connection_status},
         )
     
     def post(self, request):
         id = request.POST.get('setting_id')
         server_url = request.POST.get('server_url')
         api_key = request.POST.get('api_key')
-        obj, created = Setting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
+        if id == "":
+            obj, created = Setting.objects.get_or_create(id=0, defaults={'server_url': server_url, 'api_key': api_key})
+        else:
+            obj, created = Setting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
         log_message = "Created the settings parameter successfully."
         
         if not created:
@@ -88,7 +108,39 @@ class SettingsView(View):
             obj.api_key = api_key
             obj.save()
             log_message = "Updated the settings parameter successfully."
-        
+            messages.success(request, "Updated the settings parameter successfully.")
         SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
 
         return redirect(request.path)
+
+
+    def connection_test(self, request, server_url, api_key):
+        headers = {
+                    'authorization': api_key,
+                    'useragent': 'netbox/requests',
+                    'accept': 'application/json'
+                }
+        connection_test = f"{server_url}/api/platform/ping"
+        try:
+            response = requests.get(connection_test, headers=headers)
+        except Exception as e:
+            messages.error(request, "Please confirm Slurpit server is running now.")
+            log_message ="Failed testing connection to the slurpit server."          
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
+            return "not connected"
+        
+        if response.status_code == 200:
+            r = response.json()
+            if r.get('status') == "up":
+                log_message ="Tested connection to the slurpit server successfully."        
+                SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
+                messages.success(request, "Tested connection to the slurpit server successfully.")
+            return 'connected'
+        else:
+            messages.error(request, "Failed testing connection to the slurpit server.")
+            log_message ="Failed testing connection to the slurpit server."          
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
+            return "not connected"
+
+        
+        

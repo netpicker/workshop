@@ -32,14 +32,23 @@
                 <div class="card-header" style="display:flex;justify-content: space-between;">
                     <h5>Status</h5>
                     <button name="Edit"  class="btn btn-blue btn-sm mx-3 px-3">
-                        <a href="" style="color:white;text-decoration: none;"> {% trans "Test" %}</a>
+                        <a href="{% url 'plugins:slurpit_netbox:settings' %}?test=test" style="color:white;text-decoration: none;"> {% trans "Test" %}</a>
                     </button>
                 </div>
                 <div class="card-body">
                   <table class="table table-hover attr-table">
                     <tr>
                       <th scope="row">Server</th>
-                      <td></td>
+                      <td>
+                        
+                        {% if connection_status == "connected" %}
+                          <span class="badge bg-success">connected</span>
+                        {% elif connection_status == "" %}
+                          <span></span>
+                        {% else %}
+                          <span class="badge bg-danger">disconnected</span>
+                        {% endif %}
+                      </td>
                     </tr>
                     <tr>
                       <th scope="row">Last Synced</th>
