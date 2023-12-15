@@ -10,8 +10,7 @@ class SlurpitConfig(PluginConfig):
     verbose_name = "Slurp'IT Plugin"
     description = "Sync Slurp'IT into NetBox"
     version = "0.0.1"
-    base_url = "slurpit"
-    required_settings = 'API_ENDPOINT', 'API_HEADERS'
+    base_url = "slurpit"    
     default_settings = {
         'DeviceType': {'model': "SlurpIT"},
         'DeviceRole': {'name': "SlurpIT"},
