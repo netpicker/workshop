@@ -3,13 +3,10 @@ from functools import partial
 from hashlib import md5
 from subprocess import PIPE, Popen
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.db import connection
 import arrow
 import requests
 import yaml
-
-from django.db import connection
-
 
 from dcim.models import (
     Device, DeviceRole, DeviceType, Manufacturer, Site
@@ -26,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 BATCH_SIZE = 128
-fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'disabled',
+fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'brand', 'disabled',
           'added', 'last_seen', 'createddate', 'changeddate')
 
 
@@ -207,7 +204,14 @@ def lookup_device_type(staged_type: str) -> DeviceType | None:
 def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     kw = get_defaults()
     cf = extra.pop('custom_field_data', {})
-    cf.update({get_config('netmiko_handler'): staged.device_os})
+    cf.update({
+        get_config('netmiko_handler'): staged.device_os,
+        'slurpit_hostname': staged.hostname,
+        'slurpit_fqdn': staged.fqdn,
+        'slurpit_platform': staged.device_os,
+        'slurpit_manufactor': staged.brand,
+        'slurpit_devicetype': staged.device_type
+    })    
     kw.update({
         'name': staged.hostname,
         'custom_field_data': cf,

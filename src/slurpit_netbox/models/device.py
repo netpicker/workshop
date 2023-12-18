@@ -17,7 +17,7 @@ from dcim.models import Device, DeviceType
 from netbox.models import NetBoxModel
 
 
-digest_parts = 'hostname', 'fqdn', 'device_os', 'disabled'
+digest_parts = 'hostname', 'fqdn', 'device_os', 'brand', 'disabled'
 fmt_digest = '\x01'.join((f"{{{part}}}" for part in digest_parts))
 mapped_in = dict(null=True, on_delete=models.SET_NULL)
 

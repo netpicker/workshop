@@ -78,13 +78,13 @@ class SettingsView(View):
             api_key = setting.api_key
         except ObjectDoesNotExist:
             setting = None
-            messages.warning(request, 'No setting parameters now. You should set the parameters!')
+            messages.warning(request, "To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
         connection_status = ''
             
         test_param = request.GET.get('test',None)
         if test_param =='test':
             if setting is None:
-                messages.warning(request, 'You can not test. You should set the parameters first.')
+                messages.warning(request, "You can not test. To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
             else:
                 connection_status = self.connection_test(request, server_url, api_key)
         return render(
