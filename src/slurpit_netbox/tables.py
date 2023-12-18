@@ -4,7 +4,7 @@ from django_tables2 import Column
 from django_tables2.columns import BoundColumn
 from django_tables2.columns.base import LinkTransform
 from django_tables2.utils import Accessor
-
+from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 
 
@@ -53,10 +53,22 @@ class ImportedDeviceTable(NetBoxTable):
     hostname = ConditionalLink()
     device_type = DeviceTypeColumn()
 
+    brand = tables.Column(
+        verbose_name = _('Manufactor')
+    )
+
+    device_os = tables.Column(
+        verbose_name = _('Platform')
+    )
+
+    last_updated = tables.Column(
+        verbose_name = _('Last seen')
+    )
+
     class Meta(NetBoxTable.Meta):
         model = ImportedDevice
-        fields = ('pk', 'id', 'hostname', 'fqdn', 'IP', 'device_os', 'device_type', 'last_updated')
-        default_columns = ('hostname', 'fqdn', 'IP', 'device_os', 'device_type', 'last_updated')
+        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
 
 
 class SourceTable(NetBoxTable):

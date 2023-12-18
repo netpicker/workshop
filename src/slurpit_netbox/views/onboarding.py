@@ -1,7 +1,7 @@
 import logging
-
 import requests
 from dcim.choices import DeviceStatusChoices
+from dcim.models import  Manufacturer, Platform, DeviceType
 from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
 from django.core.exceptions import FieldDoesNotExist, ValidationError
@@ -14,7 +14,7 @@ from extras.signals import clear_webhooks
 from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
-
+from .. import get_config
 from ..models import ImportedDevice, SlurpitLog
 from ..management.choices import *
 from .. import forms, importer, models, tables
@@ -152,6 +152,8 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         ]
         nullified_fields = request.POST.getlist('_nullify')
         updated_objects = []
+        manufacturer_list = []
+        brand_name_list = []        
         model_fields = {}
         m2m_fields = {}
 
@@ -176,6 +178,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 continue
 
             extra = {'custom_field_data': {}}
+            
             # Update standard fields. If a field is listed in _nullify, delete its value.
             for name, model_field in model_fields.items():
                 # Handle nullification
@@ -196,14 +199,23 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
             device = get_dcim(obj, **extra)
             obj.mapped_device = device
             obj.save()
-            
+
+            # Make the list of manufacture from obj.brand
+            if obj.brand not in brand_name_list:
+                manu_name = obj.brand
+                brand_name_list.append(manu_name)
+                manu_defs = {'slug': manu_name.lower(), 'name': manu_name, 'platform': obj.device_os}
+                manufacturer_list.append(manu_defs)
+
+
+
             log_message = f"Onboarded device - {obj.hostname} successfully."
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
 
             # Take a snapshot of change-logged models
             if hasattr(device, 'snapshot'):
                 device.snapshot()
-
+            
             updated_objects.append(device)
 
             # Handle M2M fields after save
@@ -219,6 +231,21 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
             if form.cleaned_data.get('remove_tags', None):
                 device.tags.remove(*form.cleaned_data['remove_tags'])
 
+        # Create the manufactors and platform 
+        for manu in manufacturer_list:
+            manu_defs = {'slug': manu['slug']}
+            manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
+            # manu.tags.set(tags)
+
+            devtype_model = get_config('DeviceType')['model']
+            devtype_defs = {'model': devtype_model, 'manufacturer': manu_obj}
+            dtype, _ = DeviceType.objects.get_or_create(devtype_defs)
+            # dtype.tags.set(tags)
+            
+            platform_defs = {'manufacturer': manu_obj, 'name': manu['platform']}
+            platform, _ = Platform.objects.get_or_create(platform_defs)
+            # platform.tags.set(tags)        
+        
         return updated_objects
 
 

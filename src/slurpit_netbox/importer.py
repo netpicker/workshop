@@ -3,13 +3,10 @@ from functools import partial
 from hashlib import md5
 from subprocess import PIPE, Popen
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.db import connection
 import arrow
 import requests
 import yaml
-
-from django.db import connection
-
 
 from dcim.models import (
     Device, DeviceRole, DeviceType, Manufacturer, Site
@@ -26,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 BATCH_SIZE = 128
-fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'disabled',
+fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'brand', 'disabled',
           'added', 'last_seen', 'createddate', 'changeddate')
 
 
