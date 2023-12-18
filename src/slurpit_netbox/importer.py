@@ -204,7 +204,14 @@ def lookup_device_type(staged_type: str) -> DeviceType | None:
 def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     kw = get_defaults()
     cf = extra.pop('custom_field_data', {})
-    cf.update({get_config('netmiko_handler'): staged.device_os})
+    cf.update({
+        get_config('netmiko_handler'): staged.device_os,
+        'slurpit_hostname': staged.hostname,
+        'slurpit_fqdn': staged.fqdn,
+        'slurpit_platform': staged.device_os,
+        'slurpit_manufactor': staged.brand,
+        'slurpit_devicetype': staged.device_type
+    })    
     kw.update({
         'name': staged.hostname,
         'custom_field_data': cf,

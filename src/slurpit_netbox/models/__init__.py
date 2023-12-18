@@ -60,8 +60,112 @@ def add_netmiko_device_type_support(tags):
     cf, _ = CustomField.objects.get_or_create(
                 defaults=default_custom_field,
                 name=netmiko_handler)
-
     device = ContentType.objects.get(app_label='dcim', model='device')
+    cf.content_types.set({device})
+
+    # hostname custom field
+    default_choices = {
+        'description': 'hostname handlers',
+        'order_alphabetically': True,
+        'extra_choices': netmiko_types,
+    }
+    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
+                        defaults=default_choices,
+                        name='slurpit_hostname_choice')
+
+    slurpit_hostname_custom_field = {
+        'type': CustomFieldTypeChoices.TYPE_SELECT,
+        'description': "slurpit hostname field",
+        'choice_set': choice,
+        'is_cloneable': True,
+    }
+    cf, _ = CustomField.objects.get_or_create(
+                defaults=slurpit_hostname_custom_field,
+                name='slurpit_hostname')
+    cf.content_types.set({device})
+
+
+    # fqdn custome field
+    default_choices = {
+        'description': 'fqdn handlers',
+        'order_alphabetically': True,
+        'extra_choices': netmiko_types,
+    }
+    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
+                        defaults=default_choices,
+                        name='slurpit_fqdn_choice')
+    
+    slurpit_fqdn_custom_field = {
+        'type': CustomFieldTypeChoices.TYPE_SELECT,
+        'choice_set': choice,
+        'description': "slurpit fqdn field",
+        'is_cloneable': True,
+    }
+    cf, _ = CustomField.objects.get_or_create(
+                defaults=slurpit_fqdn_custom_field,
+                name='slurpit_fqdn')
+    cf.content_types.set({device})
+    
+    # platform custom field
+    default_choices = {
+        'description': 'platform handlers',
+        'order_alphabetically': True,
+        'extra_choices': netmiko_types,
+    }
+    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
+                        defaults=default_choices,
+                        name='slurpit_platform_choice')
+    
+    slurpit_platform_custom_field = {
+        'type': CustomFieldTypeChoices.TYPE_SELECT,
+        'description': "slurpit platform field",
+        'choice_set': choice,
+        'is_cloneable': True,
+    }
+    cf, _ = CustomField.objects.get_or_create(
+                defaults=slurpit_platform_custom_field,
+                name='slurpit_platform')
+    cf.content_types.set({device})
+
+    # manufactor custom field
+    default_choices = {
+        'description': 'fqdn handlers',
+        'order_alphabetically': True,
+        'extra_choices': netmiko_types,
+    }
+    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
+                        defaults=default_choices,
+                        name='slurpit_manufactor_choice')
+    slurpit_manufactor_custom_field = {
+        'type': CustomFieldTypeChoices.TYPE_SELECT,
+        'description': "slurpit manufactor field",
+        'choice_set': choice,
+        'is_cloneable': True,
+    }
+    cf, _ = CustomField.objects.get_or_create(
+                defaults=slurpit_manufactor_custom_field,
+                name='slurpit_manufactor')
+    cf.content_types.set({device})
+
+    # device type custom field
+    default_choices = {
+        'description': 'device type handlers',
+        'order_alphabetically': True,
+        'extra_choices': netmiko_types,
+    }
+    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
+                        defaults=default_choices,
+                        name='slurpit_device_type_choice')
+    
+    slurpit_devicetype_custom_field = {
+        'type': CustomFieldTypeChoices.TYPE_SELECT,
+        'description': "slurpit device_type field",
+        'choice_set': choice,
+        'is_cloneable': True,
+    }
+    cf, _ = CustomField.objects.get_or_create(
+                defaults=slurpit_devicetype_custom_field,
+                name='slurpit_devicetype')
     cf.content_types.set({device})
 
 
