@@ -7,10 +7,10 @@
           <div class="card">
             
             <div class="card-header" style="display:flex;justify-content: space-between;">
-                    <h5>Parameters</h5>
-                    <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
-                        {% trans "Edit" %}
-                    </button>
+                <h5>Parameters</h5>
+                <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
+                    {% trans "Edit" %}
+                </button>
             </div>
             <div class="card-body">
               <table class="table table-hover attr-table">
@@ -31,9 +31,7 @@
             <div class="card">
                 <div class="card-header" style="display:flex;justify-content: space-between;">
                     <h5>Status</h5>
-                    <button name="Edit"  class="btn btn-blue btn-sm mx-3 px-3">
-                        <a href="{% url 'plugins:slurpit_netbox:settings' %}?test=test" style="color:white;text-decoration: none;"> {% trans "Test" %}</a>
-                    </button>
+                    <a name="Edit" class="btn btn-blue btn-sm mx-3 px-3" href="{% url 'plugins:slurpit_netbox:settings' %}?test=test"> {% trans "Test" %}</a>
                 </div>
                 <div class="card-body">
                   <table class="table table-hover attr-table">
@@ -79,7 +77,7 @@
                     <label for="server_url">Server URL</label>
                     <input type="text" class="form-control" name="server_url" placeholder="Enter your slurpit url" value="{{setting.server_url}}" required>
                   </div>
-                  <div class="form-group">
+                  <div class="form-group pt-2">
                     <label for="api_key">API Key</label>
                     <input type="text" class="form-control" name="api_key" placeholder="Enter your slurpit API key" value="{{setting.api_key}}" required>
                   </div>
@@ -87,7 +85,7 @@
     
             <!-- Modal Footer -->
             <div class="modal-footer">
-                <button type="submit" class="btn btn-outline-danger" id="edit_setting_btn" >{% trans "Save" %}</button>
+                <button type="submit" class="btn btn-outline-success" id="edit_setting_btn" >{% trans "Save" %}</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </form>
