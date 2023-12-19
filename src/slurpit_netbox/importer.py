@@ -9,7 +9,7 @@ import requests
 import yaml
 
 from dcim.models import (
-    Device, DeviceRole, DeviceType, Manufacturer, Site
+    Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
 )
 from dcim.choices import DeviceStatusChoices
 from django.db.models import QuerySet
@@ -205,15 +205,20 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     kw = get_defaults()
     cf = extra.pop('custom_field_data', {})
     cf.update({
-        get_config('netmiko_handler'): staged.device_os,
         'slurpit_hostname': staged.hostname,
         'slurpit_fqdn': staged.fqdn,
         'slurpit_platform': staged.device_os,
         'slurpit_manufactor': staged.brand,
         'slurpit_devicetype': staged.device_type
     })    
+    platforms = Platform.objects.filter(name=staged.device_os)
+
+    if platforms:
+        device_platform = platforms[0]
+    
     kw.update({
         'name': staged.hostname,
+        'platform': device_platform,
         'custom_field_data': cf,
         **extra,
         # 'primary_ip4_id': int(ip_address(staged.fqdn)),
@@ -222,6 +227,7 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     if staged_type := staged.device_type:
         if device_type := lookup_device_type(staged_type):
             kw.update(device_type=device_type)
+
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
     return device
