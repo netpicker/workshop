@@ -42,26 +42,9 @@ def ensure_slurpit_tags(*items):
 
 
 def add_netmiko_device_type_support(tags):
-    default_choices = {
-        'description': 'NetMiko supported handlers',
-        'extra_choices': netmiko_types,
-        'order_alphabetically': True,
-    }
-    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
-                        defaults=default_choices,
-                        name=netmiko_choices)
-
-    default_custom_field = {
-        'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'choice_set': choice,
-        'description': "Netmiko handler's name for integrations",
-        'is_cloneable': True,
-    }
-    cf, _ = CustomField.objects.get_or_create(
-                defaults=default_custom_field,
-                name=netmiko_handler)
+   
     device = ContentType.objects.get(app_label='dcim', model='device')
-    cf.content_types.set({device})
+    
 
     # hostname custom field
     default_choices = {
@@ -75,9 +58,10 @@ def add_netmiko_device_type_support(tags):
 
     slurpit_hostname_custom_field = {
         'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "slurpit hostname field",
+        'description': "",
         'choice_set': choice,
         'is_cloneable': True,
+        'label': 'Slurpit Hostname',
     }
     cf, _ = CustomField.objects.get_or_create(
                 defaults=slurpit_hostname_custom_field,
@@ -98,7 +82,8 @@ def add_netmiko_device_type_support(tags):
     slurpit_fqdn_custom_field = {
         'type': CustomFieldTypeChoices.TYPE_SELECT,
         'choice_set': choice,
-        'description': "slurpit fqdn field",
+        'description': "",
+        'label': 'Slurpit Fqdn',
         'is_cloneable': True,
     }
     cf, _ = CustomField.objects.get_or_create(
@@ -118,9 +103,10 @@ def add_netmiko_device_type_support(tags):
     
     slurpit_platform_custom_field = {
         'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "slurpit platform field",
+        'description': "",
         'choice_set': choice,
         'is_cloneable': True,
+        'label': 'Slurpit Platform',
     }
     cf, _ = CustomField.objects.get_or_create(
                 defaults=slurpit_platform_custom_field,
@@ -138,9 +124,10 @@ def add_netmiko_device_type_support(tags):
                         name='slurpit_manufactor_choice')
     slurpit_manufactor_custom_field = {
         'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "slurpit manufactor field",
+        'description': "",
         'choice_set': choice,
         'is_cloneable': True,
+        'label': 'Slurpit Manufactor',
     }
     cf, _ = CustomField.objects.get_or_create(
                 defaults=slurpit_manufactor_custom_field,
@@ -159,9 +146,10 @@ def add_netmiko_device_type_support(tags):
     
     slurpit_devicetype_custom_field = {
         'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "slurpit device_type field",
+        'description': "",
         'choice_set': choice,
         'is_cloneable': True,
+        'label': 'Slurpit Device Type',
     }
     cf, _ = CustomField.objects.get_or_create(
                 defaults=slurpit_devicetype_custom_field,
