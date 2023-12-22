@@ -21,8 +21,10 @@ from .. import forms, importer, models, tables
 from ..importer import (
     get_dcim, import_from_queryset, lookup_device_type, run_import
 )
+from ..decorators import slurpit_plugin_registered
+from django.utils.decorators import method_decorator
 
-
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportedDeviceListView(generic.ObjectListView):
     
     queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True)
@@ -50,6 +52,7 @@ class ImportedDeviceListView(generic.ObjectListView):
         return redirect(request.path)
 
 
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportedDeviceOnboardView(generic.BulkEditView):
     template_name = 'slurpit_netbox/bulk_edit.html'
     queryset = models.ImportedDevice.objects.all()
@@ -252,6 +255,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         return updated_objects
 
 
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportDevices(View):
     def get(self, request, *args, **kwargs):
         try:

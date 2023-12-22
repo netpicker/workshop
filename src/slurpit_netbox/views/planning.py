@@ -9,6 +9,8 @@ from ..tables import PlanningTable
 from ..models import Source
 from ..models import Planning
 
+from ..decorators import slurpit_plugin_registered
+from django.utils.decorators import method_decorator
 
 import sys
 from django.conf import settings
@@ -22,6 +24,7 @@ def reload_urlconf():
 
 
 @register_model_view(Source, name='planning', path='planning')
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class PlanningListView(generic.ObjectChildrenView):
     queryset = Source.objects.all()
     child_model = Planning

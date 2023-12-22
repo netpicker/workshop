@@ -14,16 +14,20 @@ from ..forms import SourceFilterForm, SourceForm
 from ..models import Source, Setting, SlurpitLog
 from ..tables import SourceTable
 from ..management.choices import *
+from ..decorators import slurpit_plugin_registered
+from django.utils.decorators import method_decorator
 
 import requests
 
+
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class SourceListView(generic.ObjectListView):
     queryset = Source.objects
     filterset = SourceFilterSet
     filterset_form = SourceFilterForm
     table = SourceTable
 
-
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 @register_model_view(Source, "edit")
 class SourceEditView(generic.ObjectEditView):
     queryset = Source.objects.all()
@@ -59,16 +63,18 @@ class SourceSyncView(BaseObjectView):
 
 
 @register_model_view(Source, "delete")
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class SourceDeleteView(generic.ObjectDeleteView):
     queryset = Source.objects.all()
 
 
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class SourceBulkDeleteView(generic.BulkDeleteView):
     queryset = Source.objects.all()
     filterset = SourceFilterSet
     table = SourceTable
 
-
+@method_decorator(slurpit_plugin_registered, name='dispatch')
 class SettingsView(View):
     
     def get(self, request):
