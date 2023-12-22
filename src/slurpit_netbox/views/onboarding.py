@@ -91,9 +91,9 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                         updated_objects = self._update_objects(form, request)
 
                         # Enforce object-level permissions
-                        object_count = self.queryset.filter(pk__in=[obj.pk for obj in updated_objects]).count()
-                        if object_count != len(updated_objects):
-                            raise PermissionsViolation
+                        # object_count = self.queryset.filter(pk__in=[obj.pk for obj in updated_objects]).count()
+                        # if object_count != len(updated_objects):
+                        #     raise PermissionsViolation
 
                     if updated_objects:
                         msg = f'Onboarded {len(updated_objects)} {model._meta.verbose_name_plural}'
@@ -193,8 +193,11 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 # manu.tags.set(tags)
 
                 devtype_model = get_config('DeviceType')['model']
-                devtype_defs = {'model': devtype_model, 'manufacturer': manu_obj}
-                dtype, _ = DeviceType.objects.get_or_create(devtype_defs)
+                print(obj.device_type)
+                print(manu_obj)
+                # devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, }
+                dtype, _ = DeviceType.objects.get_or_create(model=obj.device_type, manufacturer=manu_obj)
+                print(dtype)
                 # dtype.tags.set(tags)
                 
                 platform_defs = {'manufacturer': manu_obj, 'name': manu['platform']}

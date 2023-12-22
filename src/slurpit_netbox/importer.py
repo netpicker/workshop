@@ -215,18 +215,23 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
 
     if platforms:
         device_platform = platforms[0]
-    
+
+    manu, _ = Manufacturer.objects.get_or_create(name=staged.brand)
+    dtype, _ = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu)
+
     kw.update({
         'name': staged.hostname,
         'platform': device_platform,
         'custom_field_data': cf,
+        'device_type': dtype,
         **extra,
         # 'primary_ip4_id': int(ip_address(staged.fqdn)),
     })
     kw.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
-    if staged_type := staged.device_type:
-        if device_type := lookup_device_type(staged_type):
-            kw.update(device_type=device_type)
+    if not dtype:
+        if staged_type := staged.device_type:
+            if device_type := lookup_device_type(staged_type):
+                kw.update(device_type=device_type)
 
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
