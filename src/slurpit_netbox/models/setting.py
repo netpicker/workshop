@@ -67,6 +67,7 @@ class Setting(PrimaryModel):
     server_url = models.CharField(max_length=200, verbose_name=_("URL"))
     api_key = models.CharField(max_length=50,editable=False)
     last_synced = models.DateTimeField(blank=True, auto_now=True,null=True, editable=False)
+    connection_status = models.CharField(max_length=50,editable=False, null=True, default='')
 
     class Meta:
         verbose_name = "setting"

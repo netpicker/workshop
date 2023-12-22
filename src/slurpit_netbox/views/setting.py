@@ -85,7 +85,11 @@ class SettingsView(View):
         except ObjectDoesNotExist:
             setting = None
             messages.warning(request, "To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
-        connection_status = ''
+        
+        if setting is None:
+            connection_status = ''
+        else:
+            connection_status = setting.connection_status
             
         test_param = request.GET.get('test',None)
         if test_param =='test':
@@ -93,6 +97,9 @@ class SettingsView(View):
                 messages.warning(request, "You can not test. To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
             else:
                 connection_status = self.connection_test(request, server_url, api_key)
+                setting.connection_status = connection_status
+                setting.save()
+
         return render(
             request,
             "slurpit_netbox/settings.html",
