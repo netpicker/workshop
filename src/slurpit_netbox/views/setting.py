@@ -114,7 +114,7 @@ class SettingsView(View):
             obj, created = Setting.objects.get_or_create(id=0, defaults={'server_url': server_url, 'api_key': api_key})
         else:
             obj, created = Setting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
-        log_message = "Created the settings parameter successfully."
+        log_message = "Added the settings parameter successfully."
         
         if not created:
             obj.server_url = server_url
@@ -137,21 +137,21 @@ class SettingsView(View):
         try:
             response = requests.get(connection_test, headers=headers)
         except Exception as e:
-            messages.error(request, "Please confirm Slurpit server is running now.")
-            log_message ="Failed testing connection to the slurpit server."          
+            messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
+            log_message ="Failed testing the connection to the Slurp'it server."          
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
             return "not connected"
         
         if response.status_code == 200:
             r = response.json()
             if r.get('status') == "up":
-                log_message ="Tested connection to the slurpit server successfully."        
+                log_message ="Tested the connection to the Slurp'it server successfully."        
                 SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
-                messages.success(request, "Tested connection to the slurpit server successfully.")
+                messages.success(request, "Tested the connection to the slurpit server successfully.")
             return 'connected'
         else:
-            messages.error(request, "Failed testing connection to the slurpit server.")
-            log_message ="Failed testing connection to the slurpit server."          
+            messages.error(request, "Failed testing the connection to the Slurp'it server.")
+            log_message ="Failed testing the connection to the Slurp'it server."          
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
             return "not connected"
 

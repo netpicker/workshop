@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "slurpit-netbox"
-version = "0.1.20"
+version = "0.1.21"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Pieter <pieter@slurpit.io>"]
 readme = "README.md"
 packages = [{include = "slurpit_netbox", from = "src"}]
 
