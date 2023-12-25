@@ -84,8 +84,7 @@ class SettingsView(View):
             api_key = setting.api_key
         except ObjectDoesNotExist:
             setting = None
-            messages.warning(request, "To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
-        
+            
         if setting is None:
             connection_status = ''
         else:
