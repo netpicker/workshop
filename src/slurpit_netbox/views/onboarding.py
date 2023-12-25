@@ -196,11 +196,8 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 # manu.tags.set(tags)
 
                 devtype_model = get_config('DeviceType')['model']
-                print(obj.device_type)
-                print(manu_obj)
                 # devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, }
                 dtype, _ = DeviceType.objects.get_or_create(model=obj.device_type, manufacturer=manu_obj)
-                print(dtype)
                 # dtype.tags.set(tags)
                 
                 platform_defs = {'manufacturer': manu_obj, 'name': manu['platform']}
