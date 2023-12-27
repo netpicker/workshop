@@ -211,17 +211,20 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
         'slurpit_manufactor': staged.brand,
         'slurpit_devicetype': staged.device_type
     })    
-    platforms = Platform.objects.filter(name=staged.device_os)
-
-    if platforms:
-        device_platform = platforms[0]
 
     manu, _ = Manufacturer.objects.get_or_create(name=staged.brand)
-    dtype, _ = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu)
-
+    platform_defs = {'name': staged.device_os}
+    platform, _ = Platform.objects.get_or_create(platform_defs)
+    devtype_slug = f'{staged.brand}-{staged.device_type}'
+    devtype_defs = {'model': staged.device_type, 'manufacturer': manu, 'slug': devtype_slug, 'default_platform': platform}
+    try:
+        dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
+    except:
+        dtype, _ = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu)
+        
     kw.update({
         'name': staged.hostname,
-        'platform': device_platform,
+        'platform': platform,
         'custom_field_data': cf,
         'device_type': dtype,
         **extra,

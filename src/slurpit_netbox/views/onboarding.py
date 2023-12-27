@@ -192,18 +192,24 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 # Create the manufactors and platform 
        
                 manu_defs = {'slug': manu['slug']}
-                manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
+                try:
+                    manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
+                except:
+                    manu_obj, _ = Manufacturer.objects.get(name=manu['name'])
                 # manu.tags.set(tags)
-
-                devtype_model = get_config('DeviceType')['model']
-                # devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, }
-                dtype, _ = DeviceType.objects.get_or_create(model=obj.device_type, manufacturer=manu_obj)
-                # dtype.tags.set(tags)
-                
-                platform_defs = {'manufacturer': manu_obj, 'name': manu['platform']}
+                platform_defs = {'name': manu['platform']}
                 platform, _ = Platform.objects.get_or_create(platform_defs)
-                # platform.tags.set(tags)      
-            
+                
+                # platform.tags.set(tags)  
+                devtype_model = get_config('DeviceType')['model']
+                devtype_slug = f'{manu["name"]}-{obj.device_type}'
+                devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, 'slug': devtype_slug, 'default_platform': platform}
+                try:
+                    dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
+                except:
+                    dtype, _ = DeviceType.objects.get(model=obj.device_type, manufacturer=manu_obj)
+                # dtype.tags.set(tags)
+
             # Update standard fields. If a field is listed in _nullify, delete its value.
             for name, model_field in model_fields.items():
                 # Handle nullification
