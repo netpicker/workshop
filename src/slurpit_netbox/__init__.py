@@ -15,6 +15,8 @@ class SlurpitConfig(PluginConfig):
         'DeviceType': {'model': "SlurpIT"},
         'DeviceRole': {'name': "SlurpIT"},
         'Site': {'name': "SlurpIT"},
+        'Location': {'name': 'SlurpIT'},
+        'Region': {'name': 'SlurpIT'},
 
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',

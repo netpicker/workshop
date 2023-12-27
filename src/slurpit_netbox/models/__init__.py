@@ -1,4 +1,4 @@
-from dcim.models import DeviceRole, DeviceType, Manufacturer, Site
+from dcim.models import DeviceRole, DeviceType, Manufacturer, Site, Location, Region
 from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
 from extras.models import CustomField, CustomFieldChoiceSet
@@ -176,6 +176,11 @@ def add_default_mandatory_objects(tags):
     role_defs = {}
     role, _ = DeviceRole.objects.get_or_create(defaults=role_defs, name=role_name)
     role.tags.set(tags)
+
+    location_name = get_config('Location')['name']
+    location_defs = {'site': site}
+    location, _= Location.objects.get_or_create(name=location_name, **location_defs)
+    location.tags.set(tags)
 
 
 def post_migration(sender, **kwargs):

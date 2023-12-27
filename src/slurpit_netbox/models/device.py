@@ -34,8 +34,16 @@ class StagedDevice(NetBoxModel):
     last_seen = models.DateTimeField(null=True)
     createddate = models.DateTimeField()
     changeddate = models.DateTimeField(null=True)
-
-
+    location = models.TextField(max_length=128, null=True)
+    region = models.TextField(max_length=128, null=True)
+    rack = models.TextField(max_length=128, null=True)
+    position = models.TextField(max_length=128, null=True)
+    airflow = models.TextField(max_length=128, null=True)
+    latitude = models.DecimalField(max_digits=8, decimal_places=6, null=True)
+    longitude = models.DecimalField(max_digits=8, decimal_places=6, null=True)
+    tenant = models.TextField(max_length=128, null=True)
+    description = models.TextField(max_length=256, null=True)
+    
 class ImportedDevice(NetBoxModel):
     digest = models.TextField(max_length=64, unique=True)
     hostname = models.TextField(max_length=255, unique=True)
@@ -50,6 +58,15 @@ class ImportedDevice(NetBoxModel):
     changeddate = models.DateTimeField(null=True)
     mapped_devicetype = models.ForeignKey(to=DeviceType, **mapped_in)
     mapped_device = models.ForeignKey(to=Device, **mapped_in)
+    location = models.TextField(max_length=128, null=True)
+    region = models.TextField(max_length=128, null=True)
+    rack = models.TextField(max_length=128, null=True)
+    position = models.TextField(max_length=128, null=True)
+    airflow = models.TextField(max_length=128, null=True)
+    latitude = models.DecimalField(max_digits=8, decimal_places=6, null=True)
+    longitude = models.DecimalField(max_digits=8, decimal_places=6, null=True)
+    tenant = models.TextField(max_length=128, null=True)
+    description = models.TextField(max_length=256, null=True)
 
     def get_absolute_url(self):
         return '/'
