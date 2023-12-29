@@ -114,15 +114,17 @@ class SettingsView(View):
         else:
             obj, created = Setting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
         log_message = "Added the settings parameter successfully."
-        
+
+        connection_status = self.connection_test(request, server_url, api_key)
+        obj.connection_status = connection_status
+
         if not created:
             obj.server_url = server_url
             obj.api_key = api_key
-            connection_status = self.connection_test(request, server_url, api_key)
-            obj.connection_status = connection_status
-            obj.save()
             log_message = "Updated the settings parameter successfully."
             messages.success(request, "Updated the settings parameter successfully.")
+        obj.save()
+        
         SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
 
         return redirect(request.path)
