@@ -6,7 +6,14 @@ from django.contrib import messages
 def slurpit_plugin_registered(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        print("Decorator two applied.")
+        ignore_paths = [
+            '/plugins/slurpit/devices/import',
+            '/plugins/slurpit/devices/onboard'
+        ]
+        # Ignore plugin check at import request
+        for ignore_path in ignore_paths:
+            if ignore_path in request.path:
+                return view_func(request, *args, **kwargs)
         try:
             setting = Setting.objects.get()
             server_url = setting.server_url

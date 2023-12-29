@@ -270,7 +270,7 @@ class ImportDevices(View):
             if result == 'done':
                 messages.info(request, "Synced the devices from Slurp'it.")
             else:
-                messages.warning(request, "To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
+                pass
         except requests.exceptions.RequestException:
             messages.error(request, "An error occured during querying Slurp'it!")
             log_message = "An error occured during querying Slurp'it!"
