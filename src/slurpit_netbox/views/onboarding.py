@@ -118,6 +118,40 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 logger.debug("Form validation failed")
 
         else:
+            brand_name_list = []   
+            manufacturer_list = [] 
+
+            for obj in self.queryset:
+                if str(obj.id) not in initial_data['pk']: 
+                    continue
+                # Make the list of manufacture from obj.brand
+                if obj.brand not in brand_name_list:
+                    manu_name = obj.brand
+                    brand_name_list.append(manu_name)
+                    manu = {'slug': manu_name.lower(), 'name': manu_name, 'platform': obj.device_os}
+                    manufacturer_list.append(manu)
+
+                    # Create the manufactors and platform 
+        
+                    manu_defs = {'slug': manu['slug']}
+                    try:
+                        manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
+                    except:
+                        manu_obj, _ = Manufacturer.objects.get(name=manu['name'])
+                    # manu.tags.set(tags)
+                    platform_defs = {'name': manu['platform']}
+                    platform, _ = Platform.objects.get_or_create(platform_defs)
+                    
+                    # platform.tags.set(tags)  
+                    devtype_model = get_config('DeviceType')['model']
+                    devtype_slug = f'{manu["name"]}-{obj.device_type}'
+                    devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, 'slug': devtype_slug, 'default_platform': platform}
+                    try:
+                        dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
+                    except:
+                        dtype, _ = DeviceType.objects.get(model=obj.device_type, manufacturer=manu_obj)
+                    # dtype.tags.set(tags)
+
             defaults = importer.get_defaults()
             # if the same device type is selected
             qs = (ImportedDevice.objects.filter(pk__in=initial_data['pk'])
@@ -154,9 +188,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
             field for field in form.fields if field not in list(custom_fields) + ['pk']
         ]
         nullified_fields = request.POST.getlist('_nullify')
-        updated_objects = []
-        manufacturer_list = []
-        brand_name_list = []        
+        updated_objects = []    
         model_fields = {}
         m2m_fields = {}
 
@@ -181,34 +213,6 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 continue
 
             extra = {'custom_field_data': {}}
-
-            # Make the list of manufacture from obj.brand
-            if obj.brand not in brand_name_list:
-                manu_name = obj.brand
-                brand_name_list.append(manu_name)
-                manu = {'slug': manu_name.lower(), 'name': manu_name, 'platform': obj.device_os}
-                manufacturer_list.append(manu)
-
-                # Create the manufactors and platform 
-       
-                manu_defs = {'slug': manu['slug']}
-                try:
-                    manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
-                except:
-                    manu_obj, _ = Manufacturer.objects.get(name=manu['name'])
-                # manu.tags.set(tags)
-                platform_defs = {'name': manu['platform']}
-                platform, _ = Platform.objects.get_or_create(platform_defs)
-                
-                # platform.tags.set(tags)  
-                devtype_model = get_config('DeviceType')['model']
-                devtype_slug = f'{manu["name"]}-{obj.device_type}'
-                devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, 'slug': devtype_slug, 'default_platform': platform}
-                try:
-                    dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
-                except:
-                    dtype, _ = DeviceType.objects.get(model=obj.device_type, manufacturer=manu_obj)
-                # dtype.tags.set(tags)
 
             # Update standard fields. If a field is listed in _nullify, delete its value.
             for name, model_field in model_fields.items():
