@@ -25,13 +25,10 @@
 {% block tabs %}
   <ul class="nav nav-tabs px-3">
     <li class="nav-item" role="presentation">
-      <a class="nav-link {% if request.GET.tab == 'source' or request.GET.tab is None %}active{% endif %}" href="?tab=source">Source</a>
+      <a class="nav-link {% if request.GET.tab == 'source' or request.GET.tab is None %}active{% endif %}" href="?tab=source">General</a>
     </li>
     <li class="nav-item" role="presentation">
         <a class="nav-link {% if request.GET.tab == 'data_tabs' %}active{% endif %}" href="?tab=data_tabs">Data tabs</a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link {% if request.GET.tab == 'webhooks' %}active{% endif %}" href="?tab=webhooks">Webhooks</a>
     </li>
   </ul>
 {% endblock tabs %}
