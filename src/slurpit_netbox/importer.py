@@ -273,7 +273,18 @@ def handle_new_comers(unattended: bool):
                      device_types=device_types, add_dcim=unattended)
     data = map(mapper, qs.iterator(BATCH_SIZE))
     for batch in isplit(data, BATCH_SIZE):
-        ImportedDevice.objects.bulk_create(batch, batch_size=BATCH_SIZE)
+        try:
+            ImportedDevice.objects.bulk_create(batch, batch_size=BATCH_SIZE, ignore_conflicts=True)
+            ImportedDevice.objects.bulk_update(batch, {
+                'device_type', 
+                'changeddate',
+                'hostname',
+                'device_os',
+                'fqdn'
+            })
+            
+        except:
+            pass
 
     log_message = "Sync job completed."
     SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)

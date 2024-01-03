@@ -25,7 +25,13 @@ def importing(*args, **kwargs):
 
 class ConditionalToggle(ToggleColumn):
     def render(self, value, bound_column, record):
-        if record.mapped_device_id is None:
+        if record.mapped_device_id is None or (
+            record.mapped_device.custom_field_data['slurpit_devicetype'] != record.device_type or
+            record.mapped_device.custom_field_data['slurpit_hostname'] != record.hostname or
+            record.mapped_device.custom_field_data['slurpit_fqdn'] != record.fqdn or
+            record.mapped_device.custom_field_data['slurpit_platform'] != record.device_os or 
+            record.mapped_device.custom_field_data['slurpit_manufactor'] != record.brand
+        ):
             result = super().render(value, bound_column, record)
             return mark_safe(result)
         return '✔'
@@ -69,6 +75,34 @@ class ImportedDeviceTable(NetBoxTable):
         model = ImportedDevice
         fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
         default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
+
+class MigratedDeviceTable(NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    pk = ConditionalToggle()
+    hostname = ConditionalLink()
+    device_type = DeviceTypeColumn()
+
+    brand = tables.Column(
+        verbose_name = _('Manufactor')
+    )
+
+    device_os = tables.Column(
+        verbose_name = _('Platform')
+    )
+
+    last_updated = tables.Column(
+        verbose_name = _('Last seen')
+    )
+
+    slurpit_devicetype = tables.Column(
+        accessor='slurpit_device_type', 
+        verbose_name='Original Device Type'
+    )
+
+    class Meta(NetBoxTable.Meta):
+        model = ImportedDevice
+        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'slurpit_devicetype', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'slurpit_devicetype', 'last_updated')
 
 
 class SourceTable(NetBoxTable):

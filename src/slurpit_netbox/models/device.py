@@ -70,3 +70,8 @@ class ImportedDevice(NetBoxModel):
 
     def get_absolute_url(self):
         return '/'
+    
+    @property
+    def slurpit_device_type(self):
+        # Returns the 'slurpit_devicetype' value from the mapped_device's custom_field_data or None if not present.
+        return self.mapped_device.custom_field_data.get('slurpit_devicetype')

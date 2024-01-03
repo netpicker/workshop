@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import transaction
-from django.db.models import ManyToManyField, ManyToManyRel
+from django.db.models import ManyToManyField, ManyToManyRel, F, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
@@ -23,6 +23,8 @@ from ..importer import (
 )
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
+from django.db.models.fields.json import KeyTextTransform
+
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportedDeviceListView(generic.ObjectListView):
@@ -33,7 +35,29 @@ class ImportedDeviceListView(generic.ObjectListView):
         if request.GET.get('tab') == "new":
             self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True) # Replace with your specific query
         elif request.GET.get('tab') == "migrate":
-            self.queryset = models.ImportedDevice.objects.all()  # Replace with your specific query
+            # Replace with your specific query
+            self.queryset = models.ImportedDevice.objects.filter(
+                mapped_device_id__isnull=False
+            ).annotate(
+                slurpit_devicetype=KeyTextTransform('slurpit_devicetype', 'mapped_device__custom_field_data'),
+                slurpit_hostname=KeyTextTransform('slurpit_hostname', 'mapped_device__custom_field_data'),
+                slurpit_fqdn=KeyTextTransform('slurpit_fqdn', 'mapped_device__custom_field_data'),
+                slurpit_platform=KeyTextTransform('slurpit_platform', 'mapped_device__custom_field_data'),
+                slurpit_manufactor=KeyTextTransform('slurpit_manufactor', 'mapped_device__custom_field_data'),
+                fdevicetype=F('device_type'),
+                fhostname=F('hostname'),
+                ffqdn=F('fqdn'),
+                fdeviceos=F('device_os'),
+                fbrand=F('brand')
+            ).exclude(
+                Q(slurpit_devicetype=F('fdevicetype')) & 
+                Q(slurpit_hostname=F('fhostname')) & 
+                Q(slurpit_fqdn=F('ffqdn')) & 
+                Q(slurpit_platform=F('fdeviceos')) & 
+                Q(slurpit_manufactor=F('fbrand'))
+            )
+            self.table = tables.MigratedDeviceTable
+
         elif request.GET.get('tab') == "onboarded":
             self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=False)  # Replace with your specific query
         else:
@@ -151,6 +175,40 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                     except:
                         dtype, _ = DeviceType.objects.get(model=obj.device_type, manufacturer=manu_obj)
                     # dtype.tags.set(tags)
+
+                if 'migrate' in request.GET:
+                    migrate = request.GET.get('migrate')
+
+                    if migrate == 'create':
+                        try:
+                            obj.mapped_device.delete()
+                            obj.mapped_device = None
+                            obj.save()
+                        except:
+                            pass
+                    else:
+                        cf = obj.mapped_device.custom_field_data
+                        cf['slurpit_hostname'] = obj.hostname
+                        cf['slurpit_fqdn'] = obj.fqdn
+                        cf['slurpit_platform'] = obj.device_os
+                        cf['slurpit_manufactor'] = obj.brand
+                        cf['slurpit_devicetype'] = obj.device_type
+
+                        obj.mapped_device.custom_field_data = cf
+                        obj.mapped_device.device_type =  dtype
+                        obj.mapped_device.platform = platform
+                        obj.mapped_device.name = obj.hostname
+                        obj.mapped_device.save()
+                        obj.save()
+
+                        msg = f'Migration is done successfully.'
+                        logger.info(msg)
+                        messages.success(self.request, msg)
+
+                        log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
+                        SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
+
+                        return redirect(self.get_return_url(request))
 
             defaults = importer.get_defaults()
             # if the same device type is selected
