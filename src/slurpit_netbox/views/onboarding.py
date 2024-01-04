@@ -10,7 +10,7 @@ from django.db.models import ManyToManyField, ManyToManyRel, F, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
-from extras.signals import clear_webhooks
+# from extras.signals import clear_webhooks
 from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
@@ -131,12 +131,12 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
 
                 except ValidationError as e:
                     messages.error(self.request, ", ".join(e.messages))
-                    clear_webhooks.send(sender=self)
+                    # clear_webhooks.send(sender=self)
 
                 except (AbortRequest, PermissionsViolation) as e:
                     logger.debug(e.message)
                     form.add_error(None, e.message)
-                    clear_webhooks.send(sender=self)
+                    # clear_webhooks.send(sender=self)
 
             else:
                 logger.debug("Form validation failed")
