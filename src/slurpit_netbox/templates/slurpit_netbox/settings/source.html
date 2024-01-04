@@ -7,7 +7,7 @@
           <div class="card">
             
             <div class="card-header" style="display:flex;justify-content: space-between;">
-                <h5>PULL Parameters</h5>
+                <h5>Slurp'it Appliance</h5>
                 <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
                     {% trans "Edit" %}
                 </button>
@@ -62,16 +62,16 @@
           <div class="card">
             
             <div class="card-header" style="display:flex;justify-content: space-between;">
-                <h5>PUSH Parameters</h5>
-                <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
+                <h5>Plugin API</h5>
+                <a class="btn btn-blue btn-sm mx-3 px-3" href="{% url 'plugins:slurpit_netbox:settings' %}?action=generate">
                     {% trans "Generate" %}
-                </button>
+                </a>
             </div>
             <div class="card-body">
               <table class="table table-hover attr-table">
                 <tr>
                   <th scope="row">API Key</th>
-                  <td>{{setting.api_key}}</td>
+                  <td>{{push_api_key}}</td>
                 </tr>
                 
               </table>

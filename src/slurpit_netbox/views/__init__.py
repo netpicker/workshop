@@ -4,3 +4,4 @@ from .planning import PlanningListView
 from .datamapping import DataMappingView
 from .reconcile import ReconcileView
 from .logging import LoggingListView
+from .push import PushDeviceView

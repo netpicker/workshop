@@ -16,6 +16,8 @@ from ..tables import SourceTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
+from ..utilities import generate_random_string
+from users.models import ObjectPermission, Token
 
 import requests
 
@@ -87,8 +89,10 @@ class SettingsView(View):
             
         if setting is None:
             connection_status = ''
+            push_api_key = ''
         else:
             connection_status = setting.connection_status
+            push_api_key = setting.push_api_key
             
         test_param = request.GET.get('test',None)
         if test_param =='test':
@@ -103,10 +107,30 @@ class SettingsView(View):
                 log_message = f"Slurpit API's test result is {connection_status}."
                 SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
 
+        action_param = request.GET.get('action',None)
+        if action_param == 'generate':
+            if setting is None:
+                setting = Setting.objects.create()
+
+            token, __annotations__ = Token.objects.get_or_create(user=request.user)
+            push_api_key = Token.generate_key()
+            token.key = push_api_key
+            token.save()
+            setting.push_api_key = push_api_key
+            setting.save()
+
+
+            log_message = f"Slurpit Push API is generated."
+            SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
+        
         return render(
             request,
             "slurpit_netbox/settings.html",
-            {"setting": setting, "connection_status": connection_status},
+            {
+                "setting": setting, 
+                "connection_status": connection_status,
+                "push_api_key": push_api_key
+            },
         )
     
     def post(self, request):
