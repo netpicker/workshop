@@ -93,11 +93,15 @@ class SettingsView(View):
         test_param = request.GET.get('test',None)
         if test_param =='test':
             if setting is None:
+                log_message = "Slurpit API test is failded."
+                SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
                 messages.warning(request, "You can not test. To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
             else:
                 connection_status = self.connection_test(request, server_url, api_key)
                 setting.connection_status = connection_status
                 setting.save()
+                log_message = f"Slurpit API's test result is {connection_status}."
+                SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
 
         return render(
             request,

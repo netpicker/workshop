@@ -43,6 +43,10 @@ class StagedDevice(NetBoxModel):
     longitude = models.DecimalField(max_digits=8, decimal_places=6, null=True)
     tenant = models.TextField(max_length=128, null=True)
     description = models.TextField(max_length=256, null=True)
+
+    def __str__(self):
+        return f"{self.hostname}"
+    
     
 class ImportedDevice(NetBoxModel):
     digest = models.TextField(max_length=64, unique=True)
@@ -70,6 +74,9 @@ class ImportedDevice(NetBoxModel):
 
     def get_absolute_url(self):
         return '/'
+    
+    def __str__(self):
+        return f"{self.hostname}"
     
     @property
     def slurpit_device_type(self):
