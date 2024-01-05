@@ -10,3 +10,4 @@ from django.utils.decorators import method_decorator
 class ReconcileView(generic.ObjectListView):
     queryset = models.ImportedDevice.objects
     table = tables.ImportedDeviceTable
+    template_name = "slurpit_netbox/comingsoon.html"
