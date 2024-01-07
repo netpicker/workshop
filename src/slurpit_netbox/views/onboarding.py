@@ -1,7 +1,7 @@
 import logging
 import requests
 from dcim.choices import DeviceStatusChoices
-from dcim.models import  Manufacturer, Platform, DeviceType
+from dcim.models import  Manufacturer, Platform, DeviceType, Site
 from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
 from django.core.exceptions import FieldDoesNotExist, ValidationError
@@ -144,6 +144,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         else:
             brand_name_list = []   
             manufacturer_list = [] 
+            return_flg = False
 
             for obj in self.queryset:
                 if str(obj.id) not in initial_data['pk']: 
@@ -173,7 +174,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                     try:
                         dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
                     except:
-                        dtype, _ = DeviceType.objects.get(model=obj.device_type, manufacturer=manu_obj)
+                        dtype, _ = DeviceType.objects.get_or_create(model=obj.device_type, manufacturer=manu_obj)
                     # dtype.tags.set(tags)
 
                 if 'migrate' in request.GET:
@@ -194,21 +195,27 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                         cf['slurpit_manufactor'] = obj.brand
                         cf['slurpit_devicetype'] = obj.device_type
 
+                        site = Site.objects.get()
+
                         obj.mapped_device.custom_field_data = cf
                         obj.mapped_device.device_type =  dtype
                         obj.mapped_device.platform = platform
                         obj.mapped_device.name = obj.hostname
+                        obj.mapped_device.site = site
                         obj.mapped_device.save()
                         obj.save()
-
-                        msg = f'Migration is done successfully.'
-                        logger.info(msg)
-                        messages.success(self.request, msg)
 
                         log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
                         SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
 
-                        return redirect(self.get_return_url(request))
+                        return_flg = True
+                
+            if return_flg:
+                msg = f'Migration is done successfully.'
+                logger.info(msg)
+                messages.success(self.request, msg)
+
+                return redirect(self.get_return_url(request))
 
             defaults = importer.get_defaults()
             # if the same device type is selected

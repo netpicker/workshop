@@ -17,6 +17,9 @@ class SlurpitConfig(PluginConfig):
         'Site': {'name': "SlurpIT"},
         'Location': {'name': 'SlurpIT'},
         'Region': {'name': 'SlurpIT'},
+        'SiteGroup': {'name': 'SlurpIT'}, 
+        'Rack': {'name': 'SlurpIT'},
+        'ConfigTemplate': {'name': 'SlurpIT'},
 
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',

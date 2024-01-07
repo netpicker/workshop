@@ -1,7 +1,7 @@
-from dcim.models import DeviceRole, DeviceType, Manufacturer, Site, Location, Region
+from dcim.models import DeviceRole, DeviceType, Manufacturer, Site, Location, Region, SiteGroup, Rack
 from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
-from extras.models import CustomField, CustomFieldChoiceSet
+from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
 from netmiko.ssh_dispatcher import CLASS_MAPPER_BASE
 
@@ -180,8 +180,21 @@ def add_default_mandatory_objects(tags):
     location_name = get_config('Location')['name']
     location_defs = {'site': site}
     location, _= Location.objects.get_or_create(name=location_name, **location_defs)
-    location.tags.set(tags)
 
+    region_name = get_config('Region')['name']
+    region, _= Region.objects.get_or_create(name=region_name)
+
+    sitegroup_name = get_config('SiteGroup')['name']
+    sitegroup, _= SiteGroup.objects.get_or_create(name=sitegroup_name)
+
+    configtemplate_name = get_config('ConfigTemplate')['name']
+    configtemplate, _= ConfigTemplate.objects.get_or_create(name=configtemplate_name)
+
+    
+
+    rack_name = get_config('Rack')['name']
+    rack, _= Rack.objects.create(name=rack_name, site=site, location=location)
+    
 
 def post_migration(sender, **kwargs):
     try:
