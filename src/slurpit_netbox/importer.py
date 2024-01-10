@@ -48,6 +48,28 @@ def get_devices():
         log_message = "Need to set the setting parameter"
         SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
         return None
+    
+def get_latest_data_on_planning(hostname, planning_id):
+    try:
+        setting = Setting.objects.get()
+        uri_base = setting.server_url
+        headers = {
+                        'authorization': setting.api_key,
+                        'useragent': 'netbox/requests',
+                        'accept': 'application/json'
+                    }
+        uri_devices = f"{uri_base}/api/devices/snapshot/single/{hostname}/{planning_id}"
+        r = requests.get(uri_devices, headers=headers)
+        r.raise_for_status()
+        data = r.json()
+        log_message = "Get the latest data from slurp'it in Netbox on planning ID."
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
+        return data
+    except ObjectDoesNotExist:
+        setting = None
+        log_message = "Need to set the setting parameter"
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+        return None
 
 
 def get_defaults():

@@ -1,0 +1,42 @@
+{% extends 'generic/object.html' %}
+{% load static %}
+{% load form_helpers %}
+{% load i18n %}
+
+{% block content %}
+
+  <div class="row px-3">
+    <div class="col col-12 py-3 mx-auto">
+      <form action="" method="get" class="form form-horizontal">
+        <div class="d-flex gap-2 plan-filter">
+          <div class="w-25">
+            {% render_form form %}
+          </div>
+          <div class="text-end">
+            <button type="submit" class="btn btn-primary btn-sm">
+              Open
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row px-3">
+    <div class="card">
+      <div class="card-body htmx-container table-responsive" id="object_list">
+        {% include 'htmx/table.html' %}
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .plan-filter label {
+      display: none !important;
+    }
+    .plan-filter button {
+      height: 35px !important;
+    }
+  </style>
+{% endblock %}
+
+

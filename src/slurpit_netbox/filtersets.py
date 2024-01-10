@@ -2,7 +2,7 @@ import django_filters
 from core.choices import DataSourceStatusChoices
 from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet, BaseFilterSet
-from .models import Source, SlurpitLog
+from .models import Source, SlurpitLog, SlurpitPlan
 from django.utils.translation import gettext as _
 
 class SourceFilterSet(NetBoxModelFilterSet):
@@ -23,7 +23,7 @@ class SourceFilterSet(NetBoxModelFilterSet):
             | Q(comments__icontains=value)
         )
 
-class LogginFilterSet(BaseFilterSet):
+class LoggingFilterSet(BaseFilterSet):
     q = django_filters.CharFilter(
         method='search',
         label=_('Search'),
@@ -44,4 +44,20 @@ class LogginFilterSet(BaseFilterSet):
             Q(message__icontains=value)
         )
 
+class SlurpitPlanFilterSet(BaseFilterSet):
+    q = django_filters.CharFilter(
+        method='search',
+        label=_('Search'),
+    )
+
+    class Meta:
+        model = SlurpitPlan
+        fields = ("id", "name", "plan_id", "display")
+
+    # def search(self, queryset, name, value):
+    #     if not value.strip():
+    #         return queryset
+    #     return queryset.filter(
+    #         Q(name__icontains=value)
+    #     )
 

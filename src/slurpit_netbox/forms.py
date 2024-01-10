@@ -9,8 +9,8 @@ from utilities.forms import add_blank_choice
 from utilities.forms.fields import CommentField, DynamicModelChoiceField
 from utilities.forms.widgets import APISelect
 from tenancy.models import TenantGroup, Tenant
-
-from .models import ImportedDevice, Source
+from utilities.forms import BootstrapMixin
+from .models import ImportedDevice, Source, SlurpitPlan
 
 
 class OnboardingForm(NetBoxModelBulkEditForm):
@@ -154,7 +154,7 @@ class SourceForm(NetBoxModelForm):
         required=True,
         label=_("API Token"),
         widget=forms.TextInput(attrs={"class": "form-control"}),
-        help_text=_("IP Fabric API Token."),
+        help_text=_("API Token."),
     )
     verify = forms.BooleanField(
         required=False,
@@ -202,3 +202,17 @@ class SourceFilterForm(NetBoxModelFilterSetForm):
         ("Data Source", ("status",)),
     )
     status = forms.MultipleChoiceField(choices=DataSourceStatusChoices, required=False)
+
+
+class SlurpitPlanTableForm(BootstrapMixin, forms.Form):
+    plan_id = DynamicModelChoiceField(
+        queryset=SlurpitPlan.objects.all(),
+        required=True,
+        label=_("Slurpit Plans"),
+    )
+    # enable_cache = forms.BooleanField(
+    #     label=_("Cache"),
+    #     required=False,
+    #     initial=True,
+    #     help_text=_("Cache results for 8 hours"),
+    # )

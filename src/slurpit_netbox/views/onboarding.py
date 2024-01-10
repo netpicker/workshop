@@ -30,6 +30,8 @@ from django.db.models.fields.json import KeyTextTransform
 class ImportedDeviceListView(generic.ObjectListView):
     
     queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True)
+    table = tables.ImportedDeviceTable
+    template_name = "slurpit_netbox/onboard_device.html"
     def get(self, request, *args, **kwargs):
         # Your custom logic for handling GET requests and setting the queryset
         if request.GET.get('tab') == "new":
@@ -66,9 +68,6 @@ class ImportedDeviceListView(generic.ObjectListView):
         # Call the parent class's get method with the modified queryset
         return super().get(request, *args, **kwargs)
     
-    table = tables.ImportedDeviceTable
-    template_name = "slurpit_netbox/onboard_device.html"
-
     def post(self, request):
         pks = map(int, request.POST.getlist('pk'))
         qs = self.queryset.filter(pk__in=pks, mapped_device_id__isnull=True)
@@ -341,3 +340,5 @@ class ImportDevices(View):
             log_message = "An error occured during querying Slurp'it!"
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
         return redirect(reverse('plugins:slurpit_netbox:importeddevice_list'))
+    
+

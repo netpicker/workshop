@@ -2,28 +2,54 @@
 {% load i18n %}
 
 <div class=" show {% if request.GET.tab == 'data_tabs' %}active{% endif %}">
-   
-    <form method="post" class="form form-horizontal">
-         <!-- sync button -->
-        {# Object table controls #}
-        {# Form buttons #}
-        <div class="noprint bulk-buttons">
-            <div class="bulk-button-group">
-                {% block bulk_buttons %}
-                <div class="" role="group">
-                
-                </div>
-                {% endblock %}
-            </div>
-        </div>
-      {% csrf_token %}
-      {# "Select all" form #}
-     
-      <div class="form form-horizontal">
-        {% csrf_token %}
-       
-        Data Tabs.
+  <div class="row mb-3">
+    <div class="col col-md-6">
+      <div class="card">
         
+        <div class="card-header">
+            <h6>Info</h6>
+            <span>
+              Assign a extra tab to your device model. This data tab will contains the lastest information of a planning.<br />
+              For example attach ARP to see the device his ARP table or LLDP to see all neighbors.
+            </span>
+        </div>
       </div>
-    </form>
-  </div>
+    </div>
+  </div>    
+
+  <div class="row mb-3">
+    <div class="col col-md-6">
+      <form method="post" class="form form-horizontal">
+        <div class="card">
+        
+          <div class="card-header" style="display:flex;justify-content: space-between;">
+            <div>
+              <h2>Planning</h2>
+              <span>Select the planning to add as a data tab.</span>
+            </div>
+            <div class="action">
+              <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:settings' %}?return_url={% url 'plugins:slurpit_netbox:settings' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue btn-sm px-3">
+                {% trans "Save" %}
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            {% csrf_token %}
+            <div class="planning-list">
+              {% for plan in plannings %}
+                <p class="plan-item" style="display:flex; align-items: center; gap:8px;">
+                  {% if plan.id in device_tab_paths %}
+                    <input type="checkbox" name="pk" value="{{plan.id}}#{{plan.name}}" checked/>
+                  {% else %}
+                    <input type="checkbox" name="pk" value="{{plan.id}}#{{plan.name}}"/>
+                  {% endif %}
+                  <b> {{ plan.name}}</b>
+                </p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>    
+</div>

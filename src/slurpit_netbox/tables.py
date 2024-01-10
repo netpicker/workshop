@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 
 
-from .models import ImportedDevice, Planning, Source, SlurpitLog
+from .models import ImportedDevice, Planning, Source, SlurpitLog, PlanningDataTab
 
 
 def check_link(**kwargs):
@@ -170,3 +170,14 @@ class LoggingTable(NetBoxTable):
 
         badge_html = f'<span class="{badge_class}">{value}</span>'
         return mark_safe(badge_html)
+    
+class SlurpitPlanTable(tables.Table):
+
+    class Meta:
+        attrs = {
+            "class": "table table-hover object-list",
+        }
+        empty_text = _("No results found")
+
+    def __init__(self, data, **kwargs):
+        super().__init__(data, **kwargs)
