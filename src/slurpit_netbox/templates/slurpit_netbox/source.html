@@ -102,7 +102,7 @@
   {% if job %}
   <div class="col col-md-12" {% if not object.job.completed %} hx-trigger="every 5s" hx-target="#sync_logs"
     hx-select="#sync_logs" hx-select-oob="#sync_status:innerHTML" hx-swap="innerHTML" {% endif %}>
-    <div id="sync_logs">{% include 'ipfabric_netbox/partials/job_logs.html' with job=job %}</div>
+    <div id="sync_logs">{% include 'slurpit_netbox/partials/job_logs.html' with job=job %}</div>
   </div>
   {%  else %}
   <div class="col col-md-12">

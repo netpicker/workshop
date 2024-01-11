@@ -34,7 +34,6 @@ class PlanningListView(generic.ObjectChildrenView):
 
     tab = ViewTab(
         label="Planning",
-        # badge=lambda obj: IPFabricBranch.objects.filter(sync=obj).count(),
         permission="slurpit_netbox.view_planning",
     )
 
