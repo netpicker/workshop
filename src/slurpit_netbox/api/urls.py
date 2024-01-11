@@ -1,6 +1,9 @@
 from netbox.api.routers import NetBoxRouter
-from slurpit_netbox.api.views import SlurpitPlanViewSet
+from . import views
 
 router = NetBoxRouter()
-router.register("plan", SlurpitPlanViewSet)
+router.APIRootView = views.SlurpitRootView
+router.register("plan", views.SlurpitPlanViewSet)
+
+app_name = 'slurpit-api'
 urlpatterns = router.urls

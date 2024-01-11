@@ -26,6 +26,9 @@ import requests
 from django_tables2 import RequestConfig, tables, Column
 from utilities.paginator import EnhancedPaginator, get_paginate_count
 from ..importer import get_latest_data_on_planning
+from django.urls import reverse
+from django.http import HttpResponseRedirect
+from datetime import datetime
 
 BATCH_SIZE = 128
 
@@ -264,6 +267,16 @@ class SettingsView(View):
         else:
             return []
 
+def get_refresh_url(request, pk):
+    get_params = request.GET.copy()
+    del get_params['refresh']
+
+    path = f"/dcim/devices/{pk}/Slurpit/"
+    query_string = get_params.urlencode()
+    url_no_refresh = f"{path}?{query_string}" if query_string else path
+
+    return url_no_refresh
+
 @register_model_view(Device, "Slurpit")
 class SlurpitPlanning(View):
     template_name = "slurpit_netbox/planning_table.html"
@@ -277,32 +290,55 @@ class SlurpitPlanning(View):
             else SlurpitPlanTableForm()
         )
         data = None
+        cached_time = None
+        result_status = "No Data"
         columns = []
+        refresh = request.GET.get('refresh')
+
         if form.is_valid():
             plan = form.cleaned_data["plan_id"]
+            result_type = request.GET.get('result_type')
+            
+
+            if result_type is None:
+                result_type = "planning"
 
             cache_key = (
-                f"slurpit_plan_{plan.plan_id}_{device.serial}"
+                f"slurpit_plan_{plan.plan_id}_{device.serial}_{result_type}"
             )
-            cache.delete(cache_key)
-            data = cache.get(cache_key)
 
+            if refresh == "refresh":
+                cache.delete(cache_key)
+                url_no_refresh = get_refresh_url(request, pk)
+                return HttpResponseRedirect(url_no_refresh)
+
+            try:
+                cached_time, data = cache.get(cache_key)
+                result_status = "Cached"
+            except:
+                pass
             if not data:
                 data = []
                 try: 
                     temp = get_latest_data_on_planning(device.name, plan.plan_id)
                     temp = temp[plan.name]["data"]
-                    print(data)
+
+                    result_key = f"{result_type}_result"
                     for r in temp:
-                        raw = r['template_result']
+                        raw = r[result_key]
                         data.append({**raw})
-                        
-                    # data = []
-                    cache.set(cache_key, data, 60 * 60 * 8)
+                    result_status = "Live"
+                    cache.set(cache_key, (datetime.now(), data), 60 * 60 * 8)
                     
                 except Exception as e:
                     messages.error(request, e)
-
+        
+        if refresh == "refresh":
+                
+                url_no_refresh = get_refresh_url(request, pk)
+                print(url_no_refresh)
+                return HttpResponseRedirect(url_no_refresh)
+        
         if not data:
             data = []
         
@@ -330,7 +366,6 @@ class SlurpitPlanning(View):
                 },
             )
 
-
         return render(
             request,
             self.template_name,
@@ -339,5 +374,7 @@ class SlurpitPlanning(View):
                 "tab": self.tab,
                 "form": form,
                 "table": table,
+                "result_status": result_status,
+                "cached_time": cached_time
             },
         )

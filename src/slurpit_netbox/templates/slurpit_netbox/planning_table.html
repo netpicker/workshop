@@ -6,22 +6,49 @@
 {% block content %}
 
   <div class="row px-3">
-    <div class="col col-12 py-3 mx-auto">
-      <form action="" method="get" class="form form-horizontal">
-        <div class="d-flex gap-2 plan-filter">
-          <div class="w-25">
-            {% render_form form %}
+    <div class="col col-12 py-3 mx-auto px-0 plan-filter">
+      <form action="" method="get" id="plan-form" class="form form-horizontal">
+        <div class="row">
+          <div class="col-6 d-flex gap-2">
+            <div class="w-50">
+              {% render_form form %}
+            </div>
+            <div class="">
+              <button type="submit" class="btn btn-primary btn-sm">
+                Open
+              </button>
+            </div>
           </div>
-          <div class="text-end">
-            <button type="submit" class="btn btn-primary btn-sm">
-              Open
-            </button>
+          <input type="hidden" value="none" name="refresh" id="refreshInput"/>
+          <div class="col-6 text-end">
+            <div class="btn-group btn-group-sm" role="group">
+              <select class="btn btn-sm btn-secondary result-type" id="result-type" name="result_type">
+                <option value="planning" {% if "result_type" not in request.GET or request.GET.result_type == 'planning' %}selected="selected"{% else %} {% endif %}>{% trans "Planning Result" %}</option>
+                <option value="template" {% if request.GET.result_type == 'template' %}selected="selected"{% else %} {% endif %}>{% trans "Template Result" %}</option>
+              </select>
+            </div>
           </div>
+         
         </div>
       </form>
+
+      
     </div>
   </div>
   <div class="row px-3">
+    <span>
+      <b>
+        {{result_status}} results 
+        {% if result_status == 'Cached' %}
+          - <a id="refresh">Refresh data</a>
+        {% endif %}
+      </b>
+      <b class="text-end cached_time">
+        {% if result_status == 'Cached' %}
+          {{ cached_time}}
+        {% endif %}
+      </b>
+    </span>
     <div class="card">
       <div class="card-body htmx-container table-responsive" id="object_list">
         {% include 'htmx/table.html' %}
@@ -36,7 +63,39 @@
     .plan-filter button {
       height: 35px !important;
     }
+
+    .result-type {
+      height: 33px !important;
+    }
+    #refresh { 
+      text-decoration: none;
+      cursor: pointer;
+      color: blue;
+    }
+
+    .cached_time {
+      position: absolute;
+      right: 12px;
+    }
   </style>
+    
+  <script>
+    var selectElement = document.getElementById('result-type');
+    var form = document.getElementById('plan-form');
+    // Add an event listener for the 'change' event
+    selectElement.addEventListener('change', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      form.submit();
+    });
+
+    var refreshElement = document.getElementById('refresh');
+    var refreshInput = document.getElementById('refreshInput');
+    refreshElement.addEventListener('click', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      refreshInput.value = "refresh";
+      form.submit();
+    });
+  </script>
 {% endblock %}
 
 

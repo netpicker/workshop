@@ -54,10 +54,10 @@ class SlurpitPlanFilterSet(BaseFilterSet):
         model = SlurpitPlan
         fields = ("id", "name", "plan_id", "display")
 
-    # def search(self, queryset, name, value):
-    #     if not value.strip():
-    #         return queryset
-    #     return queryset.filter(
-    #         Q(name__icontains=value)
-    #     )
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value)
+        )
 

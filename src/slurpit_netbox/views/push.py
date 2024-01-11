@@ -8,13 +8,15 @@ from ..importer import process_import, import_devices
 from ..management.choices import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from dcim.models import Device
 import json
 
 
 class PushDeviceView(APIView):
     
     permission_classes = [IsAuthenticated]
-
+    queryset = Device.objects.all()
+    
     def post(self, request):
         # Load JSON data from the request body
         devices = json.loads(request.body.decode('utf-8'))
