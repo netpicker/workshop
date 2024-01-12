@@ -30,13 +30,28 @@
   <ul class="nav nav-tabs px-3">
         
     <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" href="?tab=new">New</a>
+      <a class="nav-tab nav-link {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" href="?tab=new">
+        New 
+        {% if request.GET.tab == 'new' or request.GET.tab is None %}
+          {% badge table.page.paginator.count %}
+        {% endif %}
+      </a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link {% if request.GET.tab == 'migrate' %}active{% endif %}" href="?tab=migrate">Migrate</a>
+      <a class="nav-tab nav-link {% if request.GET.tab == 'migrate' %}active{% endif %}" href="?tab=migrate">
+        Migrate
+        {% if request.GET.tab == 'migrate' %}
+          {% badge table.page.paginator.count %}
+        {% endif %}
+      </a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link  {% if request.GET.tab == 'onboarded' %}active{% endif %}" href="?tab=onboarded">Onboarded</a>
+      <a class="nav-tab nav-link  {% if request.GET.tab == 'onboarded' %}active{% endif %}" href="?tab=onboarded">
+        Onboarded
+        {% if request.GET.tab == 'onboarded' %}
+          {% badge table.page.paginator.count %}
+        {% endif %}
+      </a>
     </li>
     
   </ul>
