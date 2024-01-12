@@ -116,12 +116,20 @@ class SettingsView(View):
         tab_param = request.GET.get('tab', None)
         plannings = []
         device_tab_paths = []
+        slurpit_apis = []
 
         if tab_param == 'data_tabs':
             plannings = self.get_planning_list(request, server_url, api_key)
             device_tab_paths = SlurpitPlan.objects.values_list('plan_id', flat=True)
             device_tab_paths = list(device_tab_paths)
+
         else:
+            slurpit_apis = [
+                {
+                    "type": "POST",
+                    "url": "plugins/slurpit/api/push_device"
+                }
+            ]
             test_param = request.GET.get('test',None)
             if test_param =='test':
                 if setting is None:
@@ -150,7 +158,7 @@ class SettingsView(View):
 
                 log_message = f"Slurpit Push API is generated."
                 SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
-
+        
         return render(
             request,
             "slurpit_netbox/settings.html",
@@ -159,7 +167,8 @@ class SettingsView(View):
                 "connection_status": connection_status,
                 "push_api_key": push_api_key,
                 "plannings": plannings,
-                "device_tab_paths": device_tab_paths
+                "device_tab_paths": device_tab_paths,
+                "slurpit_apis": slurpit_apis
             },
         )
     
