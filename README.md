@@ -1,5 +1,8 @@
 # Slurpit Netbox Plugin
 
+## githook
+- `git config core.hooksPath .githooks` to auto increment the plugin version number
+
 We assume to install Netbox on your local virtual environment.
 ## How to install the plugin on the Netbox
 
