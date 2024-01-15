@@ -205,7 +205,7 @@ class SourceFilterForm(NetBoxModelFilterSetForm):
 
 
 class SlurpitPlanTableForm(BootstrapMixin, forms.Form):
-    plan_id = DynamicModelChoiceField(
+    id = DynamicModelChoiceField(
         queryset=SlurpitPlan.objects.all(),
         required=True,
         label=_("Slurpit Plans"),

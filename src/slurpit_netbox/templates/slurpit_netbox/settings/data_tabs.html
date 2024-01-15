@@ -38,7 +38,7 @@
             <div class="planning-list">
               {% for plan in plannings %}
                 <p class="plan-item" style="display:flex; align-items: center; gap:8px;">
-                  {% if plan.id in device_tab_paths %}
+                  {% if plan.selected %}
                     <input type="checkbox" name="pk" value="{{plan.id}}#{{plan.name}}" checked/>
                   {% else %}
                     <input type="checkbox" name="pk" value="{{plan.id}}#{{plan.name}}"/>

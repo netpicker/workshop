@@ -115,15 +115,12 @@ class SettingsView(View):
         
         tab_param = request.GET.get('tab', None)
         plannings = []
-        device_tab_paths = []
         slurpit_apis = []
 
         if tab_param == 'data_tabs':
-            plannings = self.get_planning_list(request, server_url, api_key)
-            device_tab_paths = SlurpitPlan.objects.values_list('plan_id', flat=True)
-            device_tab_paths = list(device_tab_paths)
-
-        else:
+            plannings = SlurpitPlan.objects.all()
+            print(plannings)
+        else:   
             slurpit_apis = [
                 {
                     "type": "POST",
@@ -167,7 +164,6 @@ class SettingsView(View):
                 "connection_status": connection_status,
                 "push_api_key": push_api_key,
                 "plannings": plannings,
-                "device_tab_paths": device_tab_paths,
                 "slurpit_apis": slurpit_apis
             },
         )
@@ -295,7 +291,7 @@ class SlurpitPlanning(View):
         device = get_object_or_404(Device, pk=pk)
         form = (
             SlurpitPlanTableForm(request.GET)
-            if "plan_id" in request.GET
+            if "id" in request.GET
             else SlurpitPlanTableForm()
         )
         data = None
@@ -305,7 +301,7 @@ class SlurpitPlanning(View):
         refresh = request.GET.get('refresh')
 
         if form.is_valid():
-            plan = form.cleaned_data["plan_id"]
+            plan = form.cleaned_data["id"]
             result_type = request.GET.get('result_type')
             
 

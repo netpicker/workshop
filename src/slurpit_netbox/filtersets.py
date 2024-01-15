@@ -52,7 +52,7 @@ class SlurpitPlanFilterSet(BaseFilterSet):
 
     class Meta:
         model = SlurpitPlan
-        fields = ("id", "name", "plan_id", "display")
+        fields = ["id", "name", "plan_id"]
 
     def search(self, queryset, name, value):
         if not value.strip():
