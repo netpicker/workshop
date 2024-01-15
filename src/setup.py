@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='slurpit-netbox',
+    name='slurpit_netbox',
     version='0.1',
     description="Sync Slurp'IT into NetBox",
     install_requires=[

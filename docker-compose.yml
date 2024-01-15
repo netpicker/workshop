@@ -1,7 +1,8 @@
 version: '3.4'
 services:
   netbox: &netbox
-    image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
+    #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
+    build: .
     depends_on:
     - postgres
     - redis

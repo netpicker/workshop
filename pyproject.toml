@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "slurpit-netbox"
+name = "slurpit_netbox"
 version = "0.1.39"
 description = ""
 authors = ["Pieter <pieter@slurpit.io>"]
@@ -13,6 +13,7 @@ netmiko = "^4.2.0"
 requests = "^2.31.0"
 arrow = "^1.3.0"
 httpx = "^0.25.2"
+djangorestframework-bulk = "^0.2.1"
 
 
 [tool.poetry.group.develop.dependencies]
