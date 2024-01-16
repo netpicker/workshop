@@ -31,10 +31,7 @@
         
     <li class="nav-item" role="presentation">
       <a class="nav-tab nav-link {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" href="?tab=new">
-        New 
-        {% if request.GET.tab == 'new' or request.GET.tab is None %}
-          {% badge table.page.paginator.count %}
-        {% endif %}
+        New {% badge to_onboard_count %}
       </a>
     </li>
     <li class="nav-item" role="presentation">
@@ -47,10 +44,7 @@
     </li>
     <li class="nav-item" role="presentation">
       <a class="nav-tab nav-link  {% if request.GET.tab == 'onboarded' %}active{% endif %}" href="?tab=onboarded">
-        Onboarded
-        {% if request.GET.tab == 'onboarded' %}
-          {% badge table.page.paginator.count %}
-        {% endif %}
+        Onboarded {% badge onboarded_count %}
       </a>
     </li>
     

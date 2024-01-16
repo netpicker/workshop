@@ -74,6 +74,12 @@ class ImportedDeviceListView(generic.ObjectListView):
         import_from_queryset(qs)
         return redirect(request.path)
 
+    def get_extra_context(self, request):
+        return {
+            'to_onboard_count': models.ImportedDevice.objects.filter( mapped_device_id__isnull=True).count(),
+            'onboarded_count': models.ImportedDevice.objects.filter( mapped_device_id__isnull=False).count()
+        }
+
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportedDeviceOnboardView(generic.BulkEditView):
