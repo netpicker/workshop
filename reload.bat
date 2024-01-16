@@ -1,0 +1,1 @@
+docker compose exec netbox curl -X GET --unix-socket /opt/unit/unit.sock http://localhost/control/applications/netbox/restart

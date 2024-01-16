@@ -18,6 +18,7 @@ services:
     - ./volumes/netbox-media-files:/opt/netbox/netbox/media:rw
     - ./volumes/netbox-reports-files:/opt/netbox/netbox/reports:rw
     - ./volumes/netbox-scripts-files:/opt/netbox/netbox/scripts:rw
+    - ./src/slurpit_netbox:/opt/netbox/netbox/slurpit_netbox:rw
   netbox-worker:
     <<: *netbox
     depends_on:
