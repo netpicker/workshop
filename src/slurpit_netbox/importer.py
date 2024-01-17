@@ -22,7 +22,7 @@ from .management.choices import *
 log = logging.getLogger(__name__)
 
 
-BATCH_SIZE = 128
+BATCH_SIZE = 1024
 fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'brand', 'disabled',
           'added', 'last_seen', 'createddate', 'changeddate')
 
