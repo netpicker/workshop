@@ -99,19 +99,8 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         else:
             pk_list = request.POST.getlist('pk')
 
-        # Include the PK list as initial data for the form
+
         initial_data = {'pk': pk_list}
-
-        # Check for other contextual data needed for the form. We avoid passing all of request.GET because the
-        # filter values will conflict with the bulk edit form fields.
-        # TODO: Find a better way to accomplish this
-        if 'device' in request.GET:
-            initial_data['device'] = request.GET.get('device')
-        elif 'device_type' in request.GET:
-            initial_data['device_type'] = request.GET.get('device_type')
-        elif 'virtual_machine' in request.GET:
-            initial_data['virtual_machine'] = request.GET.get('virtual_machine')
-
         if '_apply' in request.POST:
             form = self.form(request.POST, initial=initial_data)
             restrict_form_fields(form, request.user)
@@ -143,9 +132,6 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                     form.add_error(None, e.message)
                     # clear_webhooks.send(sender=self)
 
-            else:
-                logger.debug("Form validation failed")
-
         else:
             brand_name_list = []   
             manufacturer_list = [] 
@@ -160,17 +146,15 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                     brand_name_list.append(manu_name)
                     manu = {'slug': manu_name.lower(), 'name': manu_name, 'platform': obj.device_os}
                     manufacturer_list.append(manu)
-
-                    # Create the manufactors and platform 
         
                     manu_defs = {'slug': manu['slug']}
                     try:
                         manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
                     except:
                         manu_obj, _ = Manufacturer.objects.get(name=manu['name'])
-                    # manu.tags.set(tags)
-                    platform_defs = {'name': manu['platform']}
-                    platform, _ = Platform.objects.get_or_create(platform_defs)
+
+                    platform_defs = {'name': manu['platform'], 'slug': manu['platform']}
+                    platform, _ = Platform.objects.get_or_create(**platform_defs)
                     
                     # platform.tags.set(tags)  
                     devtype_model = get_config('DeviceType')['model']

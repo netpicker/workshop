@@ -50,6 +50,8 @@ services:
   postgres:
     image: docker.io/postgres:15-alpine
     env_file: docker/env/postgres.env
+    ports:
+      - 5432:5432
     volumes:
     - ./volumes/netbox-postgres-data:/var/lib/postgresql/data
     networks:

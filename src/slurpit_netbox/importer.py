@@ -237,8 +237,8 @@ def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     })    
 
     manu, _ = Manufacturer.objects.get_or_create(name=staged.brand)
-    platform_defs = {'name': staged.device_os}
-    platform, _ = Platform.objects.get_or_create(platform_defs)
+    platform_defs = {'name': staged.device_os, 'slug': staged.device_os}
+    platform, _ = Platform.objects.get_or_create(**platform_defs)
     devtype_slug = f'{staged.brand}-{staged.device_type}'
     devtype_defs = {'model': staged.device_type, 'manufacturer': manu, 'slug': devtype_slug, 'default_platform': platform}
     try:
