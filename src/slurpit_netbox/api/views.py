@@ -54,10 +54,10 @@ class SlurpitPlanViewSet(
         # For other methods, use the default queryset
         return self.queryset
     
-    @action(detail=False, methods=['delete'], url_path='delete')
+    @action(detail=False, methods=['delete'], url_path='delete/(?P<planning_id>[^/.]+)')
     def delete(self, request, *args, **kwargs):
-        ids_to_delete = request.data.get('ids', []) 
-        SlurpitPlan.objects.filter(plan_id__in=ids_to_delete).delete()
+        planning_id = kwargs.get('planning_id')
+        SlurpitPlan.objects.filter(plan_id=planning_id).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -71,14 +71,14 @@ class SnapshotViewSet(
     serializer_class = SnapshotSerializer
     filterset_class = SnapshotFilterSet
 
-    @action(detail=False, methods=['delete'], url_path='delete-all')
+    @action(detail=False, methods=['delete'], url_path='delete-all/(?P<hostname>[^/.]+)/(?P<planning_id>[^/.]+)')
     def delete_all(self, request, *args, **kwargs):
         """
         A custom action to delete all SlurpitPlan objects.
         Be careful with this operation: it cannot be undone!
         """
-        hostname = request.query_params.get('hostname', None)
-        plan_id = request.query_params.get('plan_id', None)
+        hostname = kwargs.get('hostname')
+        plan_id = kwargs.get('planning_id')
 
         if hostname and plan_id:
             self.queryset = Snapshot.objects.filter(hostname=hostname, plan_id=plan_id)
@@ -106,11 +106,11 @@ class DeviceViewSet(
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-    @action(detail=False, methods=['delete'], url_path='delete')
+    @action(detail=False, methods=['delete'], url_path='delete/(?P<hostname>[^/.]+)')
     def delete(self, request, *args, **kwargs):
-        hostname_to_delete = request.data.get('hostname', []) 
-        ImportedDevice.objects.filter(hostname__in=hostname_to_delete).delete()
-        StagedDevice.objects.filter(hostname__in=hostname_to_delete).delete()
+        hostname_to_delete = kwargs.get('hostname')
+        ImportedDevice.objects.filter(hostname=hostname_to_delete).delete()
+        StagedDevice.objects.filter(hostname=hostname_to_delete).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     

@@ -145,7 +145,7 @@ class SettingsView(View):
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/snapshot/delete-all/?hostname=hostname&plan_id=plan_id"
+                    "url": "api/plugins/slurpit/snapshot/delete-all/{hostname}/{planning_id}/"
                 },
                 {
                     "type": "POST",
@@ -153,7 +153,7 @@ class SettingsView(View):
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/planning/delete/"
+                    "url": "api/plugins/slurpit/planning/delete/{planning_id}/"
                 },
                 {
                     "type": "DELETE",
@@ -165,7 +165,7 @@ class SettingsView(View):
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/device/delete/"
+                    "url": "api/plugins/slurpit/device/delete/{hostname}/"
                 },
                 {
                     "type": "DELETE",
