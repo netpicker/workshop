@@ -29,6 +29,9 @@ from ..importer import get_latest_data_on_planning
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from datetime import datetime
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from django.http import JsonResponse
 
 BATCH_SIZE = 128
 
@@ -443,3 +446,10 @@ class SlurpitPlanning(View):
                 "cached_time": cached_time
             },
         )
+
+
+class SlurpitTestAPIView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        return JsonResponse({'status': 'success'})

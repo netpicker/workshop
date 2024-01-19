@@ -32,7 +32,7 @@ urlpatterns = (
     ## logging ##
     path('slurpitlog/',         views.LoggingListView.as_view(), name='slurpitlog_list'),
 
-    # ### Push APIs #
-    # path('api/push_device',     views.PushDeviceView.as_view(), name='push_device'),
+    ### Slurpit Test APIs #
+    path('testapi/',            views.SlurpitTestAPIView.as_view(), name='test_api'),
     
 )
