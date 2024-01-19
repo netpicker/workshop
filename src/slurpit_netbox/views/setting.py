@@ -141,6 +141,26 @@ class SettingsView(View):
             slurpit_apis = [
                 {
                     "type": "POST",
+                    "url": "api/plugins/slurpit/slurpitdevice/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/slurpitdevice/delete-all/?hostname=hostname&plan_id=plan_id"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/plan/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/plan/delete/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/plan/delete-all/"
+                },
+                {
+                    "type": "POST",
                     "url": "plugins/slurpit/api/push_device"
                 }
             ]
@@ -284,7 +304,8 @@ class SettingsView(View):
 
 def get_refresh_url(request, pk):
     get_params = request.GET.copy()
-    del get_params['refresh']
+    get_params['refresh'] = 'none'
+    get_params['sync'] = 'none'
 
     path = f"/dcim/devices/{pk}/Slurpit/"
     query_string = get_params.urlencode()
@@ -309,6 +330,7 @@ class SlurpitPlanning(View):
         result_status = "No Data"
         columns = []
         refresh = request.GET.get('refresh')
+        sync = request.GET.get('sync')
 
         if form.is_valid():
             plan = form.cleaned_data["id"]
@@ -322,9 +344,31 @@ class SlurpitPlanning(View):
                 f"slurpit_plan_{plan.plan_id}_{device.serial}_{result_type}"
             )
 
+            url_no_refresh = get_refresh_url(request, pk)
+
+            if sync == "sync":
+                cache.delete(cache_key)
+                temp = get_latest_data_on_planning(device.name, plan.plan_id)
+                temp = temp[plan.name]["data"]
+
+                SlurpitDevice.objects.filter(hostname=device.name, plan_id=plan.plan_id).delete()
+
+                # Store the latest data to DB
+                new_items = []
+                for item in temp:
+                    new_items.append(
+                        SlurpitDevice(hostname=device.name, plan_id=plan.plan_id, content=item)
+                    )
+                
+                split_devices_arr = list(split_list(new_items, BATCH_SIZE))
+
+                for device_arr in split_devices_arr:
+                    SlurpitDevice.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+
+                return HttpResponseRedirect(url_no_refresh)
+            
             if refresh == "refresh":
                 cache.delete(cache_key)
-                url_no_refresh = get_refresh_url(request, pk)
                 return HttpResponseRedirect(url_no_refresh)
 
             try:
@@ -335,27 +379,11 @@ class SlurpitPlanning(View):
             if not data:
                 data = []
                 try: 
-                    temp = get_latest_data_on_planning(device.name, plan.plan_id)
-                    print('ccc')
-                    print(temp)
-                    print('aab')
-                    temp = temp[plan.name]["data"]
-
-                    # Store the latest data to DB
-                    # new_items = []
-                    # for item in temp:
-                    #     new_items.append(
-                    #         SlurpitDevice(hostname=device.name, plan_id=plan.plan_id, content=item)
-                    #     )
-                    
-                    # split_devices_arr = list(split_list(new_items, BATCH_SIZE))
-
-                    # for device_arr in split_devices_arr:
-                    #     SlurpitDevice.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
-                    
-                    # # print(SlurpitDevice.objects.all())
+                    temp = SlurpitDevice.objects.filter(hostname=device.name, plan_id=plan.plan_id)
                     result_key = f"{result_type}_result"
+
                     for r in temp:
+                        r = r.content
                         raw = r[result_key]
                         data.append({**raw})
                     result_status = "Live"

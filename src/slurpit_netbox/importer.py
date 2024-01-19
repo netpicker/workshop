@@ -63,7 +63,6 @@ def get_latest_data_on_planning(hostname, planning_id):
         r = requests.get(uri_devices, headers=headers)
         r.raise_for_status()
         data = r.json()
-        print(data)
         log_message = "Get the latest data from slurp'it in Netbox on planning ID."
         SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
         return data

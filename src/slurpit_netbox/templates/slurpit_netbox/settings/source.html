@@ -80,7 +80,9 @@
                 {% for item in slurpit_apis %}
                   <tr>
                     <th>
-                      <span class="badge bg-primary">{{item.type}}</span>
+                      <span class="badge {% if item.type == 'DELETE' %} bg-danger{% else %}bg-primary{% endif %}">
+                        {{item.type}}
+                      </span>
                     </th>
                     <td>{{ item.url}}</td>
                   </tr>

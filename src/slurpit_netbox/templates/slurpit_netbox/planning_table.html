@@ -20,9 +20,10 @@
             </div>
           </div>
           <input type="hidden" value="none" name="refresh" id="refreshInput"/>
+          <input type="hidden" value="none" name="sync" id="syncInput"/>
           <div class="col-6 text-end">
             <div class="btn-group btn-group-sm" role="group">
-              <a name="sync"  class="btn btn-orange btn-sm mx-2">{% trans "Sync" %}</a>
+              <a name="sync"  class="btn btn-orange btn-sm mx-2" id="sync">{% trans "Sync" %}</a>
               <select class="btn btn-sm btn-secondary result-type" id="result-type" name="result_type">
                 <option value="planning" {% if "result_type" not in request.GET or request.GET.result_type == 'planning' %}selected="selected"{% else %} {% endif %}>{% trans "Planning Result" %}</option>
                 <option value="template" {% if request.GET.result_type == 'template' %}selected="selected"{% else %} {% endif %}>{% trans "Template Result" %}</option>
@@ -89,13 +90,26 @@
       form.submit();
     });
 
+    
+
+    var syncElement = document.getElementById('sync');
+    var syncInput = document.getElementById('syncInput');
+
+    syncElement.addEventListener('click', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      syncInput.value = "sync";
+      form.submit();
+    });
+
     var refreshElement = document.getElementById('refresh');
     var refreshInput = document.getElementById('refreshInput');
+
     refreshElement.addEventListener('click', function(event) {
       // The event target is the select element, and its value is the selected option's value
       refreshInput.value = "refresh";
       form.submit();
     });
+
   </script>
 {% endblock %}
 
