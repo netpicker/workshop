@@ -6,7 +6,7 @@ from extras.models.tags import Tag
 from netmiko.ssh_dispatcher import CLASS_MAPPER_BASE
 
 from .. import get_config
-from .device import ImportedDevice, StagedDevice, SlurpitDevice, fmt_digest
+from .device import ImportedDevice, StagedDevice, Snapshot, fmt_digest
 from .planning import Planning
 from .setting import Source, Setting
 from .logs import SlurpitLog

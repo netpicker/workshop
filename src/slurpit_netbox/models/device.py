@@ -83,7 +83,7 @@ class ImportedDevice(NetBoxModel):
         # Returns the 'slurpit_devicetype' value from the mapped_device's custom_field_data or None if not present.
         return self.mapped_device.custom_field_data.get('slurpit_devicetype')
 
-class SlurpitDevice(PrimaryModel):
+class Snapshot(PrimaryModel):
     hostname = models.TextField(max_length=255, null=True)
     plan_id = models.TextField(max_length=10, null=True)
     content = models.JSONField()

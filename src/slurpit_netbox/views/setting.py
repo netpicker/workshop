@@ -11,7 +11,7 @@ from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm
-from ..models import Source, Setting, SlurpitLog, PlanningDataTab, SlurpitPlan, SlurpitDevice
+from ..models import Source, Setting, SlurpitLog, PlanningDataTab, SlurpitPlan, Snapshot
 from ..tables import SourceTable, SlurpitPlanTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
@@ -141,11 +141,11 @@ class SettingsView(View):
             slurpit_apis = [
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/slurpitdevice/"
+                    "url": "api/plugins/slurpit/snapshot/"
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/slurpitdevice/delete-all/?hostname=hostname&plan_id=plan_id"
+                    "url": "api/plugins/slurpit/snapshot/delete-all/?hostname=hostname&plan_id=plan_id"
                 },
                 {
                     "type": "POST",
@@ -161,7 +161,15 @@ class SettingsView(View):
                 },
                 {
                     "type": "POST",
-                    "url": "plugins/slurpit/api/push_device"
+                    "url": "api/plugins/slurpit/device/add/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/device/delete/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/device/delete-all/"
                 }
             ]
             test_param = request.GET.get('test',None)
@@ -351,19 +359,19 @@ class SlurpitPlanning(View):
                 temp = get_latest_data_on_planning(device.name, plan.plan_id)
                 temp = temp[plan.name]["data"]
 
-                SlurpitDevice.objects.filter(hostname=device.name, plan_id=plan.plan_id).delete()
+                Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id).delete()
 
                 # Store the latest data to DB
                 new_items = []
                 for item in temp:
                     new_items.append(
-                        SlurpitDevice(hostname=device.name, plan_id=plan.plan_id, content=item)
+                        Snapshot(hostname=device.name, plan_id=plan.plan_id, content=item)
                     )
                 
                 split_devices_arr = list(split_list(new_items, BATCH_SIZE))
 
                 for device_arr in split_devices_arr:
-                    SlurpitDevice.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+                    Snapshot.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
 
                 return HttpResponseRedirect(url_no_refresh)
             
@@ -379,7 +387,7 @@ class SlurpitPlanning(View):
             if not data:
                 data = []
                 try: 
-                    temp = SlurpitDevice.objects.filter(hostname=device.name, plan_id=plan.plan_id)
+                    temp = Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
                     result_key = f"{result_type}_result"
 
                     for r in temp:

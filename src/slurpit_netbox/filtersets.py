@@ -2,7 +2,7 @@ import django_filters
 from core.choices import DataSourceStatusChoices
 from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet, BaseFilterSet
-from .models import Source, SlurpitLog, SlurpitPlan, SlurpitDevice
+from .models import Source, SlurpitLog, SlurpitPlan, Snapshot, ImportedDevice
 from django.utils.translation import gettext as _
 
 class SourceFilterSet(NetBoxModelFilterSet):
@@ -61,14 +61,14 @@ class SlurpitPlanFilterSet(BaseFilterSet):
             Q(name__icontains=value)
         )
     
-class SlurpitDeviceFilterSet(BaseFilterSet):
+class SnapshotFilterSet(BaseFilterSet):
     q = django_filters.CharFilter(
         method='search',
         label=_('Search'),
     )
 
     class Meta:
-        model = SlurpitDevice
+        model = Snapshot
         fields = ["id", "hostname", "plan_id"]
 
     def search(self, queryset, name, value):
@@ -78,3 +78,19 @@ class SlurpitDeviceFilterSet(BaseFilterSet):
             Q(name__icontains=value)
         )
 
+class ImportedDeviceFilterSet(BaseFilterSet):
+    q = django_filters.CharFilter(
+        method='search',
+        label=_('Search'),
+    )
+
+    class Meta:
+        model = ImportedDevice
+        fields = ["id", "hostname"]
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value)
+        )
