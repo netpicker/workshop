@@ -114,9 +114,7 @@ class DeviceViewSet(
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-    @action(detail=False, methods=['post'], url_path='add')
-    def add(self, request, *args, **kwargs):
-
+    def create(self, request):
         # Load JSON data from the request body
         devices = json.loads(request.body.decode('utf-8'))
 
@@ -127,5 +125,5 @@ class DeviceViewSet(
 
         import_devices(devices)
         process_import()
-
+        
         return JsonResponse({'status': 'success'})

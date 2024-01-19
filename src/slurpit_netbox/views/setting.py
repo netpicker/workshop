@@ -149,19 +149,19 @@ class SettingsView(View):
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/plan/"
+                    "url": "api/plugins/slurpit/planning/"
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/plan/delete/"
+                    "url": "api/plugins/slurpit/planning/delete/"
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/plan/delete-all/"
+                    "url": "api/plugins/slurpit/planning/delete-all/"
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/add/"
+                    "url": "api/plugins/slurpit/device/"
                 },
                 {
                     "type": "DELETE",

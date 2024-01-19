@@ -3,7 +3,7 @@ from . import views
 
 router = NetBoxRouter()
 router.APIRootView = views.SlurpitRootView
-router.register("plan", views.SlurpitPlanViewSet)
+router.register("planning", views.SlurpitPlanViewSet)
 router.register("snapshot", views.SnapshotViewSet)
 router.register("device", views.DeviceViewSet)
 
