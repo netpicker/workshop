@@ -12,3 +12,5 @@ class SlurpitPlan(PrimaryModel):
     
     def get_absolute_url(self):
         return reverse("plugins:slurpit_netbox:slurpitplan", args=[self.pk])
+    
+

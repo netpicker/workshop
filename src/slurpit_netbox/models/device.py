@@ -14,7 +14,7 @@ from dcim.models import Device, DeviceType
 "changeddate": "2023-11-01 23:02:51"
 """
 
-from netbox.models import NetBoxModel
+from netbox.models import NetBoxModel, PrimaryModel
 
 
 digest_parts = 'hostname', 'fqdn', 'device_os', 'brand', 'disabled'
@@ -82,3 +82,12 @@ class ImportedDevice(NetBoxModel):
     def slurpit_device_type(self):
         # Returns the 'slurpit_devicetype' value from the mapped_device's custom_field_data or None if not present.
         return self.mapped_device.custom_field_data.get('slurpit_devicetype')
+
+class SlurpitDevice(PrimaryModel):
+    hostname = models.TextField(max_length=255, null=True)
+    plan_id = models.TextField(max_length=10, null=True)
+    content = models.JSONField()
+
+    def __str__(self):
+        return f"{self.hostname}#{self.plan_id}"
+    

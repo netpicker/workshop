@@ -42,3 +42,10 @@ class SlurpitPlanViewSet(
         # Perform the deletion and return a response
         self.queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            # Customize this queryset to suit your requirements for GET requests
+            return SlurpitPlan.objects.filter(selected=True)
+        # For other methods, use the default queryset
+        return self.queryset

@@ -28,6 +28,7 @@
               <span>Select the planning to add as a data tab.</span>
             </div>
             <div class="action">
+              <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:settings' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Sync" %}</a>
               <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:settings' %}?return_url={% url 'plugins:slurpit_netbox:settings' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue btn-sm px-3">
                 {% trans "Save" %}
               </button>

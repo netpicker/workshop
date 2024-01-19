@@ -11,7 +11,7 @@ from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm
-from ..models import Source, Setting, SlurpitLog, PlanningDataTab, SlurpitPlan
+from ..models import Source, Setting, SlurpitLog, PlanningDataTab, SlurpitPlan, SlurpitDevice
 from ..tables import SourceTable, SlurpitPlanTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
@@ -118,8 +118,25 @@ class SettingsView(View):
         slurpit_apis = []
 
         if tab_param == 'data_tabs':
-            plannings = SlurpitPlan.objects.all()
-            print(plannings)
+            # Synchronize planning data
+            sync_param = request.GET.get('sync', None)
+            if sync_param == 'true':
+                # Get planning data from Slurpit API
+                new_plannings = self.get_planning_list(request, server_url, api_key)
+
+                new_items = []
+                for item in new_plannings:
+                    new_items.append(
+                        SlurpitPlan(name=item['name'], plan_id=item['id'])
+                    )
+                
+                split_plans_arr = list(split_list(new_items, BATCH_SIZE))
+
+                for plan_arr in split_plans_arr:
+                    SlurpitPlan.objects.bulk_create(plan_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+
+            plannings = SlurpitPlan.objects.all().order_by('id')
+            
         else:   
             slurpit_apis = [
                 {
@@ -194,21 +211,14 @@ class SettingsView(View):
         else:
             plans = request.POST.getlist('pk')
             total_plan_ids = []
-            plans_arr = []
+
             # Split id: 1#plan_name
             for plan in plans:
                 plan_arr = plan.split('#')
                 total_plan_ids.append(plan_arr[0])
-                plans_arr.append(
-                    SlurpitPlan(name=plan_arr[1], plan_id=plan_arr[0], display=plan_arr[1])
-                )
-            # Remove unchecked plans.
-            SlurpitPlan.objects.exclude(plan_id__in=total_plan_ids).delete()
-            # Add checked new plans.
-            split_plans_arr = list(split_list(plans_arr, BATCH_SIZE))
-
-            for plan_arr in split_plans_arr:
-                SlurpitPlan.objects.bulk_create(plan_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+                
+            SlurpitPlan.objects.filter(id__in=total_plan_ids).update(selected=True)
+            SlurpitPlan.objects.exclude(id__in=total_plan_ids).update(selected=False)
 
             return redirect(return_url)
         
@@ -326,8 +336,24 @@ class SlurpitPlanning(View):
                 data = []
                 try: 
                     temp = get_latest_data_on_planning(device.name, plan.plan_id)
+                    print('ccc')
+                    print(temp)
+                    print('aab')
                     temp = temp[plan.name]["data"]
 
+                    # Store the latest data to DB
+                    # new_items = []
+                    # for item in temp:
+                    #     new_items.append(
+                    #         SlurpitDevice(hostname=device.name, plan_id=plan.plan_id, content=item)
+                    #     )
+                    
+                    # split_devices_arr = list(split_list(new_items, BATCH_SIZE))
+
+                    # for device_arr in split_devices_arr:
+                    #     SlurpitDevice.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+                    
+                    # # print(SlurpitDevice.objects.all())
                     result_key = f"{result_type}_result"
                     for r in temp:
                         raw = r[result_key]
@@ -337,12 +363,10 @@ class SlurpitPlanning(View):
                     
                 except Exception as e:
                     messages.error(request, e)
-        
+
         if refresh == "refresh":
-                
-                url_no_refresh = get_refresh_url(request, pk)
-                print(url_no_refresh)
-                return HttpResponseRedirect(url_no_refresh)
+            url_no_refresh = get_refresh_url(request, pk)
+            return HttpResponseRedirect(url_no_refresh)
         
         if not data:
             data = []
