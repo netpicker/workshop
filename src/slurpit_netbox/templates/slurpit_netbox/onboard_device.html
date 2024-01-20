@@ -36,10 +36,7 @@
     </li>
     <li class="nav-item" role="presentation">
       <a class="nav-tab nav-link {% if request.GET.tab == 'migrate' %}active{% endif %}" href="?tab=migrate">
-        Migrate
-        {% if request.GET.tab == 'migrate' %}
-          {% badge table.page.paginator.count %}
-        {% endif %}
+        Migrate {% badge migrate_count %}
       </a>
     </li>
     <li class="nav-item" role="presentation">

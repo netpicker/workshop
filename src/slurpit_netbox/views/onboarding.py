@@ -28,17 +28,9 @@ from django.db.models.fields.json import KeyTextTransform
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportedDeviceListView(generic.ObjectListView):
-    
-    queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True)
-    table = tables.ImportedDeviceTable
-    template_name = "slurpit_netbox/onboard_device.html"
-    def get(self, request, *args, **kwargs):
-        # Your custom logic for handling GET requests and setting the queryset
-        if request.GET.get('tab') == "new":
-            self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True) # Replace with your specific query
-        elif request.GET.get('tab') == "migrate":
-            # Replace with your specific query
-            self.queryset = models.ImportedDevice.objects.filter(
+    to_onboard_queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True)
+    onboarded_queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=False)
+    migrate_queryset = models.ImportedDevice.objects.filter(
                 mapped_device_id__isnull=False
             ).annotate(
                 slurpit_devicetype=KeyTextTransform('slurpit_devicetype', 'mapped_device__custom_field_data'),
@@ -58,14 +50,19 @@ class ImportedDeviceListView(generic.ObjectListView):
                 Q(slurpit_platform=F('fdeviceos')) & 
                 Q(slurpit_manufactor=F('fbrand'))
             )
+    
+    queryset = to_onboard_queryset
+    table = tables.ImportedDeviceTable
+    template_name = "slurpit_netbox/onboard_device.html"
+    def get(self, request, *args, **kwargs):        
+        self.queryset = self.to_onboard_queryset
+
+        if request.GET.get('tab') == "migrate":
+            self.queryset = self.migrate_queryset
             self.table = tables.MigratedDeviceTable
-
         elif request.GET.get('tab') == "onboarded":
-            self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=False)  # Replace with your specific query
-        else:
-            self.queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True) # Replace with your specific query
+            self.queryset = self.onboarded_queryset
 
-        # Call the parent class's get method with the modified queryset
         return super().get(request, *args, **kwargs)
     
     def post(self, request):
@@ -76,8 +73,9 @@ class ImportedDeviceListView(generic.ObjectListView):
 
     def get_extra_context(self, request):
         return {
-            'to_onboard_count': models.ImportedDevice.objects.filter( mapped_device_id__isnull=True).count(),
-            'onboarded_count': models.ImportedDevice.objects.filter( mapped_device_id__isnull=False).count()
+            'to_onboard_count': self.to_onboard_queryset.count(),
+            'onboarded_count': self.onboarded_queryset.count(),
+            'migrate_count': self.migrate_queryset.count()
         }
 
 
