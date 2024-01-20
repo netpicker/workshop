@@ -36,7 +36,7 @@ class SnapshotSerializer(serializers.ModelSerializer):
 class ImportedDeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImportedDevice
-        exclude = ('digest',) 
+        fields = '__all__'
 
 
 class SourceSerializer(NetBoxModelSerializer):

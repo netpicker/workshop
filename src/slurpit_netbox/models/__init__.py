@@ -6,7 +6,7 @@ from extras.models.tags import Tag
 from netmiko.ssh_dispatcher import CLASS_MAPPER_BASE
 
 from .. import get_config
-from .device import ImportedDevice, StagedDevice, Snapshot, fmt_digest
+from .device import ImportedDevice, StagedDevice, Snapshot
 from .planning import Planning
 from .setting import Source, Setting
 from .logs import SlurpitLog
@@ -15,7 +15,7 @@ from .planning_datatab import PlanningDataTab
 
 __all__ = [
     'ImportedDevice', 'Planning', 'Source', 'StagedDevice',
-    'post_migration', 'fmt_digest', 'SlurpitLog', 'Setting'
+    'post_migration', 'SlurpitLog', 'Setting'
 ]
 
 

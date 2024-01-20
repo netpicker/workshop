@@ -19,7 +19,7 @@ from ..models import ImportedDevice, SlurpitLog
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
-    get_dcim, import_from_queryset, lookup_device_type, run_import
+    get_dcim_device, import_from_queryset, lookup_device_type, run_import
 )
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
@@ -285,7 +285,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                 elif name in form.changed_data:
                     extra[name]['custom_field_data'][cf_name] = customfield.serialize(form.cleaned_data[name])
 
-            device = get_dcim(obj, **extra)
+            device = get_dcim_device(obj, **extra)
             obj.mapped_device = device
             obj.save()
 

@@ -1,9 +1,9 @@
 import logging
 from functools import partial
-from hashlib import md5
 from subprocess import PIPE, Popen
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
+from django.db.models import F, ExpressionWrapper, fields
 import arrow
 import requests
 import yaml
@@ -16,15 +16,15 @@ from django.db.models import QuerySet
 from django.utils.text import slugify
 
 from . import get_config
-from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, fmt_digest, SlurpitLog, Setting
+from .models import ImportedDevice, StagedDevice, ensure_slurpit_tags, SlurpitLog, Setting
 from .management.choices import *
 
 log = logging.getLogger(__name__)
 
 
-BATCH_SIZE = 1024
-fields = ('id', 'digest', 'hostname', 'fqdn', 'device_os', 'device_type', 'brand', 'disabled',
-          'added', 'last_seen', 'createddate', 'changeddate')
+BATCH_SIZE = 256
+columns = ('hostname', 'fqdn', 'device_os', 'device_type', 'brand', 
+          'createddate', 'changeddate')
 
 
 def get_devices():
@@ -88,27 +88,28 @@ def get_defaults():
 def import_devices(devices):
     with connection.cursor() as cursor:
         cursor.execute(f"truncate {StagedDevice._meta.db_table} cascade")
+    to_insert = []
     for device in devices:
+        if device.get('disabled') == '1':
+            continue
         if device.get('device_type') is None:
             log.warning('Missing device type, cannot import %r', device)
             log_message = f"Missing device type, cannot import device - {device.get('hostname')}"
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
-        plain = fmt_digest.format(**device).encode()
-        digest = md5(plain).hexdigest()
-        for tsf in ('last_seen', 'createddate', 'changeddate'):
-            dt = device[tsf]
-            device[tsf] = arrow.get(dt).datetime if dt else dt
-        StagedDevice.objects.create(digest=digest, **device)
-
-        log_message = f"Created/Updated device - {device.get('hostname')}."
-        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
+            continue
+        device['createddate'] = arrow.get(device['createddate']).datetime
+        device['changeddate'] = arrow.get(device['changeddate']).datetime
+        to_insert.append(StagedDevice(**{key: value for key, value in device.items() if key in columns}))
+    StagedDevice.objects.bulk_create(to_insert)
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync staged {len(to_insert)} devices")
 
 
 def process_import():
-    unattended = get_config('unattended_import')
     handle_parted()
     handle_changed()
-    handle_new_comers(unattended)
+    handle_new_comers()
+    
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message="Sync job completed.")
 
 
 def run_import():
@@ -122,36 +123,77 @@ def run_import():
 
 
 def handle_parted():
-    parted_qs = (
-        ImportedDevice.objects.filter(mapped_device_id__isnull=False).only('id')
-        .difference(StagedDevice.objects.only('id'))
+    parted_qs = ImportedDevice.objects.exclude(
+        hostname__in=StagedDevice.objects.values('hostname')
     )
-    Device.objects.filter(id__in=parted_qs).update(status=DeviceStatusChoices.STATUS_OFFLINE)
-
-
-def isplit(iter, n):
-    while True:
-        items = []
-        try:
-            for _ in range(n):
-                items.append(next(iter))
-        except StopIteration:
-            if items:
-                yield items
-            break
+    
+    count = 0
+    for device in parted_qs:
+        if device.mapped_device is None:
+            device.delete()
+        elif device.mapped_device.status == DeviceStatusChoices.STATUS_OFFLINE:
+            continue
         else:
-            yield items
+            device.mapped_device.status=DeviceStatusChoices.STATUS_OFFLINE
+            device.mapped_device.save()
+        count += 1
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync parted {count} devices")
+    
 
+def handle_new_comers():
+    unattended = get_config('unattended_import')
+    
+    qs = StagedDevice.objects.exclude(
+        hostname__in=ImportedDevice.objects.values('hostname')
+    )
+
+    device_types = map_new_devicetypes(qs)
+    offset = 0
+    count = len(qs)
+
+    while offset < count:
+        batch_qs = qs[offset:offset + BATCH_SIZE]
+        to_import = []        
+        for device in batch_qs:
+            to_import.append(get_from_staged(device, device_types, unattended))
+        ImportedDevice.objects.bulk_create(to_import, ignore_conflicts=True)
+        offset += BATCH_SIZE
+
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
+
+def handle_changed():
+    query = f"SELECT s.* FROM {StagedDevice._meta.db_table} s INNER JOIN {ImportedDevice._meta.db_table} i ON s.hostname = i.hostname AND s.changeddate > i.changeddate"
+    qs = StagedDevice.objects.raw(query)
+    offset = 0
+    count = len(qs)
+
+    while offset < count:
+        batch_qs = qs[offset:offset + BATCH_SIZE]
+        to_import = []        
+        for device in batch_qs:
+            result = ImportedDevice.objects.get(hostname=device.hostname)
+            result.copy_staged_values(device)
+            result.save()
+
+            if result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
+                result.mapped_device.status=DeviceStatusChoices.STATUS_INVENTORY
+                result.mapped_device.save()
+        offset += BATCH_SIZE
+
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync updated {count} devices")
 
 def import_from_queryset(qs: QuerySet, **extra):
-    def set_mapped(idev: ImportedDevice) -> ImportedDevice:
-        idev.mapped_device = get_dcim(idev, **extra)
-        return idev
+    count = len(qs)
+    offset = 0
 
-    mapper = partial(set_mapped, **extra)
-    for batch in isplit(map(mapper, qs), BATCH_SIZE):
-        ImportedDevice.objects.bulk_update(batch, fields={'mapped_device_id'})
-
+    while offset < count:
+        batch_qs = qs[offset:offset + BATCH_SIZE]
+        to_import = []        
+        for device in batch_qs:
+            device.mapped_device = get_dcim_device(device, **extra)
+            to_import.append(device)
+        ImportedDevice.objects.bulk_update(to_import, fields={'mapped_device_id'})
+        offset += BATCH_SIZE
 
 def grep(where: str, what: str, options: str) -> list[str] | None:
     opt = [f"-{options}"] if options else []
@@ -163,9 +205,7 @@ def grep(where: str, what: str, options: str) -> list[str] | None:
 
 
 def lookup_manufacturer(s: str) -> Manufacturer | None:
-    default = {'name': s}
-    slug = slugify(s)
-    manufacturer, new = Manufacturer.objects.get_or_create(default, slug=slug)
+    manufacturer, new = Manufacturer.objects.get_or_create(name = s, slug=slugify(s))
     if new:
         ensure_slurpit_tags(manufacturer)
     return manufacturer
@@ -175,20 +215,11 @@ def create_devicetype(descriptor: dict) -> DeviceType | None:
     manufacturer = lookup_manufacturer(descriptor.get('manufacturer'))
     if manufacturer is None:
         return None
-    kw = {k.attname: descriptor[k.attname]
-          for k in DeviceType._meta.fields if k.attname in descriptor}
+    kw = {k.attname: descriptor[k.attname] for k in DeviceType._meta.fields if k.attname in descriptor}
     dev_type = DeviceType.objects.create(manufacturer=manufacturer, **kw)
-    log_message = "Created DeviceType."
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
+    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message="Created DeviceType.")
     ensure_slurpit_tags(dev_type)
     return dev_type
-
-
-def get_db_devicetype(staged_type: str) -> DeviceType | None:
-    try:
-        return DeviceType.objects.get(model__iexact=staged_type)
-    except DeviceType.DoesNotExist:
-        return None
 
 
 def get_library_devicetype(staged_type: str) -> dict | None:
@@ -213,18 +244,18 @@ def get_library_devicetype(staged_type: str) -> dict | None:
 
 
 def lookup_device_type(staged_type: str) -> DeviceType | None:
-    devtype = get_db_devicetype(staged_type)
+    devtype = DeviceType.objects.filter(model__iexact=staged_type).first()
     if devtype is not None:
         return devtype
     descriptor = get_library_devicetype(staged_type)
     if descriptor is None:
         return None
     model = descriptor['model']
-    devtype = get_db_devicetype(model) or create_devicetype(descriptor)
+    devtype = DeviceType.objects.filter(model__iexact=model).first() or create_devicetype(descriptor)
     return devtype
 
 
-def get_dcim(staged: StagedDevice | ImportedDevice, **extra) -> Device:
+def get_dcim_device(staged: StagedDevice | ImportedDevice, **extra) -> Device:
     kw = get_defaults()
     cf = extra.pop('custom_field_data', {})
     cf.update({
@@ -269,50 +300,18 @@ def get_from_staged(
         device_types: dict[str, DeviceType],
         add_dcim: bool
 ) -> ImportedDevice:
-    kw = {f: getattr(staged, f) for f in fields}
-    dt = device_types.get(staged.device_type)
+    device = ImportedDevice()
+    device.copy_staged_values(staged)
+    device.mapped_devicetype = device_types.get(staged.device_type)
     if add_dcim:
-        extra = {'device_type': dt} if dt else {}
-        kw['mapped_device'] = get_dcim(staged, **extra)
-    kw['mapped_devicetype'] = dt
-    return ImportedDevice(**kw)
+        extra = {'device_type': device.mapped_devicetype} if device.mapped_devicetype else {}
+        device.mapped_device = get_dcim_device(staged, **extra)
+    return device
 
 
 def map_new_devicetypes(qs):
     staged = StagedDevice.objects.values('device_type')
     imported = ImportedDevice.objects.values('device_type')
     qs = staged.distinct().difference(imported.distinct())
-    result = {dt['device_type']: lookup_device_type(dt['device_type']) for dt in qs}
-    return result
+    return {dt['device_type']: lookup_device_type(dt['device_type']) for dt in qs}
 
-
-def handle_new_comers(unattended: bool):
-    qs: QuerySet = (
-        StagedDevice.objects.only(*fields)
-        .difference(ImportedDevice.objects.only(*fields))
-    )
-    device_types = map_new_devicetypes(qs)
-    mapper = partial(get_from_staged,
-                     device_types=device_types, add_dcim=unattended)
-    data = map(mapper, qs.iterator(BATCH_SIZE))
-    for batch in isplit(data, BATCH_SIZE):
-        try:
-            ImportedDevice.objects.bulk_create(batch, batch_size=BATCH_SIZE, ignore_conflicts=True)
-            ImportedDevice.objects.bulk_update(batch, {
-                'device_type', 
-                'changeddate',
-                'hostname',
-                'device_os',
-                'fqdn'
-            })
-            
-        except:
-            pass
-
-    log_message = "Sync job completed."
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
-
-
-def handle_changed():
-    # id's identical, digest changed -> update
-    pass
