@@ -91,33 +91,26 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         logger = logging.getLogger(__name__)
         model = self.queryset.model
 
-        # If we are editing *all* objects in the queryset, replace the PK list with all matched objects.
         if request.POST.get('_all') and self.filterset is not None:
             pk_list = self.filterset(request.GET, self.queryset.values_list('pk', flat=True), request=request).qs
         else:
             pk_list = request.POST.getlist('pk')
 
+        self.queryset = models.ImportedDevice.objects.filter(pk__in=pk_list)
 
-        initial_data = {'pk': pk_list}
+        form = self.form(request.POST, initial={'pk': pk_list})
+        restrict_form_fields(form, request.user)
+
         if '_apply' in request.POST:
-            form = self.form(request.POST, initial=initial_data)
-            restrict_form_fields(form, request.user)
-
             if form.is_valid():
                 logger.debug("Form validation was successful")
                 try:
                     with transaction.atomic():
                         updated_objects = self._update_objects(form, request)
-
-                        # Enforce object-level permissions
-                        # object_count = self.queryset.filter(pk__in=[obj.pk for obj in updated_objects]).count()
-                        # if object_count != len(updated_objects):
-                        #     raise PermissionsViolation
-
-                    if updated_objects:
-                        msg = f'Onboarded {len(updated_objects)} {model._meta.verbose_name_plural}'
-                        logger.info(msg)
-                        messages.success(self.request, msg)
+                        if updated_objects:
+                            msg = f'Onboarded {len(updated_objects)} {model._meta.verbose_name_plural}'
+                            logger.info(msg)
+                            messages.success(self.request, msg)
 
                     return redirect(self.get_return_url(request))
 
@@ -131,42 +124,11 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                     # clear_webhooks.send(sender=self)
 
         else:
-            brand_name_list = []   
-            manufacturer_list = [] 
-            return_flg = False
+            if 'migrate' in request.GET:
+                migrate = request.GET.get('migrate')
+                return_flg = False
 
-            for obj in self.queryset:
-                if str(obj.id) not in initial_data['pk']: 
-                    continue
-                # Make the list of manufacture from obj.brand
-                if obj.brand not in brand_name_list:
-                    manu_name = obj.brand
-                    brand_name_list.append(manu_name)
-                    manu = {'slug': manu_name.lower(), 'name': manu_name, 'platform': obj.device_os}
-                    manufacturer_list.append(manu)
-        
-                    manu_defs = {'slug': manu['slug']}
-                    try:
-                        manu_obj, _ = Manufacturer.objects.get_or_create(defaults=manu_defs, name=manu['name'])
-                    except:
-                        manu_obj, _ = Manufacturer.objects.get(name=manu['name'])
-
-                    platform_defs = {'name': manu['platform'], 'slug': manu['platform']}
-                    platform, _ = Platform.objects.get_or_create(**platform_defs)
-                    
-                    # platform.tags.set(tags)  
-                    devtype_model = get_config('DeviceType')['model']
-                    devtype_slug = f'{manu["name"]}-{obj.device_type}'
-                    devtype_defs = {'model': obj.device_type, 'manufacturer': manu_obj, 'slug': devtype_slug, 'default_platform': platform}
-                    try:
-                        dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
-                    except:
-                        dtype, _ = DeviceType.objects.get_or_create(model=obj.device_type, manufacturer=manu_obj)
-                    # dtype.tags.set(tags)
-
-                if 'migrate' in request.GET:
-                    migrate = request.GET.get('migrate')
-
+                for obj in self.queryset:
                     if migrate == 'create':
                         try:
                             obj.mapped_device.delete()
@@ -196,30 +158,28 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
                         SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
 
                         return_flg = True
-                
-            if return_flg:
-                msg = f'Migration is done successfully.'
-                logger.info(msg)
-                messages.success(self.request, msg)
+                    
+                if return_flg:
+                    msg = f'Migration is done successfully.'
+                    logger.info(msg)
+                    messages.success(self.request, msg)
 
-                return redirect(self.get_return_url(request))
+                    return redirect(self.get_return_url(request))
 
             defaults = importer.get_defaults()
-            # if the same device type is selected
-            qs = (ImportedDevice.objects.filter(pk__in=initial_data['pk'])
-                  .values_list('device_type').distinct())
-            device_types = list(qs)
+            device_types = list(self.queryset.values_list('device_type').distinct())
             if len(device_types) == 1 and (dt := lookup_device_type(device_types[0][0])):
                 defaults['device_type'] = dt
+            initial_data = {'pk': pk_list}
             for k, v in defaults.items():
                 initial_data.setdefault(k, str(v.id))
-            if not initial_data.get('status'):
-                initial_data['status'] = DeviceStatusChoices.STATUS_INVENTORY
+            initial_data.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
+
             form = self.form(initial=initial_data)
             restrict_form_fields(form, request.user)
-
+                
         # Retrieve objects being edited
-        table = self.table(self.queryset.filter(pk__in=pk_list, mapped_device_id__isnull=True), orderable=False)
+        table = self.table(self.queryset.filter(mapped_device_id__isnull=True), orderable=False)
         if not table.rows:
             messages.warning(request, "No onboardable {} were selected.".format(model._meta.verbose_name_plural))
             log_message = "Failed onboarded since no onboardable device was selected."
@@ -309,8 +269,6 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
             if form.cleaned_data.get('remove_tags', None):
                 device.tags.remove(*form.cleaned_data['remove_tags'])
 
-          
-        
         return updated_objects
 
 
