@@ -125,7 +125,9 @@ class SettingsView(View):
             sync_param = request.GET.get('sync', None)
             if sync_param == 'true':
                 # Get planning data from Slurpit API
-                new_plannings = self.get_planning_list(request, server_url, api_key)
+                new_plannings = []
+                if setting is not None:
+                    new_plannings = self.get_planning_list(request, server_url, api_key)
 
                 new_items = []
                 for item in new_plannings:
