@@ -32,6 +32,7 @@ from datetime import datetime
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.http import JsonResponse
+from account.models import UserToken
 
 BATCH_SIZE = 128
 
@@ -109,12 +110,17 @@ class SettingsView(View):
         except ObjectDoesNotExist:
             setting = None
             
+        push_api_key = ''
+        
         if setting is None:
             connection_status = ''
-            push_api_key = ''
         else:
             connection_status = setting.connection_status
-            push_api_key = setting.push_api_key
+
+        tokens = UserToken.objects.filter(user=request.user).count()
+
+        if tokens > 0:
+            push_api_key = 'existed'
         
         tab_param = request.GET.get('tab', None)
         plannings = []
