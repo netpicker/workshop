@@ -13,9 +13,6 @@ from dcim.models import Device, DeviceType
 
 from netbox.models import NetBoxModel, PrimaryModel
 
-
-mapped_in = dict(null=True, on_delete=models.SET_NULL)
-
 class StagedDevice(NetBoxModel):
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)
@@ -37,8 +34,8 @@ class ImportedDevice(NetBoxModel):
     brand = models.CharField(max_length=255)
     createddate = models.DateTimeField()
     changeddate = models.DateTimeField(null=True)
-    mapped_devicetype = models.ForeignKey(to=DeviceType, **mapped_in)
-    mapped_device = models.ForeignKey(to=Device, **mapped_in)
+    mapped_devicetype = models.ForeignKey(to=DeviceType, null=True, on_delete=models.SET_NULL)
+    mapped_device = models.OneToOneField(to=Device, null=True, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
         return '/'

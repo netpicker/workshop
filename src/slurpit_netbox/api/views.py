@@ -1,5 +1,7 @@
 
 from netbox.api.viewsets import NetBoxModelViewSet
+from dcim.models import Device
+from dcim.choices import DeviceStatusChoices
 from slurpit_netbox.models import SlurpitPlan, Snapshot, ImportedDevice, StagedDevice
 from slurpit_netbox.filtersets import SlurpitPlanFilterSet, SnapshotFilterSet, ImportedDeviceFilterSet
 from .serializers import SlurpitPlanSerializer, SnapshotSerializer, ImportedDeviceSerializer
@@ -8,6 +10,7 @@ from rest_framework_bulk import BulkCreateModelMixin, BulkDestroyModelMixin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from django.db import transaction
 from django.http import JsonResponse
 import json
 from ..validator import device_validator
@@ -103,8 +106,11 @@ class DeviceViewSet(
         A custom action to delete all SlurpitPlan objects.
         Be careful with this operation: it cannot be undone!
         """
-        ImportedDevice.objects.all().delete()
-        StagedDevice.objects.all().delete()
+
+        with transaction.atomic():
+            Device.objects.select_related('importeddevice').update(status=DeviceStatusChoices.STATUS_OFFLINE)
+            StagedDevice.objects.all().delete()
+            ImportedDevice.objects.filter(mapped_device__isnull=True).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
