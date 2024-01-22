@@ -173,6 +173,10 @@ class SettingsView(View):
                 {
                     "type": "DELETE",
                     "url": "api/plugins/slurpit/device/delete-all/"
+                },
+                {
+                    "type": "POST",
+                    "url": "plugins/slurpit/testapi/"
                 }
             ]
             test_param = request.GET.get('test',None)
