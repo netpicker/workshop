@@ -63,7 +63,7 @@
             
             <div class="card-header" style="display:flex;justify-content: space-between;">
                 <h5>Plugin API</h5>
-                <a class="btn btn-blue btn-sm mx-3 px-3" href="{% url 'plugins:slurpit_netbox:settings' %}?action=generate">
+                <a class="btn btn-blue btn-sm mx-3 px-3" href="/user/api-tokens/" target="_blank" >
                     {% trans "Generate" %}
                 </a>
             </div>
@@ -71,7 +71,8 @@
               <table class="table table-hover attr-table">
                 <tr>
                   <th scope="row">API Key</th>
-                  <td>{{push_api_key}}</td>
+                  <!-- <td>{{push_api_key}}</td> -->
+                  <td>*******************************************</td>
                 </tr>
                 
               </table>
