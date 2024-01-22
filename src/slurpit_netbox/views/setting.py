@@ -175,8 +175,8 @@ class SettingsView(View):
                     "url": "api/plugins/slurpit/device/delete-all/"
                 },
                 {
-                    "type": "POST",
-                    "url": "plugins/slurpit/testapi/"
+                    "type": "GET",
+                    "url": "api/plugins/slurpit/test/api/"
                 }
             ]
             test_param = request.GET.get('test',None)
@@ -450,10 +450,3 @@ class SlurpitPlanning(View):
                 "cached_time": cached_time
             },
         )
-
-
-class SlurpitTestAPIView(APIView):
-    
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
-        return JsonResponse({'status': 'success'})

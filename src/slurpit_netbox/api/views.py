@@ -12,6 +12,8 @@ from django.http import JsonResponse
 import json
 from ..validator import device_validator
 from ..importer import process_import, import_devices
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 __all__ = (
     'SlurpitPlanViewSet',
@@ -126,4 +128,16 @@ class DeviceViewSet(
         import_devices(devices)
         process_import()
         
+        return JsonResponse({'status': 'success'})
+    
+class SlurpitTestAPIView(NetBoxModelViewSet):
+    queryset = ImportedDevice.objects.all()
+    serializer_class = ImportedDeviceSerializer
+    filterset_class = ImportedDeviceFilterSet
+
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='api')
+    def api(self, request, *args, **kwargs):
+    
         return JsonResponse({'status': 'success'})
