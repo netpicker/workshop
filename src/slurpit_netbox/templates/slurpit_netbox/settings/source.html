@@ -64,7 +64,11 @@
             <div class="card-header" style="display:flex;justify-content: space-between;">
                 <h5>Plugin API</h5>
                 <a class="btn btn-blue btn-sm mx-3 px-3" href="/user/api-tokens/" target="_blank" >
-                    {% trans "Generate" %}
+                    {% if push_api_key == '' %}
+                      {% trans "Generate" %}
+                    {% else %}
+                      {% trans "Show" %}
+                    {% endif %}
                 </a>
             </div>
             <div class="card-body">
@@ -72,7 +76,13 @@
                 <tr>
                   <th scope="row">API Key</th>
                   <!-- <td>{{push_api_key}}</td> -->
-                  <td>*******************************************</td>
+                  <td>
+                    {% if push_api_key == '' %}
+                      NO API KEY
+                    {% else %}
+                      *******************************************
+                    {% endif %}
+                  </td>
                 </tr>
                 
               </table>
