@@ -18,6 +18,10 @@ def device_validator(data):
                 # Further validation logic for each field could go here,
                 # like checking that 'last_seen' is a valid datetime for instance:
                 if field in ['last_seen', 'createddate', 'changeddate']:
+                    # Date fields can be NULL sometimes
+                    if entry[field] is None:
+                        # If last_seen is null, set it to the value of createddate
+                        entry[field] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     try:
                         # Assuming the dates are in ISO format (YYYY-MM-DD HH:MM:SS)
                         datetime.strptime(entry[field], '%Y-%m-%d %H:%M:%S')
