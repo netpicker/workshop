@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "slurpit_netbox"
-version = "0.1.49
+version = "0.1.50"
 description = ""
 authors = ["Pieter <pieter@slurpit.io>"]
 readme = "README.md"
