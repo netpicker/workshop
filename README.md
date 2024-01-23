@@ -1,8 +1,4 @@
-# Slurpit NetBox Plugin
-
-It's assumed that we'll install NetBox in the local virtual environment.
-
-## How to install the plugin on the NetBox
+## How to install the plugin on your local NetBox server
 
  ### Activate the Virtual Environment
  
@@ -15,7 +11,7 @@ $ source /opt/netbox/venv/bin/activate
  ### Run setup.py
 
  ```
-$ python3 setup.py develop
+$ python setup.py develop
  ```
 
  ### Configure NetBox
@@ -36,11 +32,11 @@ PLUGINS = [
 Use the 'migrate' management command to apply the migration file.
 
 ```
-python netbox/manage.py migrate slurpit_netbox
+python manage.py migrate slurpit_netbox
 ```
 
 After saving the file, start the NetBox development server if it isn't already running.
 
  ```
-$ python3 manage.py runserver 0.0.0.0:8000 --insecure
+$ python manage.py runserver 0.0.0.0:8000 --insecure
  ```
