@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 
 
-from .models import ImportedDevice, Planning, Source, SlurpitLog, PlanningDataTab
+from .models import ImportedDevice, Planning, Source, SlurpitLog
 
 
 def check_link(**kwargs):

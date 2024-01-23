@@ -127,28 +127,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='PlanningDataTab',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True, null=True)),
-                ('last_updated', models.DateTimeField(auto_now=True, null=True)),
-                ('custom_field_data', models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder)),
-                ('index', models.TextField(max_length=20, unique=True)),
-                ('name', models.TextField(max_length=255, null=True)),
-                ('flags', models.TextField(max_length=10, null=True)),
-                ('type', models.TextField(max_length=50, null=True)),
-                ('act_mtu', models.TextField(max_length=50, null=True)),
-                ('l2_mtu', models.TextField(max_length=50, null=True)),
-                ('max_mtu', models.TextField(max_length=50, null=True)),
-                ('mac_addr', models.TextField(max_length=50, null=True)),
-                ('timestamp', models.DateTimeField(null=True)),
-                ('tags', taggit.managers.TaggableManager(through='extras.TaggedItem', to='extras.Tag')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.CreateModel(
             name='Planning',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),

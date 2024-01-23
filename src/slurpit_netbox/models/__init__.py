@@ -11,7 +11,6 @@ from .planning import Planning
 from .setting import Source, Setting
 from .logs import SlurpitLog
 from .slurpit_plan import SlurpitPlan
-from .planning_datatab import PlanningDataTab
 
 __all__ = [
     'ImportedDevice', 'Planning', 'Source', 'StagedDevice',

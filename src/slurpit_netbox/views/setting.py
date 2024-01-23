@@ -11,7 +11,7 @@ from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm, SlurpitApplianceTypeForm
-from ..models import Source, Setting, SlurpitLog, PlanningDataTab, SlurpitPlan, Snapshot
+from ..models import Source, Setting, SlurpitLog, SlurpitPlan, Snapshot
 from ..tables import SourceTable, SlurpitPlanTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered

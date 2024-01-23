@@ -1,14 +1,14 @@
-# Slurpit Netbox Plugin
+# Slurpit NetBox Plugin
 
-We assume to install Netbox on your local virtual environment.
-## How to install the plugin on the Netbox
+We assume to install NetBox on your local virtual environment.
+## How to install the plugin on the NetBox
 
  ### Activate the Virtual Environment
  
- To ensure our plugin is accessible to the NetBox installation, we first need to activate the Python virtual environment that was created when we installed NetBox. To do this, determine the virtual environment's path (this will be /opt/netbox/venv/ if you use the documentation's defaults) and activate it:
+ To ensure our plugin is accessible to the NetBox installation, we first need to activate the Python virtual environment that was created when we installed NetBox. To do this, determine the virtual environment's path (this will be /opt/NetBox/venv/ if you use the documentation's defaults) and activate it:
 
  ```
-$ source /opt/netbox/venv/bin/activate
+$ source /opt/NetBox/venv/bin/activate
  ```
 
  ### Run setup.py
@@ -17,14 +17,14 @@ $ source /opt/netbox/venv/bin/activate
 $ python3 setup.py develop
  ```
 
- ### Configure Netbox
+ ### Configure NetBox
  
- Finally, we need to configure NetBox to enable our new plugin. Over in the NetBox installation path, open netbox/netbox/configuration.py and look for the PLUGINS parameter
+ Finally, we need to configure NetBox to enable our new plugin. Over in the NetBox installation path, open NetBox/NetBox/configuration.py and look for the PLUGINS parameter
 
  ```
 # configuration.py
 PLUGINS = [
-    'slurpit_netbox',
+    'slurpit_NetBox',
 ]
  ``` 
 
@@ -32,11 +32,11 @@ PLUGINS = [
 
  ```
 PLUGINS_CONFIG = {
-        'slurpit_netbox':{
+        'slurpit_NetBox':{
                 'API_ENDPOINT': 'http://localhost', 
                 'API_HEADERS': {
                         'authorization': YOUR_SLURPIT_API_KEY,
-                        'useragent': 'netbox/requests',
+                        'useragent': 'NetBox/requests',
                 }
         }
 }
@@ -49,10 +49,10 @@ PLUGINS_CONFIG = {
  We can apply the migration file using the migrate management command:
 
 ```
-python netbox/manage.py migrate slurpit_netbox
+python NetBox/manage.py migrate slurpit_NetBox
 ```
 
- Save the file and run the Netbox development server (if not already running):
+ Save the file and run the NetBox development server (if not already running):
 
  ```
 $ python3 manage.py runserver
