@@ -1,6 +1,7 @@
 # Slurpit NetBox Plugin
 
-We assume to install NetBox on your local virtual environment.
+It's assumed that we'll install NetBox in the local virtual environment.
+
 ## How to install the plugin on the NetBox
 
  ### Activate the Virtual Environment
@@ -27,20 +28,6 @@ PLUGINS = [
     'slurpit_NetBox',
 ]
  ``` 
-
- And we need to set the API_ENDPOINT and API_HEADERS to integrate the Slurpit. eg: http://localhost as API_ENDPOINT
-
- ```
-PLUGINS_CONFIG = {
-        'slurpit_NetBox':{
-                'API_ENDPOINT': 'http://localhost', 
-                'API_HEADERS': {
-                        'authorization': YOUR_SLURPIT_API_KEY,
-                        'useragent': 'NetBox/requests',
-                }
-        }
-}
- ```
 
  
 
