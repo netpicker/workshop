@@ -80,6 +80,7 @@ class ImportedDeviceListView(generic.ObjectListView):
             server_url = setting.server_url
             api_key = setting.api_key
             appliance_type = setting.appliance_type
+            connection_status = setting.connection_status
         except ObjectDoesNotExist:
             setting = None
 
@@ -88,6 +89,7 @@ class ImportedDeviceListView(generic.ObjectListView):
             'onboarded_count': self.onboarded_queryset.count(),
             'migrate_count': self.migrate_queryset.count(),
             'appliance_type': appliance_type,
+            'connection_status': connection_status
         }
 
 

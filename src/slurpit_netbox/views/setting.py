@@ -301,7 +301,7 @@ class SettingsView(View):
                 }
         connection_test = f"{server_url}/api/platform/ping"
         try:
-            response = requests.get(connection_test, headers=headers)
+            response = requests.get(connection_test, headers=headers, timeout=5)
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed testing the connection to the Slurp'it server."          
@@ -478,6 +478,7 @@ class SlurpitPlanning(View):
             server_url = setting.server_url
             api_key = setting.api_key
             appliance_type = setting.appliance_type
+            connection_status = setting.connection_status
         except ObjectDoesNotExist:
             setting = None
 
@@ -491,6 +492,7 @@ class SlurpitPlanning(View):
                 "table": table,
                 "result_status": result_status,
                 "cached_time": cached_time,
-                'appliance_type': appliance_type,
+                "appliance_type": appliance_type,
+                "connection_status": connection_status,
             },
         )
