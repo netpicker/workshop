@@ -42,12 +42,17 @@
           <div class="card-body">
             {% csrf_token %}
             <div class="planning-list">
+              <p>
+                <input type="checkbox" id="planning-all"/>
+                <b>All</b>
+              </p>
+              
               {% for plan in plannings %}
                 <p class="plan-item" style="display:flex; align-items: center; gap:8px;">
                   {% if plan.selected %}
-                    <input type="checkbox" name="pk" value="{{plan.id}}#{{plan.name}}" checked/>
+                    <input type="checkbox" class="plan-checkbox" name="pk" value="{{plan.id}}#{{plan.name}}" checked/>
                   {% else %}
-                    <input type="checkbox" name="pk" value="{{plan.id}}#{{plan.name}}"/>
+                    <input type="checkbox" class="plan-checkbox" name="pk" value="{{plan.id}}#{{plan.name}}"/>
                   {% endif %}
                   <b> {{ plan.name}}</b>
                 </p>
@@ -59,3 +64,18 @@
     </div>
   </div>    
 </div>
+
+<script>
+  var allElement = document.getElementById('planning-all');
+
+  // Add an event listener for the 'change' event
+  allElement.addEventListener('change', function(event) {
+    // The event target is the select element, and its value is the selected option's value
+
+    const checkboxes = document.querySelectorAll('.plan-checkbox');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = allElement.checked;
+    });
+  });
+</script>
