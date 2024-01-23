@@ -1,34 +1,106 @@
 {% load buttons %}
 {% load i18n %}
+{% load form_helpers %}
 
 <div class=" show {% if request.GET.tab == 'source' or request.GET.tab is None %}active{% endif %}">
     <div class="row mb-3">
         <div class="col col-md-6">
-          <div class="card">
+          <form action="" method="get" id="appliance-type-form" class="form form-horizontal mb-3">
+            <div class="card">
             
-            <div class="card-header" style="display:flex;justify-content: space-between;">
-                <h5>Slurp'it Server</h5>
-                <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
-                    {% trans "Edit" %}
-                </button>
+              <div class="card-header" style="display:flex;justify-content: space-between;">
+                  <h5>NetBox Server</h5>
+                  <button class="btn btn-blue btn-sm mx-3 px-3">
+                      {% trans "Save" %}
+                  </button>
+              </div>
+              <div class="card-body">
+                {% render_form form %}
+              
+                <div class="row">
+                  <div class="col-sm-3"></div>
+                  <div class="col">
+                    <p>Cloud: Data will be pushed from Slurpit to NetBox</p>
+                    <p>On-promise: Data can be pulled from Slurpit</p>
+                    <p>Both; Pull & Push functionality are avaiable</p>
+                  </div>
+                </div>
+               
+              </div>
             </div>
-            <div class="card-body">
-              <table class="table table-hover attr-table">
-                <tr>
-                  <th scope="row">Server URL</th>
-                  <td>{{setting.server_url}}</td>
-                </tr>
-                <tr>
-                  <th scope="row">API Key</th>
-                  <td>{{setting.api_key}}</td>
-                </tr>
-                
-              </table>
+          </form>
+          
+          {% if appliance_type == 'both' or appliance_type == 'cloud'  %}
+            <div class="card">
+              
+              <div class="card-header" style="display:flex;justify-content: space-between;">
+                  <h5>Plugin API</h5>
+                  <a class="btn btn-blue btn-sm mx-3 px-3" href="/user/api-tokens/" target="_blank" >
+                      {% if push_api_key == '' %}
+                        {% trans "Generate" %}
+                      {% else %}
+                        {% trans "Show" %}
+                      {% endif %}
+                  </a>
+              </div>
+              <div class="card-body">
+                <table class="table table-hover attr-table">
+                  <tr>
+                    <th scope="row">API Key</th>
+                    <!-- <td>{{push_api_key}}</td> -->
+                    <td>
+                      {% if push_api_key == '' %}
+                        NO API KEY
+                      {% else %}
+                        *******************************************
+                      {% endif %}
+                    </td>
+                  </tr>
+                  
+                </table>
+                <h6>API calls:</h6>
+                <table class="table table-hover attr-table">
+                  {% for item in slurpit_apis %}
+                    <tr>
+                      <th>
+                        <span class="badge {% if item.type == 'DELETE' %} bg-danger{% elif item.type == 'GET' %}bg-primary{% else %}bg-success{% endif %}">
+                          {{item.type}}
+                        </span>
+                      </th>
+                      <td>{{ item.url}}</td>
+                    </tr>
+                  {% endfor %}
+                </table>
             </div>
-          </div>
+            </div>
+          {% endif %}
+
         </div>
         <div class="col col-md-6">
+          {% if appliance_type == 'both' or appliance_type == 'on-premise'  %}
             <div class="card">
+
+                  <div class="card-header" style="display:flex;justify-content: space-between;">
+                    <h5>Slurp'it Server</h5>
+                    <button class="btn btn-blue btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
+                        {% trans "Edit" %}
+                    </button>
+                </div>
+                
+                <div class="card-body">
+                  <table class="table table-hover attr-table">
+                    <tr>
+                      <th scope="row">Server URL</th>
+                      <td>{{setting.server_url}}</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">API Key</th>
+                      <td>{{setting.api_key}}</td>
+                    </tr>
+                    
+                  </table>
+                </div>
+
                 <div class="card-header" style="display:flex;justify-content: space-between;">
                     <h5>Status</h5>
                     <a name="Edit" class="btn btn-blue btn-sm mx-3 px-3" href="{% url 'plugins:slurpit_netbox:settings' %}?test=test"> {% trans "Test" %}</a>
@@ -56,52 +128,9 @@
                   </table>
                 </div>
             </div>
+          {% endif %}
         </div>
 
-        <div class="col col-md-6">
-          <div class="card">
-            
-            <div class="card-header" style="display:flex;justify-content: space-between;">
-                <h5>Plugin API</h5>
-                <a class="btn btn-blue btn-sm mx-3 px-3" href="/user/api-tokens/" target="_blank" >
-                    {% if push_api_key == '' %}
-                      {% trans "Generate" %}
-                    {% else %}
-                      {% trans "Show" %}
-                    {% endif %}
-                </a>
-            </div>
-            <div class="card-body">
-              <table class="table table-hover attr-table">
-                <tr>
-                  <th scope="row">API Key</th>
-                  <!-- <td>{{push_api_key}}</td> -->
-                  <td>
-                    {% if push_api_key == '' %}
-                      NO API KEY
-                    {% else %}
-                      *******************************************
-                    {% endif %}
-                  </td>
-                </tr>
-                
-              </table>
-              <h6>API calls:</h6>
-              <table class="table table-hover attr-table">
-                {% for item in slurpit_apis %}
-                  <tr>
-                    <th>
-                      <span class="badge {% if item.type == 'DELETE' %} bg-danger{% elif item.type == 'GET' %}bg-primary{% else %}bg-success{% endif %}">
-                        {{item.type}}
-                      </span>
-                    </th>
-                    <td>{{ item.url}}</td>
-                  </tr>
-                {% endfor %}
-              </table>
-          </div>
-        </div>
-      </div>
     </div>
 </div>
 

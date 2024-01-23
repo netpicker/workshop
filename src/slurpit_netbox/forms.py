@@ -10,8 +10,8 @@ from utilities.forms.fields import CommentField, DynamicModelChoiceField
 from utilities.forms.widgets import APISelect
 from tenancy.models import TenantGroup, Tenant
 from utilities.forms import BootstrapMixin
-from .models import ImportedDevice, Source, SlurpitPlan
-
+from .models import ImportedDevice, Source, SlurpitPlan, Setting
+from .management.choices import SlurpitApplianceTypeChoices
 
 class OnboardingForm(NetBoxModelBulkEditForm):
     model = ImportedDevice
@@ -210,9 +210,11 @@ class SlurpitPlanTableForm(BootstrapMixin, forms.Form):
         required=True,
         label=_("Slurpit Plans"),
     )
-    # enable_cache = forms.BooleanField(
-    #     label=_("Cache"),
-    #     required=False,
-    #     initial=True,
-    #     help_text=_("Cache results for 8 hours"),
-    # )
+
+class SlurpitApplianceTypeForm(BootstrapMixin, forms.Form):
+    model =  Setting
+    appliance_type = forms.ChoiceField(
+        label=_('Appliance Type'),
+        choices=add_blank_choice(SlurpitApplianceTypeChoices),
+        required=False
+    )

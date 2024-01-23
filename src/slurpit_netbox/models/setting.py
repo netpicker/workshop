@@ -7,7 +7,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext as _
 from netbox.models import PrimaryModel
 from slurpit_netbox.slurpitch import SlurpitSession
-
+from ..management.choices  import SlurpitApplianceTypeChoices
 
 def apply_tags(object, tags):
     def _apply(object):
@@ -69,6 +69,13 @@ class Setting(PrimaryModel):
     last_synced = models.DateTimeField(blank=True, auto_now=True,null=True, editable=False)
     connection_status = models.CharField(max_length=50,editable=False, null=True, default='')
     push_api_key = models.CharField(max_length=200,null=True, editable=False)
+    
+    appliance_type = models.CharField(
+        verbose_name=_('Applicance Type'),
+        max_length=50,
+        choices=SlurpitApplianceTypeChoices,
+        blank=True
+    )
 
     class Meta:
         verbose_name = "setting"

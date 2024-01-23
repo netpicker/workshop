@@ -10,7 +10,7 @@ from utilities.htmx import is_htmx
 from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
-from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm
+from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm, SlurpitApplianceTypeForm
 from ..models import Source, Setting, SlurpitLog, PlanningDataTab, SlurpitPlan, Snapshot
 from ..tables import SourceTable, SlurpitPlanTable
 from ..management.choices import *
@@ -103,10 +103,14 @@ class SettingsView(View):
     model_name = "device"
     
     def get(self, request):
+        appliance_type = ''
         try:
             setting = Setting.objects.get()
             server_url = setting.server_url
             api_key = setting.api_key
+            appliance_type = setting.appliance_type
+
+            print(appliance_type)
         except ObjectDoesNotExist:
             setting = None
             
@@ -125,6 +129,11 @@ class SettingsView(View):
         tab_param = request.GET.get('tab', None)
         plannings = []
         slurpit_apis = []
+        initial_data = {
+            "appliance_type": appliance_type
+        }
+
+        form = SlurpitApplianceTypeForm(initial=initial_data)
 
         if tab_param == 'data_tabs':
             # Synchronize planning data
@@ -149,6 +158,17 @@ class SettingsView(View):
             plannings = SlurpitPlan.objects.all().order_by('id')
             
         else:   
+            appliance_type_param = request.GET.get('appliance_type', None)
+
+            if appliance_type_param:
+                if setting is None:
+                    setting = Setting.objects.create()
+                # Update appliance typ
+                setting.appliance_type = appliance_type_param
+                setting.save()
+
+                return HttpResponseRedirect(reverse("plugins:slurpit_netbox:settings"))
+
             slurpit_apis = [
                 {
                     "type": "POST",
@@ -224,7 +244,9 @@ class SettingsView(View):
                 "connection_status": connection_status,
                 "push_api_key": push_api_key,
                 "plannings": plannings,
-                "slurpit_apis": slurpit_apis
+                "slurpit_apis": slurpit_apis,
+                "form": form,
+                "appliance_type": appliance_type,
             },
         )
     
@@ -336,6 +358,7 @@ def get_refresh_url(request, pk):
 
     return url_no_refresh
 
+
 @register_model_view(Device, "Slurpit")
 class SlurpitPlanning(View):
     template_name = "slurpit_netbox/planning_table.html"
@@ -446,6 +469,15 @@ class SlurpitPlanning(View):
                 },
             )
 
+        appliance_type = ''
+        try:
+            setting = Setting.objects.get()
+            server_url = setting.server_url
+            api_key = setting.api_key
+            appliance_type = setting.appliance_type
+        except ObjectDoesNotExist:
+            setting = None
+
         return render(
             request,
             self.template_name,
@@ -455,6 +487,7 @@ class SlurpitPlanning(View):
                 "form": form,
                 "table": table,
                 "result_status": result_status,
-                "cached_time": cached_time
+                "cached_time": cached_time,
+                'appliance_type': appliance_type,
             },
         )

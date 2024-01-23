@@ -15,7 +15,7 @@ from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
 from .. import get_config
-from ..models import ImportedDevice, SlurpitLog
+from ..models import ImportedDevice, SlurpitLog, Setting
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
@@ -24,6 +24,7 @@ from ..importer import (
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.db.models.fields.json import KeyTextTransform
+from django.core.exceptions import ObjectDoesNotExist
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
@@ -54,6 +55,7 @@ class ImportedDeviceListView(generic.ObjectListView):
     queryset = to_onboard_queryset
     table = tables.ImportedDeviceTable
     template_name = "slurpit_netbox/onboard_device.html"
+
     def get(self, request, *args, **kwargs):        
         self.queryset = self.to_onboard_queryset
 
@@ -72,10 +74,20 @@ class ImportedDeviceListView(generic.ObjectListView):
         return redirect(request.path)
 
     def get_extra_context(self, request):
+        appliance_type = ''
+        try:
+            setting = Setting.objects.get()
+            server_url = setting.server_url
+            api_key = setting.api_key
+            appliance_type = setting.appliance_type
+        except ObjectDoesNotExist:
+            setting = None
+
         return {
             'to_onboard_count': self.to_onboard_queryset.count(),
             'onboarded_count': self.onboarded_queryset.count(),
-            'migrate_count': self.migrate_queryset.count()
+            'migrate_count': self.migrate_queryset.count(),
+            'appliance_type': appliance_type,
         }
 
 

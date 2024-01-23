@@ -33,3 +33,15 @@ class LogCategoryChoices(ChoiceSet):
         (RECONCILE, _('reconcile')),
         (INIT, _('init')),
     )
+
+class SlurpitApplianceTypeChoices(ChoiceSet):
+
+    CLOUD = 'cloud'
+    ONPREMISE = 'on-premise'
+    BOTH = 'both'
+
+    CHOICES = (
+        (CLOUD, _('CLOUD')),
+        (ONPREMISE, _('ON PREMISE')),
+        (BOTH, _('BOTH')),
+    )

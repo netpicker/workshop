@@ -25,12 +25,15 @@ def slurpit_plugin_registered(view_func):
                     setting = Setting.objects.get()
                     server_url = setting.server_url
                     api_key = setting.api_key
-                    
-                    if api_key == '' or server_url == '':
-                        messages.warning(request, "To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
+                    appliance_type = setting.appliance_type
+
+                    if appliance_type == '':
+                        messages.warning(request, "To use the Slurp'it plugin, you should need to choose Appliance Type at Setting Page.")
+                    elif appliance_type != 'cloud' and api_key == '' or server_url == '':
+                        messages.warning(request, "To use the Slurp'it plugin, you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
                 except ObjectDoesNotExist:
                     setting = None
-                    messages.warning(request, "To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
+                    messages.warning(request, "To use the Slurp'it plugin, you should need to choose Appliance Type at Setting Page.")
                 
                 return view_func(request, *args, **kwargs)
             
