@@ -14,6 +14,7 @@ def slurpit_plugin_registered(view_func):
             'plugins/slurpit/reconcile/',
             'plugins/slurpit/slurpitlog/'
         ]
+        print('abcd')
 
         for path in paths:
             if path in request.path and request.method == 'GET':
@@ -21,6 +22,7 @@ def slurpit_plugin_registered(view_func):
                 test_param = request.GET.get('test',None)
                 if test_param == 'test':
                     continue
+
                 try:
                     setting = Setting.objects.get()
                     server_url = setting.server_url
@@ -31,11 +33,11 @@ def slurpit_plugin_registered(view_func):
                         messages.warning(request, "To use the Slurp'it plugin, you should need to choose Appliance Type at Setting Page.")
                     elif appliance_type != 'cloud' and api_key == '' or server_url == '':
                         messages.warning(request, "To use the Slurp'it plugin, you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
-                except ObjectDoesNotExist:
+                except Exception as e:
                     setting = None
                     messages.warning(request, "To use the Slurp'it plugin, you should need to choose Appliance Type at Setting Page.")
-                
+
                 return view_func(request, *args, **kwargs)
-            
+
         return view_func(request, *args, **kwargs)
     return _wrapped_view

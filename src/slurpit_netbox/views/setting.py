@@ -110,8 +110,7 @@ class SettingsView(View):
             api_key = setting.api_key
             appliance_type = setting.appliance_type
 
-            print(appliance_type)
-        except ObjectDoesNotExist:
+        except Exception as e:
             setting = None
             
         push_api_key = ''
