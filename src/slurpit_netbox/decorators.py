@@ -14,7 +14,6 @@ def slurpit_plugin_registered(view_func):
             'plugins/slurpit/reconcile/',
             'plugins/slurpit/slurpitlog/'
         ]
-        print('abcd')
 
         for path in paths:
             if path in request.path and request.method == 'GET':

@@ -58,18 +58,20 @@
                   </tr>
                   
                 </table>
-                <h6>API calls:</h6>
-                <table class="table table-hover attr-table">
-                  {% for item in slurpit_apis %}
-                    <tr>
-                      <th>
-                        <span class="badge {% if item.type == 'DELETE' %} bg-danger{% elif item.type == 'GET' %}bg-primary{% else %}bg-success{% endif %}">
-                          {{item.type}}
-                        </span>
-                      </th>
-                      <td>{{ item.url}}</td>
-                    </tr>
-                  {% endfor %}
+                {% if debug == True %}
+                  <h6>API calls:</h6>
+                  <table class="table table-hover attr-table">
+                    {% for item in slurpit_apis %}
+                      <tr>
+                        <th>
+                          <span class="badge {% if item.type == 'DELETE' %} bg-danger{% elif item.type == 'GET' %}bg-primary{% else %}bg-success{% endif %}">
+                            {{item.type}}
+                          </span>
+                        </th>
+                        <td>{{ item.url}}</td>
+                      </tr>
+                    {% endfor %}
+                {% endif %}
                 </table>
             </div>
             </div>

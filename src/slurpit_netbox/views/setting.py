@@ -33,6 +33,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from account.models import UserToken
+from django.conf import settings
 
 BATCH_SIZE = 128
 
@@ -206,6 +207,7 @@ class SettingsView(View):
                     "url": "api/plugins/slurpit/test/api/"
                 }
             ]
+
             test_param = request.GET.get('test',None)
             if test_param =='test':
                 if setting is None:
@@ -235,6 +237,7 @@ class SettingsView(View):
                 log_message = f"Slurpit Push API is generated."
                 SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
         
+        debug = settings.DEBUG
         return render(
             request,
             "slurpit_netbox/settings.html",
@@ -246,6 +249,7 @@ class SettingsView(View):
                 "slurpit_apis": slurpit_apis,
                 "form": form,
                 "appliance_type": appliance_type,
+                "debug": debug,
             },
         )
     
