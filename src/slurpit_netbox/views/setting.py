@@ -396,24 +396,8 @@ class SlurpitPlanning(View):
             url_no_refresh = get_refresh_url(request, pk)
 
             if sync == "sync":
-                cache.delete(cache_key)
-                temp = get_latest_data_on_planning(device.name, plan.plan_id)
-                temp = temp[plan.name]["data"]
-
-                Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id).delete()
-
-                # Store the latest data to DB
-                new_items = []
-                for item in temp:
-                    new_items.append(
-                        Snapshot(hostname=device.name, plan_id=plan.plan_id, content=item)
-                    )
+                sync_snapshot(cache_key, device.name, plan)
                 
-                split_devices_arr = list(split_list(new_items, BATCH_SIZE))
-
-                for device_arr in split_devices_arr:
-                    Snapshot.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
-
                 return HttpResponseRedirect(url_no_refresh)
             
             if refresh == "refresh":
@@ -430,6 +414,11 @@ class SlurpitPlanning(View):
                 try: 
                     temp = Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
                     result_key = f"{result_type}_result"
+                    
+                    # Empty case
+                    if temp.count() == 0:
+                        sync_snapshot(cache_key, device.name, plan)
+                        temp = Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
 
                     for r in temp:
                         r = r.content
@@ -496,3 +485,22 @@ class SlurpitPlanning(View):
                 "connection_status": connection_status,
             },
         )
+
+def sync_snapshot(cache_key, device_name, plan):
+    cache.delete(cache_key)
+    temp = get_latest_data_on_planning(device_name, plan.plan_id)
+    temp = temp[plan.name]["data"]
+
+    Snapshot.objects.filter(hostname=device_name, plan_id=plan.plan_id).delete()
+
+    # Store the latest data to DB
+    new_items = []
+    for item in temp:
+        new_items.append(
+            Snapshot(hostname=device_name, plan_id=plan.plan_id, content=item)
+        )
+    
+    split_devices_arr = list(split_list(new_items, BATCH_SIZE))
+
+    for device_arr in split_devices_arr:
+        Snapshot.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
