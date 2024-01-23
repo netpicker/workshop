@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 
 
-from .models import ImportedDevice, Planning, Source, SlurpitLog
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSource, SlurpitLog
 
 
 def check_link(**kwargs):
@@ -53,7 +53,7 @@ class DeviceTypeColumn(Column):
         return link(value, value=value, record=record, bound_column=bound_column)
 
 
-class ImportedDeviceTable(NetBoxTable):
+class SlurpitImportedDeviceTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
     pk = ConditionalToggle()
     hostname = ConditionalLink()
@@ -72,7 +72,7 @@ class ImportedDeviceTable(NetBoxTable):
     )
 
     class Meta(NetBoxTable.Meta):
-        model = ImportedDevice
+        model = SlurpitImportedDevice
         fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
         default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
 
@@ -100,7 +100,7 @@ class MigratedDeviceTable(NetBoxTable):
     )
 
     class Meta(NetBoxTable.Meta):
-        model = ImportedDevice
+        model = SlurpitImportedDevice
         fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'slurpit_devicetype', 'last_updated')
         default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'slurpit_devicetype', 'last_updated')
 
@@ -108,11 +108,11 @@ class MigratedDeviceTable(NetBoxTable):
 class SourceTable(NetBoxTable):
     name = tables.Column(linkify=True)
     status = columns.ChoiceFieldColumn()
-    # snapshot_count = tables.Column(verbose_name="Snapshots")
+    # snapshot_count = tables.Column(verbose_name="SlurpitSnapshots")
     tags = columns.TagColumn(url_name="core:datasource_list")
 
     class Meta(NetBoxTable.Meta):
-        model = Source
+        model = SlurpitSource
         fields = (
             "pk",
             "id",
@@ -139,7 +139,7 @@ class PlanningTable(NetBoxTable):
     disabled = columns.BooleanColumn()
 
     class Meta(NetBoxTable.Meta):
-        model = Planning
+        model = SlurpitPlanning
         fields = (
             "pk",
             "id",

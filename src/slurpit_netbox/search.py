@@ -1,10 +1,10 @@
 from netbox.search import SearchIndex, register_search
-from .models import ImportedDevice
+from .models import SlurpitImportedDevice
 
 
 @register_search
-class ImportedDeviceIndex(SearchIndex):
-    model = ImportedDevice
+class SlurpitImportedDeviceIndex(SearchIndex):
+    model = SlurpitImportedDevice
     fields = (
         ('hostname', 100),
         ('fqdn', 500),

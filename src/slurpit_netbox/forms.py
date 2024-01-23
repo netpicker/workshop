@@ -10,11 +10,11 @@ from utilities.forms.fields import CommentField, DynamicModelChoiceField
 from utilities.forms.widgets import APISelect
 from tenancy.models import TenantGroup, Tenant
 from utilities.forms import BootstrapMixin
-from .models import ImportedDevice, Source, SlurpitPlan, Setting
+from .models import SlurpitImportedDevice, SlurpitSource, SlurpitPlan, SlurpitSetting
 from .management.choices import SlurpitApplianceTypeChoices
 
 class OnboardingForm(NetBoxModelBulkEditForm):
-    model = ImportedDevice
+    model = SlurpitImportedDevice
     device_type = DynamicModelChoiceField(
         label=_('Device type'),
         queryset=DeviceType.objects.all(),
@@ -165,7 +165,7 @@ class SourceForm(NetBoxModelForm):
     )
 
     class Meta:
-        model = Source
+        model = SlurpitSource
         fields = [
             "name",
             "url",
@@ -196,7 +196,7 @@ class SourceForm(NetBoxModelForm):
 
 
 class SourceFilterForm(NetBoxModelFilterSetForm):
-    model = Source
+    model = SlurpitSource
     fieldsets = (
         (None, ("q", "filter_id")),
         ("Data Source", ("status",)),
@@ -212,7 +212,7 @@ class SlurpitPlanTableForm(BootstrapMixin, forms.Form):
     )
 
 class SlurpitApplianceTypeForm(BootstrapMixin, forms.Form):
-    model =  Setting
+    model =  SlurpitSetting
     appliance_type = forms.ChoiceField(
         label=_('Appliance Type'),
         choices=add_blank_choice(SlurpitApplianceTypeChoices),

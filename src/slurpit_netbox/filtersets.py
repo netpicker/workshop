@@ -2,7 +2,7 @@ import django_filters
 from core.choices import DataSourceStatusChoices
 from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet, BaseFilterSet
-from .models import Source, SlurpitLog, SlurpitPlan, Snapshot, ImportedDevice
+from .models import SlurpitSource, SlurpitLog, SlurpitPlan, SlurpitSnapshot, SlurpitImportedDevice
 from django.utils.translation import gettext as _
 
 class SourceFilterSet(NetBoxModelFilterSet):
@@ -11,7 +11,7 @@ class SourceFilterSet(NetBoxModelFilterSet):
     )
 
     class Meta:
-        model = Source
+        model = SlurpitSource
         fields = ("id", "name")
 
     def search(self, queryset, name, value):
@@ -61,14 +61,14 @@ class SlurpitPlanFilterSet(BaseFilterSet):
             Q(name__icontains=value)
         )
     
-class SnapshotFilterSet(BaseFilterSet):
+class SlurpitSnapshotFilterSet(BaseFilterSet):
     q = django_filters.CharFilter(
         method='search',
         label=_('Search'),
     )
 
     class Meta:
-        model = Snapshot
+        model = SlurpitSnapshot
         fields = ["id", "hostname", "plan_id"]
 
     def search(self, queryset, name, value):
@@ -78,14 +78,14 @@ class SnapshotFilterSet(BaseFilterSet):
             Q(name__icontains=value)
         )
 
-class ImportedDeviceFilterSet(BaseFilterSet):
+class SlurpitImportedDeviceFilterSet(BaseFilterSet):
     q = django_filters.CharFilter(
         method='search',
         label=_('Search'),
     )
 
     class Meta:
-        model = ImportedDevice
+        model = SlurpitImportedDevice
         fields = ["id", "hostname"]
 
     def search(self, queryset, name, value):

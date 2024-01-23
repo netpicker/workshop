@@ -4,7 +4,7 @@ from datetime import datetime
 def device_validator(data):
     # Perform your custom validation logic here.
     # For example, we check if required fields are present and have the correct format:
-    required_fields = ['hostname', 'fqdn', 'device_os', 
+    required_fields = ['id', 'hostname', 'fqdn', 'device_os', 
                        'device_type', 'brand', 'disabled', 
                        'createddate', 'changeddate']
     

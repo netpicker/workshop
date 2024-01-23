@@ -13,7 +13,9 @@ from dcim.models import Device, DeviceType
 
 from netbox.models import NetBoxModel, PrimaryModel
 
-class StagedDevice(NetBoxModel):
+class SlurpitStagedDevice(NetBoxModel):
+    slurpit_id = models.IntegerField(unique=True)
+    disabled = models.BooleanField(default=False)
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)
     device_os = models.CharField(max_length=128)
@@ -26,7 +28,9 @@ class StagedDevice(NetBoxModel):
         return f"{self.hostname}"
     
     
-class ImportedDevice(NetBoxModel):
+class SlurpitImportedDevice(NetBoxModel):
+    slurpit_id = models.IntegerField(unique=True)
+    disabled = models.BooleanField(default=False)
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)
     device_os = models.CharField(max_length=128)
@@ -48,7 +52,9 @@ class ImportedDevice(NetBoxModel):
         # Returns the 'slurpit_devicetype' value from the mapped_device's custom_field_data or None if not present.
         return self.mapped_device.custom_field_data.get('slurpit_devicetype')
 
-    def copy_staged_values(self, device: StagedDevice):
+    def copy_staged_values(self, device: SlurpitStagedDevice):
+        self.slurpit_id = device.slurpit_id
+        self.disabled = device.disabled
         self.hostname = device.hostname
         self.fqdn = device.fqdn
         self.device_os = device.device_os
@@ -58,7 +64,7 @@ class ImportedDevice(NetBoxModel):
         self.changeddate = device.changeddate
 
 
-class Snapshot(PrimaryModel):
+class SlurpitSnapshot(PrimaryModel):
     hostname = models.TextField(max_length=255, null=True)
     plan_id = models.TextField(max_length=10, null=True)
     content = models.JSONField()

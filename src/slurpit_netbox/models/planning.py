@@ -1,11 +1,11 @@
 from django.db import models, transaction
 from django.urls import reverse
 from netbox.models import PrimaryModel
-from .setting import Source
+from .setting import SlurpitSource
 
 
-class Planning(PrimaryModel):
-    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+class SlurpitPlanning(PrimaryModel):
+    source = models.ForeignKey(SlurpitSource, on_delete=models.CASCADE)
     external_id = models.CharField(max_length=32)
     name = models.CharField(max_length=100, unique=True, editable=False)
     disabled = models.BooleanField(editable=False)
@@ -27,16 +27,16 @@ class Planning(PrimaryModel):
 
     @classmethod
     def update_selected_for(cls, source_id, selected: list):
-        qs = Planning.objects.filter(source_id=source_id, disabled=False)
+        qs = SlurpitPlanning.objects.filter(source_id=source_id, disabled=False)
         qs.exclude(pk__in=selected).update(selected=False)
         qs.filter(pk__in=selected).update(selected=True)
 
     @classmethod
-    def sync(cls, source: Source):
+    def sync(cls, source: SlurpitSource):
         session = source.get_session()
         r = session.get('/api/planning')
         r.raise_for_status()
-        old_planning = {p.external_id: p for p in Planning.objects.all()}
+        old_planning = {p.external_id: p for p in SlurpitPlanning.objects.all()}
         new_planning = {p['id']: p for p in r.json()}
         old_ids = set(old_planning.keys())
         new_ids = set(new_planning.keys())
@@ -47,9 +47,9 @@ class Planning(PrimaryModel):
                 kw = {k: v for k, v in p.items() if k in ('name', 'disabled')}
                 Planning.objects.create(source=source, description=p['comment'], external_id=str(p['id']), **kw)
             obsolete_ids = {old_planning[old_id].id for old_id in set(old_ids) - set(new_ids)}
-            Planning.objects.filter(pk__in=obsolete_ids).delete()
+            SlurpitPlanning.objects.filter(pk__in=obsolete_ids).delete()
 
-            qs = Planning.objects.filter(external_id__in=set(new_ids) & set(old_ids))
+            qs = SlurpitPlanning.objects.filter(external_id__in=set(new_ids) & set(old_ids))
             for q in qs:
                 p = new_planning[q.external_id]
                 q.name = p['name']

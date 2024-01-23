@@ -18,7 +18,7 @@ def apply_tags(object, tags):
     _apply(object)
 
 
-class Source(PrimaryModel):
+class SlurpitSource(PrimaryModel):
     name = models.CharField(max_length=100, unique=True)
     url = models.CharField(max_length=200, verbose_name=_("URL"))
     status = models.CharField(
@@ -63,7 +63,7 @@ class Source(PrimaryModel):
 
         self.url = self.url.rstrip("/")
 
-class Setting(PrimaryModel):
+class SlurpitSetting(PrimaryModel):
     server_url = models.CharField(max_length=200, verbose_name=_("URL"))
     api_key = models.CharField(max_length=50,editable=False)
     last_synced = models.DateTimeField(blank=True, auto_now=True,null=True, editable=False)

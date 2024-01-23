@@ -19,8 +19,8 @@ urlpatterns = (
     path("source/<int:pk>/",     include(get_model_urls("slurpit_netbox", "source"))),
     
     ## onboard device ##
-    path('devices/',            views.ImportedDeviceListView.as_view(), name='importeddevice_list'),
-    path('devices/onboard',     views.ImportedDeviceOnboardView.as_view(), name='onboard'),
+    path('devices/',            views.SlurpitImportedDeviceListView.as_view(), name='importeddevice_list'),
+    path('devices/onboard',     views.SlurpitImportedDeviceOnboardView.as_view(), name='onboard'),
     path('devices/import',      views.ImportDevices.as_view(), name='import'),
 
     ## data mapping ##

@@ -3,17 +3,17 @@ from netbox.api.fields import ChoiceField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
-from slurpit_netbox.models import SlurpitPlan, ImportedDevice, Planning, StagedDevice, Source, SlurpitLog, Setting, Snapshot
+from slurpit_netbox.models import SlurpitPlan, SlurpitImportedDevice, SlurpitPlanning, SlurpitStagedDevice, SlurpitSource, SlurpitLog, SlurpitSetting, SlurpitSnapshot
 
 __all__ = (
     'SlurpitPlanSerializer',
-    'StagedDeviceSerializer',
-    'ImportedDeviceSerializer',
-    'SourceSerializer',
-    'PlanningSerializer',
+    'SlurpitStagedDeviceSerializer',
+    'SlurpitImportedDeviceSerializer',
+    'SlurpitSourceSerializer',
+    'SlurpitPlanningSerializer',
     'SlurpitLogSerializer',
-    'SettingSerializer',
-    'SnapshotSerializer'
+    'SlurpitSettingSerializer',
+    'SlurpitSnapshotSerializer'
 )
 
 class SlurpitPlanSerializer(NetBoxModelSerializer):
@@ -22,29 +22,29 @@ class SlurpitPlanSerializer(NetBoxModelSerializer):
         model = SlurpitPlan
         fields = ["id", "name", "display", "plan_id"]
 
-class StagedDeviceSerializer(serializers.ModelSerializer):
+class SlurpitStagedDeviceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StagedDevice
+        model = SlurpitStagedDevice
         fields = '__all__'
 
-class SnapshotSerializer(serializers.ModelSerializer):
+class SlurpitSnapshotSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Snapshot
-        fields = '__all__'
-
-
-class ImportedDeviceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ImportedDevice
+        model = SlurpitSnapshot
         fields = '__all__'
 
 
-class SourceSerializer(NetBoxModelSerializer):
+class SlurpitImportedDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SlurpitImportedDevice
+        fields = '__all__'
+
+
+class SlurpitSourceSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="core-api:datasource-detail")
     status = ChoiceField(choices=DataSourceStatusChoices, read_only=True)
 
     class Meta:
-        model = Source
+        model = SlurpitSource
         fields = [
             "id",
             "url",
@@ -59,9 +59,9 @@ class SourceSerializer(NetBoxModelSerializer):
         ]
 
 
-class PlanningSerializer(NetBoxModelSerializer):
+class SlurpitPlanningSerializer(NetBoxModelSerializer):
     class Meta:
-        model = Planning
+        model = SlurpitPlanning
         fields = '__all__'
 
 class SlurpitLogSerializer(NetBoxModelSerializer):
@@ -69,7 +69,7 @@ class SlurpitLogSerializer(NetBoxModelSerializer):
         model = SlurpitLog
         fields = '__all__'
 
-class SettingSerializer(NetBoxModelSerializer):
+class SlurpitSettingSerializer(NetBoxModelSerializer):
     class Meta:
-        model = Setting
+        model = SlurpitSetting
         fields = '__all__'

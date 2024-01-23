@@ -3,13 +3,18 @@ import os
 from django.apps import apps
 from django.db.models.signals import post_migrate
 from extras.plugins import PluginConfig, get_plugin_config
+from importlib import metadata
 
 
 class SlurpitConfig(PluginConfig):
     name = "slurpit_netbox"
-    verbose_name = "Slurp'IT Plugin"
-    description = "Sync Slurp'IT into NetBox"
-    version = "0.0.1"
+    verbose_name = "Slurp'it Plugin"
+    description = "Sync Slurp'it into NetBox"
+    version = "0.1.63"
+    try:
+        version = metadata.version(name) #if installed with pip, it will get the version
+    except Exception as e:
+        pass
     base_url = "slurpit"    
     default_settings = {
         'DeviceType': {'model': "SlurpIT"},
@@ -24,6 +29,7 @@ class SlurpitConfig(PluginConfig):
         'netmiko_choices': 'netmiko_choices',
         'netmiko_handler': 'netmiko_handler',
         'unattended_import': False,
+        'version': version,
         'DEVICETYPE_LIBRARY': os.environ.get('DEVICETYPE_LIBRARY'),
     }
 
@@ -33,9 +39,9 @@ class SlurpitConfig(PluginConfig):
         post_migrate.connect(post_migration, sender=deps_app, weak=False)
         super().ready()
         try:
-            from .models.planning import Planning
+            from .models.planning import SlurpitPlanning
             from .views.planning import make_planning_tabs
-            planning = Planning.get_planning()
+            planning = SlurpitPlanning.get_planning()
             make_planning_tabs(planning)
         except:
             pass

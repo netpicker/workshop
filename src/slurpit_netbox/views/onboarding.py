@@ -15,7 +15,7 @@ from netbox.views import generic
 from utilities.exceptions import AbortRequest, PermissionsViolation
 from utilities.forms import restrict_form_fields
 from .. import get_config
-from ..models import ImportedDevice, SlurpitLog, Setting
+from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
@@ -28,10 +28,10 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
-class ImportedDeviceListView(generic.ObjectListView):
-    to_onboard_queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=True)
-    onboarded_queryset = models.ImportedDevice.objects.filter( mapped_device_id__isnull=False)
-    migrate_queryset = models.ImportedDevice.objects.filter(
+class SlurpitImportedDeviceListView(generic.ObjectListView):
+    to_onboard_queryset = models.SlurpitImportedDevice.objects.filter( mapped_device_id__isnull=True)
+    onboarded_queryset = models.SlurpitImportedDevice.objects.filter( mapped_device_id__isnull=False)
+    migrate_queryset = models.SlurpitImportedDevice.objects.filter(
                 mapped_device_id__isnull=False
             ).annotate(
                 slurpit_devicetype=KeyTextTransform('slurpit_devicetype', 'mapped_device__custom_field_data'),
@@ -53,7 +53,7 @@ class ImportedDeviceListView(generic.ObjectListView):
             )
     
     queryset = to_onboard_queryset
-    table = tables.ImportedDeviceTable
+    table = tables.SlurpitImportedDeviceTable
     template_name = "slurpit_netbox/onboard_device.html"
 
     def get(self, request, *args, **kwargs):        
@@ -75,8 +75,9 @@ class ImportedDeviceListView(generic.ObjectListView):
 
     def get_extra_context(self, request):
         appliance_type = ''
+        connection_status = ''
         try:
-            setting = Setting.objects.get()
+            setting = SlurpitSetting.objects.get()
             server_url = setting.server_url
             api_key = setting.api_key
             appliance_type = setting.appliance_type
@@ -94,10 +95,10 @@ class ImportedDeviceListView(generic.ObjectListView):
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
-class ImportedDeviceOnboardView(generic.BulkEditView):
+class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
     template_name = 'slurpit_netbox/bulk_edit.html'
-    queryset = models.ImportedDevice.objects.all()
-    table = tables.ImportedDeviceTable
+    queryset = models.SlurpitImportedDevice.objects.all()
+    table = tables.SlurpitImportedDeviceTable
     model_form = forms.OnboardingForm
     form = forms.OnboardingForm
 
@@ -110,7 +111,7 @@ class ImportedDeviceOnboardView(generic.BulkEditView):
         else:
             pk_list = request.POST.getlist('pk')
 
-        self.queryset = models.ImportedDevice.objects.filter(pk__in=pk_list)
+        self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
 
         form = self.form(request.POST, initial={'pk': pk_list})
         restrict_form_fields(form, request.user)

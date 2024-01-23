@@ -2,9 +2,9 @@
 from netbox.api.viewsets import NetBoxModelViewSet
 from dcim.models import Device
 from dcim.choices import DeviceStatusChoices
-from slurpit_netbox.models import SlurpitPlan, Snapshot, ImportedDevice, StagedDevice
-from slurpit_netbox.filtersets import SlurpitPlanFilterSet, SnapshotFilterSet, ImportedDeviceFilterSet
-from .serializers import SlurpitPlanSerializer, SnapshotSerializer, ImportedDeviceSerializer
+from slurpit_netbox.models import SlurpitPlan, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
+from slurpit_netbox.filtersets import SlurpitPlanFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
+from .serializers import SlurpitPlanSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
 from rest_framework.routers import APIRootView
 from rest_framework_bulk import BulkCreateModelMixin, BulkDestroyModelMixin
 from rest_framework.decorators import action
@@ -67,14 +67,14 @@ class SlurpitPlanViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SnapshotViewSet(
+class SlurpitSnapshotViewSet(
         BulkCreateModelMixin,
         BulkDestroyModelMixin,
         NetBoxModelViewSet
     ):
-    queryset = Snapshot.objects.all()
-    serializer_class = SnapshotSerializer
-    filterset_class = SnapshotFilterSet
+    queryset = SlurpitSnapshot.objects.all()
+    serializer_class = SlurpitSnapshotSerializer
+    filterset_class = SlurpitSnapshotFilterSet
 
     @action(detail=False, methods=['delete'], url_path='delete-all/(?P<hostname>[^/.]+)/(?P<planning_id>[^/.]+)')
     def delete_all(self, request, *args, **kwargs):
@@ -86,7 +86,7 @@ class SnapshotViewSet(
         plan_id = kwargs.get('planning_id')
 
         if hostname and plan_id:
-            self.queryset = Snapshot.objects.filter(hostname=hostname, plan_id=plan_id)
+            self.queryset = SlurpitSnapshot.objects.filter(hostname=hostname, plan_id=plan_id)
             # Perform the deletion and return a response
             self.queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -96,16 +96,16 @@ class DeviceViewSet(
         BulkDestroyModelMixin,
         NetBoxModelViewSet
     ):
-    queryset = ImportedDevice.objects.all()
-    serializer_class = ImportedDeviceSerializer
-    filterset_class = ImportedDeviceFilterSet
+    queryset = SlurpitImportedDevice.objects.all()
+    serializer_class = SlurpitImportedDeviceSerializer
+    filterset_class = SlurpitImportedDeviceFilterSet
 
     @action(detail=False, methods=['delete'], url_path='delete-all')
     def delete_all(self, request, *args, **kwargs):
         with transaction.atomic():
-            Device.objects.select_related('importeddevice').update(status=DeviceStatusChoices.STATUS_OFFLINE)
-            StagedDevice.objects.all().delete()
-            ImportedDevice.objects.filter(mapped_device__isnull=True).delete()
+            Device.objects.select_related('slurpitimporteddevice').update(status=DeviceStatusChoices.STATUS_OFFLINE)
+            SlurpitStagedDevice.objects.all().delete()
+            SlurpitImportedDevice.objects.filter(mapped_device__isnull=True).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -113,10 +113,10 @@ class DeviceViewSet(
     def delete(self, request, *args, **kwargs):
         hostname_to_delete = kwargs.get('hostname')
         with transaction.atomic():
-            to_delete = ImportedDevice.objects.filter(hostname=hostname_to_delete)
-            Device.objects.filter(importeddevice__in=to_delete).update(status=DeviceStatusChoices.STATUS_OFFLINE)
+            to_delete = SlurpitImportedDevice.objects.filter(hostname=hostname_to_delete)
+            Device.objects.filter(slurpitimporteddevice__in=to_delete).update(status=DeviceStatusChoices.STATUS_OFFLINE)
             to_delete.filter(mapped_device__isnull=True).delete()
-            StagedDevice.objects.filter(hostname=hostname_to_delete).delete()
+            SlurpitStagedDevice.objects.filter(hostname=hostname_to_delete).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -135,9 +135,9 @@ class DeviceViewSet(
         return JsonResponse({'status': 'success'})
     
 class SlurpitTestAPIView(NetBoxModelViewSet):
-    queryset = ImportedDevice.objects.all()
-    serializer_class = ImportedDeviceSerializer
-    filterset_class = ImportedDeviceFilterSet
+    queryset = SlurpitImportedDevice.objects.all()
+    serializer_class = SlurpitImportedDeviceSerializer
+    filterset_class = SlurpitImportedDeviceFilterSet
 
     permission_classes = [IsAuthenticated]
 

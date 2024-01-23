@@ -11,7 +11,7 @@ from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm, SlurpitApplianceTypeForm
-from ..models import Source, Setting, SlurpitLog, SlurpitPlan, Snapshot
+from ..models import SlurpitSource, SlurpitSetting, SlurpitLog, SlurpitPlan, SlurpitSnapshot
 from ..tables import SourceTable, SlurpitPlanTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
@@ -45,55 +45,55 @@ def split_list(input_list, chunk_size):
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SourceListView(generic.ObjectListView):
-    queryset = Source.objects
+    queryset = SlurpitSource.objects
     filterset = SourceFilterSet
     filterset_form = SourceFilterForm
     table = SourceTable
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
-@register_model_view(Source, "edit")
+@register_model_view(SlurpitSource, "edit")
 class SourceEditView(generic.ObjectEditView):
-    queryset = Source.objects.all()
+    queryset = SlurpitSource.objects.all()
     form = SourceForm
 
 
-@register_model_view(Source)
+@register_model_view(SlurpitSource)
 class SourceView(generic.ObjectView):
-    queryset = Source.objects.all()
+    queryset = SlurpitSource.objects.all()
 
     def get(self, request, **kwargs):
         if is_htmx(request):
-            source: Source = self.get_object(**kwargs)
+            source: SlurpitSource = self.get_object(**kwargs)
             r = source.get_session().get('/platform/ping')
             status = f"{'OK' if r.ok else 'ERR'} ({r.status_code})"
             return HttpResponse(status)
         return super().get(request, **kwargs)
 
 
-@register_model_view(Source, "sync", path="sync")
+@register_model_view(SlurpitSource, "sync", path="sync")
 class SourceSyncView(BaseObjectView):
-    queryset = Source.objects.all()
+    queryset = SlurpitSource.objects.all()
 
     def get_required_permission(self):
         return "slurpit_netbox.sync_source"
 
     def get(self, request, pk):
-        from ..models import Planning
+        from ..models import SlurpitPlanning
         source = get_object_or_404(self.queryset, pk=pk)
-        Planning.sync(source)
+        SlurpitPlanning.sync(source)
         messages.success(request, f"Planning sync'ed")
         return redirect(source.get_absolute_url())
 
 
-@register_model_view(Source, "delete")
+@register_model_view(SlurpitSource, "delete")
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SourceDeleteView(generic.ObjectDeleteView):
-    queryset = Source.objects.all()
+    queryset = SlurpitSource.objects.all()
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SourceBulkDeleteView(generic.BulkDeleteView):
-    queryset = Source.objects.all()
+    queryset = SlurpitSource.objects.all()
     filterset = SourceFilterSet
     table = SourceTable
 
@@ -106,7 +106,7 @@ class SettingsView(View):
     def get(self, request):
         appliance_type = ''
         try:
-            setting = Setting.objects.get()
+            setting = SlurpitSetting.objects.get()
             server_url = setting.server_url
             api_key = setting.api_key
             appliance_type = setting.appliance_type
@@ -162,7 +162,7 @@ class SettingsView(View):
 
             if appliance_type_param:
                 if setting is None:
-                    setting = Setting.objects.create()
+                    setting = SlurpitSetting.objects.create()
                 # Update appliance typ
                 setting.appliance_type = appliance_type_param
                 setting.save()
@@ -224,7 +224,7 @@ class SettingsView(View):
             action_param = request.GET.get('action',None)
             if action_param == 'generate':
                 if setting is None:
-                    setting = Setting.objects.create()
+                    setting = SlurpitSetting.objects.create()
 
                 token, __annotations__ = Token.objects.get_or_create(user=request.user)
                 push_api_key = Token.generate_key()
@@ -260,9 +260,9 @@ class SettingsView(View):
             server_url = request.POST.get('server_url')
             api_key = request.POST.get('api_key')
             if id == "":
-                obj, created = Setting.objects.get_or_create(id=0, defaults={'server_url': server_url, 'api_key': api_key})
+                obj, created = SlurpitSetting.objects.get_or_create(id=0, defaults={'server_url': server_url, 'api_key': api_key})
             else:
-                obj, created = Setting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
+                obj, created = SlurpitSetting.objects.get_or_create(id=id, defaults={'server_url': server_url, 'api_key': api_key})
             log_message = "Added the settings parameter successfully."
 
             connection_status = self.connection_test(request, server_url, api_key)
@@ -412,13 +412,13 @@ class SlurpitPlanning(View):
             if not data:
                 data = []
                 try: 
-                    temp = Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
+                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
                     result_key = f"{result_type}_result"
                     
                     # Empty case
                     if temp.count() == 0:
                         sync_snapshot(cache_key, device.name, plan)
-                        temp = Snapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
+                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
 
                     for r in temp:
                         r = r.content
@@ -463,7 +463,7 @@ class SlurpitPlanning(View):
 
         appliance_type = ''
         try:
-            setting = Setting.objects.get()
+            setting = SlurpitSetting.objects.get()
             server_url = setting.server_url
             api_key = setting.api_key
             appliance_type = setting.appliance_type
@@ -491,16 +491,16 @@ def sync_snapshot(cache_key, device_name, plan):
     temp = get_latest_data_on_planning(device_name, plan.plan_id)
     temp = temp[plan.name]["data"]
 
-    Snapshot.objects.filter(hostname=device_name, plan_id=plan.plan_id).delete()
+    SlurpitSnapshot.objects.filter(hostname=device_name, plan_id=plan.plan_id).delete()
 
     # Store the latest data to DB
     new_items = []
     for item in temp:
         new_items.append(
-            Snapshot(hostname=device_name, plan_id=plan.plan_id, content=item)
+            SlurpitSnapshot(hostname=device_name, plan_id=plan.plan_id, content=item)
         )
     
     split_devices_arr = list(split_list(new_items, BATCH_SIZE))
 
     for device_arr in split_devices_arr:
-        Snapshot.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+        SlurpitSnapshot.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)

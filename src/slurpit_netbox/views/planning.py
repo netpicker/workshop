@@ -6,8 +6,8 @@ from netbox.registry import registry
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 from ..tables import PlanningTable
-from ..models import Source
-from ..models import Planning
+from ..models import SlurpitSource
+from ..models import SlurpitPlanning
 
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
@@ -23,11 +23,11 @@ def reload_urlconf():
         del sys.modules[url_conf]
 
 
-@register_model_view(Source, name='planning', path='planning')
+@register_model_view(SlurpitSource, name='planning', path='planning')
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class PlanningListView(generic.ObjectChildrenView):
-    queryset = Source.objects.all()
-    child_model = Planning
+    queryset = SlurpitSource.objects.all()
+    child_model = SlurpitPlanning
     template_name = "slurpit_netbox/planning/planning_list.html"
     table = PlanningTable
     actions = []
@@ -43,8 +43,8 @@ class PlanningListView(generic.ObjectChildrenView):
     def post(self, request, *args, **kwargs):
         pks = request.POST.getlist('pk')
         source_id = request.resolver_match.kwargs['pk']
-        Planning.update_selected_for(source_id, pks)
-        planning = Planning.get_planning()
+        SlurpitPlanning.update_selected_for(source_id, pks)
+        planning = SlurpitPlanning.get_planning()
         make_planning_tabs(planning)
         return redirect(self.get_return_url(request))
 
@@ -54,7 +54,7 @@ class PlanningListView(generic.ObjectChildrenView):
 
 
 def make_planning_tabs(plannings):
-    def create_view_class(planning: Planning):
+    def create_view_class(planning: SlurpitPlanning):
         class SlurpitPlanningView(generic.ObjectView):
             _planning = planning
             queryset = Device.objects.all()
@@ -84,14 +84,14 @@ def make_planning_tabs(plannings):
         deco(view_class)
 
 
-@register_model_view(Source, name='fetch_planning', path='fetch')
+@register_model_view(SlurpitSource, name='fetch_planning', path='fetch')
 class PlanningSyncView(generic.ObjectView):
-    queryset = Source.objects
+    queryset = SlurpitSource.objects
 
     def post(self, request, *args, **kwargs):
-        source = get_object_or_404(Source.objects, **kwargs)
-        Planning.sync(source)
-        planning = Planning.get_planning()
+        source = get_object_or_404(SlurpitSource.objects, **kwargs)
+        SlurpitPlanning.sync(source)
+        planning = SlurpitPlanning.get_planning()
         make_planning_tabs(planning)
         url = reverse('plugins:slurpit_netbox:source_planning',
                        kwargs=request.resolver_match.kwargs)

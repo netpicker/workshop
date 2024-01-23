@@ -6,15 +6,15 @@ from extras.models.tags import Tag
 from netmiko.ssh_dispatcher import CLASS_MAPPER_BASE
 
 from .. import get_config
-from .device import ImportedDevice, StagedDevice, Snapshot
-from .planning import Planning
-from .setting import Source, Setting
+from .device import SlurpitImportedDevice, SlurpitStagedDevice, SlurpitSnapshot
+from .planning import SlurpitPlanning
+from .setting import SlurpitSource, SlurpitSetting
 from .logs import SlurpitLog
 from .slurpit_plan import SlurpitPlan
 
 __all__ = [
-    'ImportedDevice', 'Planning', 'Source', 'StagedDevice',
-    'post_migration', 'SlurpitLog', 'Setting'
+    'SlurpitImportedDevice', 'SlurpitPlanning', 'SlurpitSource', 'SlurpitStagedDevice',
+    'post_migration', 'SlurpitLog', 'SlurpitSetting'
 ]
 
 
@@ -199,12 +199,12 @@ def add_default_mandatory_objects(tags):
 
 def post_migration(sender, **kwargs):
     try:
-        from .planning import Planning
+        from .planning import SlurpitPlanning
         from ..views.planning import make_planning_tabs
         tags = ensure_slurpit_tags()
         add_netmiko_device_type_support(tags)
         add_default_mandatory_objects(tags)
-        planning = Planning.get_planning()
+        planning = SlurpitPlanning.get_planning()
         make_planning_tabs(planning)
     except:
         pass

@@ -1,5 +1,5 @@
 from functools import wraps
-from .models import Setting
+from .models import SlurpitSetting
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
 
@@ -27,7 +27,7 @@ def slurpit_plugin_registered(view_func):
                     continue
                 
                 try:
-                    setting = Setting.objects.get()
+                    setting = SlurpitSetting.objects.get()
                     server_url = setting.server_url
                     api_key = setting.api_key
                     appliance_type = setting.appliance_type
