@@ -102,11 +102,6 @@ class DeviceViewSet(
 
     @action(detail=False, methods=['delete'], url_path='delete-all')
     def delete_all(self, request, *args, **kwargs):
-        """
-        A custom action to delete all SlurpitPlan objects.
-        Be careful with this operation: it cannot be undone!
-        """
-
         with transaction.atomic():
             Device.objects.select_related('importeddevice').update(status=DeviceStatusChoices.STATUS_OFFLINE)
             StagedDevice.objects.all().delete()
@@ -117,8 +112,11 @@ class DeviceViewSet(
     @action(detail=False, methods=['delete'], url_path='delete/(?P<hostname>[^/.]+)')
     def delete(self, request, *args, **kwargs):
         hostname_to_delete = kwargs.get('hostname')
-        ImportedDevice.objects.filter(hostname=hostname_to_delete).delete()
-        StagedDevice.objects.filter(hostname=hostname_to_delete).delete()
+        with transaction.atomic():
+            to_delete = ImportedDevice.objects.filter(hostname=hostname_to_delete)
+            Device.objects.filter(importeddevice__in=to_delete).update(status=DeviceStatusChoices.STATUS_OFFLINE)
+            to_delete.filter(mapped_device__isnull=True).delete()
+            StagedDevice.objects.filter(hostname=hostname_to_delete).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
