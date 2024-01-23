@@ -21,7 +21,11 @@ def slurpit_plugin_registered(view_func):
                 test_param = request.GET.get('test',None)
                 if test_param == 'test':
                     continue
-
+                
+                appliance_type_param = request.GET.get('appliance_type', None)
+                if appliance_type_param:
+                    continue
+                
                 try:
                     setting = Setting.objects.get()
                     server_url = setting.server_url
