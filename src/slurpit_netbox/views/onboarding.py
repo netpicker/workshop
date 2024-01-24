@@ -1,11 +1,11 @@
 import logging
 import requests
 from dcim.choices import DeviceStatusChoices
-from dcim.models import  Manufacturer, Platform, DeviceType, Site
+from dcim.models import  Manufacturer, Platform, DeviceType, Site, Device
 from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
 from django.core.exceptions import FieldDoesNotExist, ValidationError
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import ManyToManyField, ManyToManyRel, F, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -29,8 +29,9 @@ from django.core.exceptions import ObjectDoesNotExist
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SlurpitImportedDeviceListView(generic.ObjectListView):
-    to_onboard_queryset = models.SlurpitImportedDevice.objects.filter( mapped_device_id__isnull=True)
-    onboarded_queryset = models.SlurpitImportedDevice.objects.filter( mapped_device_id__isnull=False)
+    conflicted_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True, hostname__in=Device.objects.values('name'))
+    to_onboard_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True).exclude(pk__in=conflicted_queryset.values('pk'))
+    onboarded_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=False)
     migrate_queryset = models.SlurpitImportedDevice.objects.filter(
                 mapped_device_id__isnull=False
             ).annotate(
@@ -62,6 +63,9 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
         if request.GET.get('tab') == "migrate":
             self.queryset = self.migrate_queryset
             self.table = tables.MigratedDeviceTable
+        elif request.GET.get('tab') == "conflicted":
+            self.queryset = self.conflicted_queryset
+            self.table = tables.MigratedDeviceTable
         elif request.GET.get('tab') == "onboarded":
             self.queryset = self.onboarded_queryset
 
@@ -89,6 +93,7 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
             'to_onboard_count': self.to_onboard_queryset.count(),
             'onboarded_count': self.onboarded_queryset.count(),
             'migrate_count': self.migrate_queryset.count(),
+            'conflicted_count': self.conflicted_queryset.count(),
             'appliance_type': appliance_type,
             'connection_status': connection_status
         }
@@ -138,60 +143,77 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     form.add_error(None, e.message)
                     # clear_webhooks.send(sender=self)
 
-        else:
-            if 'migrate' in request.GET:
-                migrate = request.GET.get('migrate')
-                return_flg = False
-
+        elif 'migrate' in request.GET:
+            migrate = request.GET.get('migrate')
+            if migrate == 'create':                
                 for obj in self.queryset:
-                    if migrate == 'create':
-                        try:
-                            obj.mapped_device.delete()
-                            obj.mapped_device = None
-                            obj.save()
-                        except:
-                            pass
-                    else:
-                        cf = obj.mapped_device.custom_field_data
-                        cf['slurpit_hostname'] = obj.hostname
-                        cf['slurpit_fqdn'] = obj.fqdn
-                        cf['slurpit_platform'] = obj.device_os
-                        cf['slurpit_manufactor'] = obj.brand
-                        cf['slurpit_devicetype'] = obj.device_type
+                    device = obj.mapped_device
+                    obj.mapped_device = None
+                    obj.save()
+                    device.delete() #delete last to prevent cascade delete
+            else:
+                for obj in self.queryset:
+                    cf = obj.mapped_device.custom_field_data
+                    cf['slurpit_hostname'] = obj.hostname
+                    cf['slurpit_fqdn'] = obj.fqdn
+                    cf['slurpit_platform'] = obj.device_os
+                    cf['slurpit_manufactor'] = obj.brand
+                    cf['slurpit_devicetype'] = obj.device_type                   
 
-                        site = Site.objects.get()
+                    obj.mapped_device.custom_field_data = cf
+                    obj.mapped_device.name = obj.hostname
+                    obj.mapped_device.save()
+                    obj.save()
 
-                        obj.mapped_device.custom_field_data = cf
-                        obj.mapped_device.device_type =  dtype
-                        obj.mapped_device.platform = platform
-                        obj.mapped_device.name = obj.hostname
-                        obj.mapped_device.site = site
-                        obj.mapped_device.save()
-                        obj.save()
+                    log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
+                    SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
+                
+                msg = f'Migration is done successfully.'
+                logger.info(msg)
+                messages.success(self.request, msg)
 
-                        log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
-                        SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
+                return redirect(self.get_return_url(request))
 
-                        return_flg = True
-                    
-                if return_flg:
-                    msg = f'Migration is done successfully.'
-                    logger.info(msg)
-                    messages.success(self.request, msg)
+        elif 'conflicted' in request.GET:
+            conflic = request.GET.get('conflicted')
+            if conflic == 'create':
+                Device.objects.filter(name__in=self.queryset.values('hostname')).delete()
+            else:
+                for obj in self.queryset:
+                    device = Device.objects.filter(name__iexact=obj.hostname).first()
+                    cf = device.custom_field_data
+                    cf['slurpit_hostname'] = obj.hostname
+                    cf['slurpit_fqdn'] = obj.fqdn
+                    cf['slurpit_platform'] = obj.device_os
+                    cf['slurpit_manufactor'] = obj.brand
+                    cf['slurpit_devicetype'] = obj.device_type
 
-                    return redirect(self.get_return_url(request))
+                    obj.mapped_device = device
+                    obj.mapped_device.custom_field_data = cf
+                    obj.mapped_device.save()
+                    obj.save()
 
-            defaults = importer.get_defaults()
-            device_types = list(self.queryset.values_list('device_type').distinct())
-            if len(device_types) == 1 and (dt := lookup_device_type(device_types[0][0])):
-                defaults['device_type'] = dt
-            initial_data = {'pk': pk_list}
-            for k, v in defaults.items():
-                initial_data.setdefault(k, str(v.id))
-            initial_data.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
+                    log_message = f"Conflicted device resolved - {obj.hostname} successfully updated."
+                    SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
+                
+                msg = f'Conflicts successfully resolved.'
+                logger.info(msg)
+                messages.success(self.request, msg)
 
-            form = self.form(initial=initial_data)
-            restrict_form_fields(form, request.user)
+                return redirect(self.get_return_url(request))
+                
+
+        defaults = importer.get_defaults()
+        device_types = list(self.queryset.values_list('device_type').distinct())
+        if len(device_types) == 1 and (dt := lookup_device_type(device_types[0][0])):
+            defaults['device_type'] = dt
+        initial_data = {'pk': pk_list}
+        for k, v in defaults.items():
+            initial_data.setdefault(k, str(v.id))
+        initial_data.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
+
+        form = self.form(initial=initial_data)
+        restrict_form_fields(form, request.user)
                 
         # Retrieve objects being edited
         table = self.table(self.queryset.filter(mapped_device_id__isnull=True), orderable=False)

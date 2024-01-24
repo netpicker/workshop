@@ -14,7 +14,7 @@ from dcim.models import Device, DeviceType
 from netbox.models import NetBoxModel, PrimaryModel
 
 class SlurpitStagedDevice(NetBoxModel):
-    slurpit_id = models.IntegerField(unique=True)
+    slurpit_id = models.BigIntegerField (unique=True)
     disabled = models.BooleanField(default=False)
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)
@@ -29,7 +29,7 @@ class SlurpitStagedDevice(NetBoxModel):
     
     
 class SlurpitImportedDevice(NetBoxModel):
-    slurpit_id = models.IntegerField(unique=True)
+    slurpit_id = models.BigIntegerField (unique=True)
     disabled = models.BooleanField(default=False)
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)

@@ -40,6 +40,11 @@
       </a>
     </li>
     <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'conflicted' %}active{% endif %}" href="?tab=conflicted">
+        Conflict {% badge conflicted_count %}
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
       <a class="nav-tab nav-link  {% if request.GET.tab == 'onboarded' %}active{% endif %}" href="?tab=onboarded">
         Onboarded {% badge onboarded_count %}
       </a>
@@ -52,6 +57,8 @@
   <div class="tab-content">
     {% if request.GET.tab == 'new' or request.GET.tab is None %}
       {% include "slurpit_netbox/onboard/new_device_list.html" %}
+    {% elif request.GET.tab == 'conflicted' %}
+      {% include "slurpit_netbox/onboard/conflict_device_list.html" %}
     {% elif request.GET.tab == 'migrate' %}
       {% include "slurpit_netbox/onboard/migrate_device_list.html" %}
     {% elif request.GET.tab == 'onboarded' %}
