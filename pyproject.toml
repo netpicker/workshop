@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "slurpit_netbox"
-version = "0.1.67"
+version = "0.1.68"
 description = ""
 authors = ["Pieter <pieter@slurpit.io>"]
 readme = "README.md"
@@ -10,7 +10,6 @@ packages = [{include = "slurpit_netbox", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 requests = "^2.31.0"
-httpx = "^0.25.2"
 djangorestframework-bulk = "^0.2.1"
 
 
