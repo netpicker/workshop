@@ -25,6 +25,10 @@ def slurpit_plugin_registered(view_func):
                 appliance_type_param = request.GET.get('appliance_type', None)
                 if appliance_type_param:
                     continue
+
+                reset_param = request.GET.get('reset', None)
+                if reset_param:
+                    continue
                 
                 try:
                     setting = SlurpitSetting.objects.get()

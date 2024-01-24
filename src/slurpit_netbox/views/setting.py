@@ -104,6 +104,17 @@ class SettingsView(View):
     model_name = "device"
     
     def get(self, request):
+        reset_param = request.GET.get('reset', None)
+        if reset_param:
+            ImportedDevice.objects.all().delete()
+            StagedDevice.objects.all().delete()
+            Snapshot.objects.all().delete()
+            SlurpitLog.objects.all().delete()
+            Setting.objects.all().delete()
+            SlurpitPlan.objects.all().delete()
+
+            return HttpResponseRedirect(reverse("plugins:slurpit_netbox:settings"))
+        
         appliance_type = ''
         try:
             setting = SlurpitSetting.objects.get()
@@ -135,6 +146,7 @@ class SettingsView(View):
 
         form = SlurpitApplianceTypeForm(initial=initial_data)
 
+        
         if tab_param == 'data_tabs':
             # Synchronize planning data
             sync_param = request.GET.get('sync', None)
