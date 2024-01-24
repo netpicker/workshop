@@ -108,8 +108,9 @@ def import_devices(devices):
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync staged {len(to_insert)} devices")
 
 
-def process_import():
-    handle_parted()
+def process_import(delete=True):
+    if delete:
+        handle_parted()
     handle_changed()
     handle_new_comers()
     

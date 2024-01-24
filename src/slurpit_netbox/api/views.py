@@ -130,7 +130,7 @@ class DeviceViewSet(
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
 
         import_devices(devices)
-        process_import()
+        process_import(delete=False)
         
         return JsonResponse({'status': 'success'})
     
