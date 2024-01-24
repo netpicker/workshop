@@ -11,7 +11,7 @@ from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
 from ..filtersets import SourceFilterSet
 from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm, SlurpitApplianceTypeForm
-from ..models import SlurpitSource, SlurpitSetting, SlurpitLog, SlurpitPlan, SlurpitSnapshot
+from ..models import SlurpitSource, SlurpitSetting, SlurpitLog, SlurpitPlan, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
 from ..tables import SourceTable, SlurpitPlanTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
@@ -106,11 +106,11 @@ class SettingsView(View):
     def get(self, request):
         reset_param = request.GET.get('reset', None)
         if reset_param:
-            ImportedDevice.objects.all().delete()
-            StagedDevice.objects.all().delete()
-            Snapshot.objects.all().delete()
+            SlurpitImportedDevice.objects.all().delete()
+            SlurpitStagedDevice.objects.all().delete()
+            SlurpitSnapshot.objects.all().delete()
             SlurpitLog.objects.all().delete()
-            Setting.objects.all().delete()
+            SlurpitSetting.objects.all().delete()
             SlurpitPlan.objects.all().delete()
 
             return HttpResponseRedirect(reverse("plugins:slurpit_netbox:settings"))
