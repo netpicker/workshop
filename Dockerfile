@@ -5,7 +5,7 @@ FROM netboxcommunity/netbox:latest
 COPY /docker/configuration/configuration.py /etc/netbox/config/configuration.py
 COPY /docker/configuration/plugins.py /etc/netbox/config/plugins.py
 
-RUN pip install netmiko arrow djangorestframework-bulk
+RUN pip install djangorestframework-bulk
 
 RUN apt-get update && apt-get install -y git
 RUN git clone https://github.com/netbox-community/devicetype-library.git /tmp/repository \

@@ -1,19 +1,18 @@
 import logging
-from functools import partial
-from subprocess import PIPE, Popen
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
-from django.db.models import F, ExpressionWrapper, fields
-import arrow
 import requests
 import yaml
 
-from dcim.models import (
-    Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
-)
-from dcim.choices import DeviceStatusChoices
-from django.db.models import QuerySet
+from functools import partial
+from subprocess import PIPE, Popen
+from datetime import datetime
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import connection
+from django.db.models import F, ExpressionWrapper, fields, QuerySet
 from django.utils.text import slugify
+
+from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
+from dcim.choices import DeviceStatusChoices
 
 from . import get_config
 from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting
@@ -40,12 +39,12 @@ def get_devices():
         r.raise_for_status()
         data = r.json()
         log_message = "Syncing the devices from slurp'it in Netbox."
-        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
+        SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
         return data
     except ObjectDoesNotExist:
         setting = None
         log_message = "Need to set the setting parameter"
-        SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+        SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=log_message)
         return None
     
 def get_latest_data_on_planning(hostname, planning_id):
@@ -63,12 +62,12 @@ def get_latest_data_on_planning(hostname, planning_id):
         r.raise_for_status()
         data = r.json()
         log_message = "Get the latest data from slurp'it in Netbox on planning ID."
-        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=log_message)
+        SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
         return data
     except ObjectDoesNotExist:
         setting = None
         log_message = "Need to set the setting parameter"
-        SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+        SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=log_message)
         return None
 
 
@@ -93,15 +92,20 @@ def import_devices(devices):
             continue
         if device.get('device_type') is None:
             log.warning('Missing device type, cannot import %r', device)
-            log_message = f"Missing device type, cannot import device - {device.get('hostname')}"
-            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+            SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"Missing device type, cannot import device {device.get('hostname')}")
             continue
         device['slurpit_id'] = device.pop('id')
-        device['createddate'] = arrow.get(device['createddate']).datetime
-        device['changeddate'] = arrow.get(device['changeddate']).datetime
+        
+        try:
+            device['createddate'] = datetime.strptime(device['createddate'], '%Y-%m-%d %H:%M:%S')
+            device['changeddate'] = datetime.strptime(device['changeddate'], '%Y-%m-%d %H:%M:%S')            
+        except ValueError:
+            SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"Failed to convert to datetime, cannot import {device.get('hostname')}")
+            log.warning(f'Failed to convert to datetime, cannot import {device}')
+            continue
         to_insert.append(SlurpitStagedDevice(**{key: value for key, value in device.items() if key in columns}))
     SlurpitStagedDevice.objects.bulk_create(to_insert)
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync staged {len(to_insert)} devices")
+    SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync staged {len(to_insert)} devices")
 
 
 def process_import():
@@ -109,7 +113,7 @@ def process_import():
     handle_changed()
     handle_new_comers()
     
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message="Sync job completed.")
+    SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message="Sync job completed.")
 
 
 def run_import():
@@ -137,7 +141,7 @@ def handle_parted():
             device.mapped_device.status=DeviceStatusChoices.STATUS_OFFLINE
             device.mapped_device.save()
         count += 1
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync parted {count} devices")
+    SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync parted {count} devices")
     
 
 def handle_new_comers():
@@ -159,7 +163,7 @@ def handle_new_comers():
         SlurpitImportedDevice.objects.bulk_create(to_import, ignore_conflicts=True)
         offset += BATCH_SIZE
 
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
+    SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
 
 def handle_changed():
     query = f"SELECT s.* FROM {SlurpitStagedDevice._meta.db_table} s INNER JOIN {SlurpitImportedDevice._meta.db_table} i ON s.hostname = i.hostname AND s.changeddate > i.changeddate"
@@ -180,7 +184,7 @@ def handle_changed():
                 result.mapped_device.save()
         offset += BATCH_SIZE
 
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message=f"Sync updated {count} devices")
+    SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync updated {count} devices")
 
 def import_from_queryset(qs: QuerySet, **extra):
     count = len(qs)
@@ -217,7 +221,7 @@ def create_devicetype(descriptor: dict) -> DeviceType | None:
         return None
     kw = {k.attname: descriptor[k.attname] for k in DeviceType._meta.fields if k.attname in descriptor}
     dev_type = DeviceType.objects.create(manufacturer=manufacturer, **kw)
-    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.ONBOARD, message="Created DeviceType.")
+    SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message="Created DeviceType.")
     ensure_slurpit_tags(dev_type)
     return dev_type
 

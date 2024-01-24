@@ -3,18 +3,12 @@ import os
 from django.apps import apps
 from django.db.models.signals import post_migrate
 from extras.plugins import PluginConfig, get_plugin_config
-from importlib import metadata
-
 
 class SlurpitConfig(PluginConfig):
     name = "slurpit_netbox"
     verbose_name = "Slurp'it Plugin"
     description = "Sync Slurp'it into NetBox"
-    version = "0.1.63"
-    try:
-        version = metadata.version(name) #if installed with pip, it will get the version
-    except Exception as e:
-        pass
+    version = '0.1.63'
     base_url = "slurpit"    
     default_settings = {
         'DeviceType': {'model': "SlurpIT"},
@@ -25,9 +19,6 @@ class SlurpitConfig(PluginConfig):
         'SiteGroup': {'name': 'SlurpIT'}, 
         'Rack': {'name': 'SlurpIT'},
         'ConfigTemplate': {'name': 'SlurpIT'},
-
-        'netmiko_choices': 'netmiko_choices',
-        'netmiko_handler': 'netmiko_handler',
         'unattended_import': False,
         'version': version,
         'DEVICETYPE_LIBRARY': os.environ.get('DEVICETYPE_LIBRARY'),

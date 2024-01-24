@@ -27,3 +27,15 @@ class SlurpitLog(models.Model):
     
     def get_absolute_url(self):        
         return '/'
+
+    def info(category, message):
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=category, message=message)
+
+    def warn(category, message):
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_WARNING, category=category, message=message)
+
+    def success(category, message):
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=category, message=message)
+
+    def failure(category, message):
+        SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=category, message=message)

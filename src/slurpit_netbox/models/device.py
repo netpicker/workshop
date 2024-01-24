@@ -22,7 +22,7 @@ class SlurpitStagedDevice(NetBoxModel):
     device_type = models.CharField(max_length=255)
     brand = models.CharField(max_length=255)
     createddate = models.DateTimeField()
-    changeddate = models.DateTimeField(null=True)
+    changeddate = models.DateTimeField()
 
     def __str__(self):
         return f"{self.hostname}"
@@ -37,7 +37,7 @@ class SlurpitImportedDevice(NetBoxModel):
     device_type = models.CharField(max_length=255)
     brand = models.CharField(max_length=255)
     createddate = models.DateTimeField()
-    changeddate = models.DateTimeField(null=True)
+    changeddate = models.DateTimeField()
     mapped_devicetype = models.ForeignKey(to=DeviceType, null=True, on_delete=models.SET_NULL)
     mapped_device = models.OneToOneField(to=Device, null=True, on_delete=models.CASCADE)
 
