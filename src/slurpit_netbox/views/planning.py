@@ -71,7 +71,7 @@ def make_planning_tabs(plannings):
     app_label = Device._meta.app_label
     model_name = Device._meta.model_name
     entry = registry['views'][app_label][model_name]
-    prefix = 'slurit_'
+    prefix = 'slurpit_'
     if entry:
         present = [v for v in entry if v['name'].startswith(prefix)]
         for v in present:

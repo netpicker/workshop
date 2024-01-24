@@ -1,6 +1,11 @@
+## Compatibility
+
+|-------------|-----------|
+| NetBox 3.7  | >= 0.8.0  |
+
 ## How to install the plugin on your local NetBox server
 
- ### Activate the Virtual Environment
+### Activate the Virtual Environment
  
 Firstly, to make the plugin available within NetBox, we must activate the Python virtual environment that was set up during the NetBox installation; you can do this by finding the path of the virtual environment, which typically is /opt/netbox/venv/ if you followed the default installation guide.
 

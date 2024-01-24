@@ -1,4 +1,3 @@
-import logging
 import requests
 import yaml
 
@@ -18,7 +17,6 @@ from . import get_config
 from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting
 from .management.choices import *
 
-log = logging.getLogger(__name__)
 
 
 BATCH_SIZE = 256
@@ -91,7 +89,6 @@ def import_devices(devices):
         if device.get('disabled') == '1':
             continue
         if device.get('device_type') is None:
-            log.warning('Missing device type, cannot import %r', device)
             SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"Missing device type, cannot import device {device.get('hostname')}")
             continue
         device['slurpit_id'] = device.pop('id')
@@ -101,7 +98,6 @@ def import_devices(devices):
             device['changeddate'] = datetime.strptime(device['changeddate'], '%Y-%m-%d %H:%M:%S')            
         except ValueError:
             SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"Failed to convert to datetime, cannot import {device.get('hostname')}")
-            log.warning(f'Failed to convert to datetime, cannot import {device}')
             continue
         to_insert.append(SlurpitStagedDevice(**{key: value for key, value in device.items() if key in columns}))
     SlurpitStagedDevice.objects.bulk_create(to_insert)
@@ -200,65 +196,11 @@ def import_from_queryset(qs: QuerySet, **extra):
         SlurpitImportedDevice.objects.bulk_update(to_import, fields={'mapped_device_id'})
         offset += BATCH_SIZE
 
-def grep(where: str, what: str, options: str) -> list[str] | None:
-    opt = [f"-{options}"] if options else []
-    needle = rf"{what}\b"
-    sub = Popen(['egrep', *opt, needle, where], stdout=PIPE, stderr=PIPE)
-    out, err = sub.communicate()
-    lines = out.decode().strip().split('\n')
-    return [ln for ln in lines if ln]
-
-
 def lookup_manufacturer(s: str) -> Manufacturer | None:
     manufacturer, new = Manufacturer.objects.get_or_create(name = s, slug=slugify(s))
     if new:
         ensure_slurpit_tags(manufacturer)
     return manufacturer
-
-
-def create_devicetype(descriptor: dict) -> DeviceType | None:
-    manufacturer = lookup_manufacturer(descriptor.get('manufacturer'))
-    if manufacturer is None:
-        return None
-    kw = {k.attname: descriptor[k.attname] for k in DeviceType._meta.fields if k.attname in descriptor}
-    dev_type = DeviceType.objects.create(manufacturer=manufacturer, **kw)
-    SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message="Created DeviceType.")
-    ensure_slurpit_tags(dev_type)
-    return dev_type
-
-
-def get_library_devicetype(staged_type: str) -> dict | None:
-    lib = get_config('DEVICETYPE_LIBRARY')
-    if lib is None:
-        return None
-    found_files = grep(lib, staged_type, 'lri')
-    cnt = len(found_files)
-    if cnt == 0:
-        return None
-    if cnt == 1:
-        info_file = found_files[0]
-    else:
-        for info_file in found_files:
-            ... # try figure out something
-        else:
-            return None
-
-    with open(info_file) as f:
-        devtype = yaml.safe_load(f)
-    return devtype
-
-
-def lookup_device_type(staged_type: str) -> DeviceType | None:
-    devtype = DeviceType.objects.filter(model__iexact=staged_type).first()
-    if devtype is not None:
-        return devtype
-    descriptor = get_library_devicetype(staged_type)
-    if descriptor is None:
-        return None
-    model = descriptor['model']
-    devtype = DeviceType.objects.filter(model__iexact=model).first() or create_devicetype(descriptor)
-    return devtype
-
 
 def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra) -> Device:
     kw = get_defaults()
@@ -292,7 +234,7 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     kw.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
     if not dtype:
         if staged_type := staged.device_type:
-            if device_type := lookup_device_type(staged_type):
+            if device_type := DeviceType.objects.filter(model__iexact=staged_type).first():
                 kw.update(device_type=device_type)
 
     device = Device.objects.create(**kw)
@@ -318,5 +260,5 @@ def map_new_devicetypes(qs):
     staged = SlurpitStagedDevice.objects.values('device_type')
     imported = SlurpitImportedDevice.objects.values('device_type')
     qs = staged.distinct().difference(imported.distinct())
-    return {dt['device_type']: lookup_device_type(dt['device_type']) for dt in qs}
+    return {dt['device_type']: DeviceType.objects.filter(model__iexact=dt['device_type']).first() for dt in qs}
 

@@ -1,4 +1,3 @@
-import logging
 from core.choices import DataSourceStatusChoices
 from core.models import Job
 from django.db import models

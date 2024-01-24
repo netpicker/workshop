@@ -1,4 +1,3 @@
-import logging
 import requests
 from dcim.choices import DeviceStatusChoices
 from dcim.models import  Manufacturer, Platform, DeviceType, Site, Device
@@ -19,7 +18,7 @@ from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
-    get_dcim_device, import_from_queryset, lookup_device_type, run_import
+    get_dcim_device, import_from_queryset, run_import
 )
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
@@ -108,7 +107,6 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
     form = forms.OnboardingForm
 
     def post(self, request, **kwargs):
-        logger = logging.getLogger(__name__)
         model = self.queryset.model
 
         if request.POST.get('_all') and self.filterset is not None:
@@ -123,13 +121,11 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
 
         if '_apply' in request.POST:
             if form.is_valid():
-                logger.debug("Form validation was successful")
                 try:
                     with transaction.atomic():
                         updated_objects = self._update_objects(form, request)
                         if updated_objects:
                             msg = f'Onboarded {len(updated_objects)} {model._meta.verbose_name_plural}'
-                            logger.info(msg)
                             messages.success(self.request, msg)
 
                     return redirect(self.get_return_url(request))
@@ -139,7 +135,6 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     # clear_webhooks.send(sender=self)
 
                 except (AbortRequest, PermissionsViolation) as e:
-                    logger.debug(e.message)
                     form.add_error(None, e.message)
                     # clear_webhooks.send(sender=self)
 
@@ -169,7 +164,6 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
                 
                 msg = f'Migration is done successfully.'
-                logger.info(msg)
                 messages.success(self.request, msg)
 
                 return redirect(self.get_return_url(request))
@@ -197,7 +191,6 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
                 
                 msg = f'Conflicts successfully resolved.'
-                logger.info(msg)
                 messages.success(self.request, msg)
 
                 return redirect(self.get_return_url(request))
@@ -205,7 +198,7 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
 
         defaults = importer.get_defaults()
         device_types = list(self.queryset.values_list('device_type').distinct())
-        if len(device_types) == 1 and (dt := lookup_device_type(device_types[0][0])):
+        if len(device_types) == 1 and (dt := DeviceType.objects.filter(model__iexact=device_types[0][0]).first()):
             defaults['device_type'] = dt
         initial_data = {'pk': pk_list}
         for k, v in defaults.items():
