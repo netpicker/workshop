@@ -8,20 +8,20 @@ class SlurpitConfig(PluginConfig):
     name = "slurpit_netbox"
     verbose_name = "Slurp'it Plugin"
     description = "Sync Slurp'it into NetBox"
-    version = '0.8.4'
-    base_url = "slurpit"    
+    version = '0.8.5'
+    base_url = "slurpit"   
     default_settings = {
-        'DeviceType': {'model': "SlurpIT"},
-        'DeviceRole': {'name': "SlurpIT"},
-        'Site': {'name': "SlurpIT"},
-        'Location': {'name': 'SlurpIT'},
-        'Region': {'name': 'SlurpIT'},
-        'SiteGroup': {'name': 'SlurpIT'}, 
-        'Rack': {'name': 'SlurpIT'},
-        'ConfigTemplate': {'name': 'SlurpIT'},
+        'DeviceType': {'model': "Slurp'it", 'slug': 'slurpit'},
+        'DeviceRole': {'name': "Slurp'it", 'slug': 'slurpit'},
+        'Site': {'name': "Slurp'it", 'slug': 'slurpit'},
+        'Location': {'name': 'Slurp\'it', 'slug': 'slurpit'},
+        'Region': {'name': 'Slurp\'it', 'slug': 'slurpit'},
+        'SiteGroup': {'name': 'Slurp\'it', 'slug': 'slurpit'}, 
+        'Rack': {'name': 'Slurp\'it'},
+        'ConfigTemplate': {'name': 'Slurp\'it'},
+        'Manufacturer': {'name': 'OEM', 'slug': 'oem'},
         'unattended_import': False,
-        'version': version,
-        'DEVICETYPE_LIBRARY': os.environ.get('DEVICETYPE_LIBRARY'),
+        'version': version
     }
 
     def ready(self):

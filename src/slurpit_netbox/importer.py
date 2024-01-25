@@ -148,7 +148,6 @@ def handle_new_comers():
         slurpit_id__in=SlurpitImportedDevice.objects.values('slurpit_id')
     )
 
-    device_types = map_new_devicetypes(qs)
     offset = 0
     count = len(qs)
 
@@ -156,7 +155,7 @@ def handle_new_comers():
         batch_qs = qs[offset:offset + BATCH_SIZE]
         to_import = []        
         for device in batch_qs:
-            to_import.append(get_from_staged(device, device_types, unattended))
+            to_import.append(get_from_staged(device, unattended))
         SlurpitImportedDevice.objects.bulk_create(to_import, ignore_conflicts=True)
         offset += BATCH_SIZE
 
@@ -196,12 +195,6 @@ def import_from_queryset(qs: QuerySet, **extra):
         SlurpitImportedDevice.objects.bulk_update(to_import, fields={'mapped_device_id'})
         offset += BATCH_SIZE
 
-def lookup_manufacturer(s: str) -> Manufacturer | None:
-    manufacturer, new = Manufacturer.objects.get_or_create(name = s, slug=slugify(s))
-    if new:
-        ensure_slurpit_tags(manufacturer)
-    return manufacturer
-
 def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra) -> Device:
     kw = get_defaults()
     cf = extra.pop('custom_field_data', {})
@@ -212,16 +205,6 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'slurpit_manufactor': staged.brand,
         'slurpit_devicetype': staged.device_type
     })    
-
-    manu = lookup_manufacturer(staged.brand)
-    platform_defs = {'name': staged.device_os, 'slug': staged.device_os}
-    platform, _ = Platform.objects.get_or_create(**platform_defs)
-    devtype_slug = f'{staged.brand}-{staged.device_type}'
-    devtype_defs = {'model': staged.device_type, 'manufacturer': manu, 'slug': devtype_slug, 'default_platform': platform}
-    try:
-        dtype, _ = DeviceType.objects.get_or_create(**devtype_defs)
-    except:
-        dtype, _ = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu)
         
     kw.update({
         'name': staged.hostname,
@@ -244,21 +227,22 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
 
 def get_from_staged(
         staged: SlurpitStagedDevice,
-        device_types: dict[str, DeviceType],
         add_dcim: bool
 ) -> SlurpitImportedDevice:
     device = SlurpitImportedDevice()
     device.copy_staged_values(staged)
-    device.mapped_devicetype = device_types.get(staged.device_type)
+
+    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, slug=slugify(staged.brand))
+    if new:
+        ensure_slurpit_tags(manu)
+    platform, new = Platform.objects.get_or_create(name=staged.device_os, slug=staged.device_os)
+    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, slug=f'{staged.brand}-{staged.device_type}', default_platform=platform)
+    if new:
+        ensure_slurpit_tags(dtype)
+
+    device.mapped_devicetype = dtype
     if add_dcim:
         extra = {'device_type': device.mapped_devicetype} if device.mapped_devicetype else {}
         device.mapped_device = get_dcim_device(staged, **extra)
     return device
-
-
-def map_new_devicetypes(qs):
-    staged = SlurpitStagedDevice.objects.values('device_type')
-    imported = SlurpitImportedDevice.objects.values('device_type')
-    qs = staged.distinct().difference(imported.distinct())
-    return {dt['device_type']: DeviceType.objects.filter(model__iexact=dt['device_type']).first() for dt in qs}
 
