@@ -213,7 +213,7 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'slurpit_devicetype': staged.device_type
     })    
 
-    manu, _ = Manufacturer.objects.get_or_create(name=staged.brand)
+    manu = lookup_manufacturer(staged.brand)
     platform_defs = {'name': staged.device_os, 'slug': staged.device_os}
     platform, _ = Platform.objects.get_or_create(**platform_defs)
     devtype_slug = f'{staged.brand}-{staged.device_type}'
