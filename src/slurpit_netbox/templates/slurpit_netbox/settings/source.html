@@ -81,7 +81,7 @@
           <div class="card">
             <div class="card-header" style="display:flex;justify-content: space-between;">
                 <h5>Reset Plugin</h5>
-                <a class="btn btn-danger btn-sm mx-3 px-3" href="?reset=true" >
+                <a class="btn btn-danger btn-sm mx-3 px-3" data-bs-toggle="modal" data-bs-target="#resetModal">
                   {% trans "Reset" %}
                 </a>
             </div>
@@ -183,4 +183,26 @@
         
       </div>
     </div>
+</div>
+
+
+<div class="modal fade" tabindex="-1" id="resetModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h6 class="modal-title">Are you sure to reset slurpit plugin?</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+          <a class="btn btn-danger btn-sm" id="" href="?reset=true" >{% trans "Reset" %}</a>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+
+      
+    </div>
+  </div>
 </div>
