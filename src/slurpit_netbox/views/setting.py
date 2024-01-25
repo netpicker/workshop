@@ -9,10 +9,9 @@ from netbox.views.generic.base import BaseObjectView
 from utilities.htmx import is_htmx
 from utilities.views import register_model_view, ViewTab
 from django.views.generic import View
-from ..filtersets import SourceFilterSet
-from ..forms import SourceFilterForm, SourceForm, SlurpitPlanTableForm, SlurpitApplianceTypeForm
-from ..models import SlurpitSource, SlurpitSetting, SlurpitLog, SlurpitPlan, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
-from ..tables import SourceTable, SlurpitPlanTable
+from ..forms import SlurpitPlanningTableForm, SlurpitApplianceTypeForm
+from ..models import SlurpitSetting, SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
+from ..tables import SlurpitPlanningTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
@@ -44,60 +43,6 @@ def split_list(input_list, chunk_size):
         yield input_list[i:i + chunk_size]
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
-class SourceListView(generic.ObjectListView):
-    queryset = SlurpitSource.objects
-    filterset = SourceFilterSet
-    filterset_form = SourceFilterForm
-    table = SourceTable
-
-@method_decorator(slurpit_plugin_registered, name='dispatch')
-@register_model_view(SlurpitSource, "edit")
-class SourceEditView(generic.ObjectEditView):
-    queryset = SlurpitSource.objects.all()
-    form = SourceForm
-
-
-@register_model_view(SlurpitSource)
-class SourceView(generic.ObjectView):
-    queryset = SlurpitSource.objects.all()
-
-    def get(self, request, **kwargs):
-        if is_htmx(request):
-            source: SlurpitSource = self.get_object(**kwargs)
-            r = source.get_session().get('/platform/ping')
-            status = f"{'OK' if r.ok else 'ERR'} ({r.status_code})"
-            return HttpResponse(status)
-        return super().get(request, **kwargs)
-
-
-@register_model_view(SlurpitSource, "sync", path="sync")
-class SourceSyncView(BaseObjectView):
-    queryset = SlurpitSource.objects.all()
-
-    def get_required_permission(self):
-        return "slurpit_netbox.sync_source"
-
-    def get(self, request, pk):
-        from ..models import SlurpitPlanning
-        source = get_object_or_404(self.queryset, pk=pk)
-        SlurpitPlanning.sync(source)
-        messages.success(request, f"Planning sync'ed")
-        return redirect(source.get_absolute_url())
-
-
-@register_model_view(SlurpitSource, "delete")
-@method_decorator(slurpit_plugin_registered, name='dispatch')
-class SourceDeleteView(generic.ObjectDeleteView):
-    queryset = SlurpitSource.objects.all()
-
-
-@method_decorator(slurpit_plugin_registered, name='dispatch')
-class SourceBulkDeleteView(generic.BulkDeleteView):
-    queryset = SlurpitSource.objects.all()
-    filterset = SourceFilterSet
-    table = SourceTable
-
-@method_decorator(slurpit_plugin_registered, name='dispatch')
 class SettingsView(View):
     
     app_label = "dcim"
@@ -111,7 +56,7 @@ class SettingsView(View):
             SlurpitSnapshot.objects.all().delete()
             SlurpitLog.objects.all().delete()
             SlurpitSetting.objects.all().delete()
-            SlurpitPlan.objects.all().delete()
+            SlurpitPlanning.objects.all().delete()
 
             return HttpResponseRedirect(reverse("plugins:slurpit_netbox:settings"))
         
@@ -145,29 +90,19 @@ class SettingsView(View):
         }
 
         form = SlurpitApplianceTypeForm(initial=initial_data)
-
         
         if tab_param == 'data_tabs':
-            # Synchronize planning data
             sync_param = request.GET.get('sync', None)
             if sync_param == 'true':
-                # Get planning data from Slurpit API
-                new_plannings = []
                 if setting is not None:
                     new_plannings = self.get_planning_list(request, server_url, api_key)
+                    new_items = []
+                    for item in new_plannings:
+                        new_items.append(SlurpitPlanning(name=item['name'], planning_id=item['id']))
+                    
+                    SlurpitPlanning.objects.bulk_create(new_items, ignore_conflicts=True)
 
-                new_items = []
-                for item in new_plannings:
-                    new_items.append(
-                        SlurpitPlan(name=item['name'], plan_id=item['id'])
-                    )
-                
-                split_plans_arr = list(split_list(new_items, BATCH_SIZE))
-
-                for plan_arr in split_plans_arr:
-                    SlurpitPlan.objects.bulk_create(plan_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
-
-            plannings = SlurpitPlan.objects.all().order_by('id')
+            plannings = SlurpitPlanning.objects.all().order_by('id')
             
         else:   
             appliance_type_param = request.GET.get('appliance_type', None)
@@ -175,7 +110,6 @@ class SettingsView(View):
             if appliance_type_param:
                 if setting is None:
                     setting = SlurpitSetting.objects.create()
-                # Update appliance typ
                 setting.appliance_type = appliance_type_param
                 setting.save()
 
@@ -223,15 +157,13 @@ class SettingsView(View):
             test_param = request.GET.get('test',None)
             if test_param =='test':
                 if setting is None:
-                    log_message = "Slurpit API test is failded."
-                    SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
+                    SlurpitLog.failure(category=LogCategoryChoices.SETTING, message="Slurpit API test is failded.")
                     messages.warning(request, "You can not test. To use the Slurp'it plugin you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
                 else:
                     connection_status = self.connection_test(request, server_url, api_key)
                     setting.connection_status = connection_status
                     setting.save()
-                    log_message = f"Slurpit API's test result is {connection_status}."
-                    SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
+                    SlurpitLog.info(category=LogCategoryChoices.SETTING, message=f"Slurpit API's test result is {connection_status}.")
 
             action_param = request.GET.get('action',None)
             if action_param == 'generate':
@@ -245,9 +177,7 @@ class SettingsView(View):
                 setting.push_api_key = push_api_key
                 setting.save()
 
-
-                log_message = f"Slurpit Push API is generated."
-                SlurpitLog.objects.create(level=LogLevelChoices.LOG_INFO, category=LogCategoryChoices.SETTING, message=log_message)
+                SlurpitLog.info(category=LogCategoryChoices.SETTING, message=f"Slurpit Push API is generated.")
         
         debug = settings.DEBUG
         return render(
@@ -290,15 +220,15 @@ class SettingsView(View):
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
         else:
             plans = request.POST.getlist('pk')
-            total_plan_ids = []
+            total_planning_ids = []
 
             # Split id: 1#plan_name
             for plan in plans:
                 plan_arr = plan.split('#')
-                total_plan_ids.append(plan_arr[0])
+                total_planning_ids.append(plan_arr[0])
                 
-            SlurpitPlan.objects.filter(id__in=total_plan_ids).update(selected=True)
-            SlurpitPlan.objects.exclude(id__in=total_plan_ids).update(selected=False)
+            SlurpitPlanning.objects.filter(id__in=total_planning_ids).update(selected=True)
+            SlurpitPlanning.objects.exclude(id__in=total_planning_ids).update(selected=False)
 
             return redirect(return_url)
         
@@ -375,16 +305,16 @@ def get_refresh_url(request, pk):
 
 
 @register_model_view(Device, "Slurpit")
-class SlurpitPlanning(View):
+class SlurpitPlanningning(View):
     template_name = "slurpit_netbox/planning_table.html"
     tab = ViewTab("Slurpit", permission="slurpit_netbox.view_devicetable")
 
     def get(self, request, pk):
         device = get_object_or_404(Device, pk=pk)
         form = (
-            SlurpitPlanTableForm(request.GET)
+            SlurpitPlanningTableForm(request.GET)
             if "id" in request.GET
-            else SlurpitPlanTableForm()
+            else SlurpitPlanningTableForm()
         )
         data = None
         cached_time = None
@@ -402,7 +332,7 @@ class SlurpitPlanning(View):
                 result_type = "planning"
 
             cache_key = (
-                f"slurpit_plan_{plan.plan_id}_{device.serial}_{result_type}"
+                f"slurpit_plan_{plan.planning_id}_{device.serial}_{result_type}"
             )
 
             url_no_refresh = get_refresh_url(request, pk)
@@ -424,13 +354,13 @@ class SlurpitPlanning(View):
             if not data:
                 data = []
                 try: 
-                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
+                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=plan.planning_id)
                     result_key = f"{result_type}_result"
                     
                     # Empty case
                     if temp.count() == 0:
                         sync_snapshot(cache_key, device.name, plan)
-                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, plan_id=plan.plan_id)
+                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=plan.planning_id)
 
                     for r in temp:
                         r = r.content
@@ -454,7 +384,7 @@ class SlurpitPlanning(View):
             columns = list(raw.keys())
         
         columns = [(k, Column()) for k in columns]
-        table = SlurpitPlanTable(data, extra_columns=columns)
+        table = SlurpitPlanningTable(data, extra_columns=columns)
 
         RequestConfig(
             request,
@@ -500,16 +430,16 @@ class SlurpitPlanning(View):
 
 def sync_snapshot(cache_key, device_name, plan):
     cache.delete(cache_key)
-    temp = get_latest_data_on_planning(device_name, plan.plan_id)
+    temp = get_latest_data_on_planning(device_name, plan.planning_id)
     temp = temp[plan.name]["data"]
 
-    SlurpitSnapshot.objects.filter(hostname=device_name, plan_id=plan.plan_id).delete()
+    SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()
 
     # Store the latest data to DB
     new_items = []
     for item in temp:
         new_items.append(
-            SlurpitSnapshot(hostname=device_name, plan_id=plan.plan_id, content=item)
+            SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item)
         )
     
     split_devices_arr = list(split_list(new_items, BATCH_SIZE))

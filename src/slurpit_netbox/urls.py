@@ -5,18 +5,9 @@ from . import views
 from . import models
 
 
-urlpatterns = (
-    path("planning/<int:pk>/",  views.PlanningListView.as_view(), name="planning_list"),
-    
+urlpatterns = (    
     ## setting ##
     path("settings/",           views.SettingsView.as_view(), name="settings"),
-
-    ## source ##
-    path("source/",             views.SourceListView.as_view(), name="source_list"),
-    path("source/add/",         views.SourceEditView.as_view(), name="source_add"),
-    path("source/delete/",      views.SourceBulkDeleteView.as_view(), name="source_bulk_delete"),
-    path("source/<int:pk>/delete/", views.SourceDeleteView.as_view(), name="source_delete"),
-    path("source/<int:pk>/",     include(get_model_urls("slurpit_netbox", "source"))),
     
     ## onboard device ##
     path('devices/',            views.SlurpitImportedDeviceListView.as_view(), name='importeddevice_list'),

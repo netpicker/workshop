@@ -3,24 +3,22 @@ from netbox.api.fields import ChoiceField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
-from slurpit_netbox.models import SlurpitPlan, SlurpitImportedDevice, SlurpitPlanning, SlurpitStagedDevice, SlurpitSource, SlurpitLog, SlurpitSetting, SlurpitSnapshot
+from slurpit_netbox.models import SlurpitPlanning, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitSetting, SlurpitSnapshot
 
 __all__ = (
-    'SlurpitPlanSerializer',
+    'SlurpitPlanningSerializer',
     'SlurpitStagedDeviceSerializer',
     'SlurpitImportedDeviceSerializer',
-    'SlurpitSourceSerializer',
-    'SlurpitPlanningSerializer',
     'SlurpitLogSerializer',
     'SlurpitSettingSerializer',
     'SlurpitSnapshotSerializer'
 )
 
-class SlurpitPlanSerializer(NetBoxModelSerializer):
+class SlurpitPlanningSerializer(NetBoxModelSerializer):
 
     class Meta:
-        model = SlurpitPlan
-        fields = ["id", "name", "display", "plan_id"]
+        model = SlurpitPlanning
+        fields = ["id", "name", "display", "planning_id"]
 
 class SlurpitStagedDeviceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,32 +34,6 @@ class SlurpitSnapshotSerializer(serializers.ModelSerializer):
 class SlurpitImportedDeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = SlurpitImportedDevice
-        fields = '__all__'
-
-
-class SlurpitSourceSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="core-api:datasource-detail")
-    status = ChoiceField(choices=DataSourceStatusChoices, read_only=True)
-
-    class Meta:
-        model = SlurpitSource
-        fields = [
-            "id",
-            "url",
-            "display",
-            "name",
-            "status",
-            "description",
-            "comments",
-            "parameters",
-            "created",
-            "last_updated",
-        ]
-
-
-class SlurpitPlanningSerializer(NetBoxModelSerializer):
-    class Meta:
-        model = SlurpitPlanning
         fields = '__all__'
 
 class SlurpitLogSerializer(NetBoxModelSerializer):

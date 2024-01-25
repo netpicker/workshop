@@ -5,14 +5,13 @@ from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
 
 from .. import get_config
-from .device import SlurpitImportedDevice, SlurpitStagedDevice, SlurpitSnapshot
-from .planning import SlurpitPlanning
-from .setting import SlurpitSource, SlurpitSetting
+from .device import SlurpitImportedDevice, SlurpitStagedDevice
+from .planning import SlurpitPlanning, SlurpitSnapshot
+from .setting import SlurpitSetting
 from .logs import SlurpitLog
-from .slurpit_plan import SlurpitPlan
 
 __all__ = [
-    'SlurpitImportedDevice', 'SlurpitPlanning', 'SlurpitSource', 'SlurpitStagedDevice',
+    'SlurpitImportedDevice', 'SlurpitStagedDevice',
     'post_migration', 'SlurpitLog', 'SlurpitSetting'
 ]
 
@@ -76,11 +75,7 @@ def add_default_mandatory_objects(tags):
 
 def post_migration(sender, **kwargs):
     try:
-        from .planning import SlurpitPlanning
-        from ..views.planning import make_planning_tabs
         tags = ensure_slurpit_tags()
         add_default_mandatory_objects(tags)
-        planning = SlurpitPlanning.get_planning()
-        make_planning_tabs(planning)
     except:
         pass

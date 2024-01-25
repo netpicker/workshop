@@ -2,9 +2,9 @@
 from netbox.api.viewsets import NetBoxModelViewSet
 from dcim.models import Device
 from dcim.choices import DeviceStatusChoices
-from slurpit_netbox.models import SlurpitPlan, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
-from slurpit_netbox.filtersets import SlurpitPlanFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
-from .serializers import SlurpitPlanSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
+from slurpit_netbox.models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
+from slurpit_netbox.filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
+from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
 from rest_framework.routers import APIRootView
 from rest_framework_bulk import BulkCreateModelMixin, BulkDestroyModelMixin
 from rest_framework.decorators import action
@@ -19,7 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 __all__ = (
-    'SlurpitPlanViewSet',
+    'SlurpitPlanningViewSet',
     'SlurpitRootView',
 )
 
@@ -33,19 +33,19 @@ class SlurpitRootView(APIRootView):
 #
 # Viewsets
 #
-class SlurpitPlanViewSet(
+class SlurpitPlanningViewSet(
         BulkCreateModelMixin,
         BulkDestroyModelMixin,
         NetBoxModelViewSet
     ):
-    queryset = SlurpitPlan.objects.all()
-    serializer_class = SlurpitPlanSerializer
-    filterset_class = SlurpitPlanFilterSet
+    queryset = SlurpitPlanning.objects.all()
+    serializer_class = SlurpitPlanningSerializer
+    filterset_class = SlurpitPlanningFilterSet
 
     @action(detail=False, methods=['delete'], url_path='delete-all')
     def delete_all(self, request, *args, **kwargs):
         """
-        A custom action to delete all SlurpitPlan objects.
+        A custom action to delete all SlurpitPlanning objects.
         Be careful with this operation: it cannot be undone!
         """
         # Perform the deletion and return a response
@@ -55,14 +55,14 @@ class SlurpitPlanViewSet(
     def get_queryset(self):
         if self.request.method == 'GET':
             # Customize this queryset to suit your requirements for GET requests
-            return SlurpitPlan.objects.filter(selected=True)
+            return SlurpitPlanning.objects.filter(selected=True)
         # For other methods, use the default queryset
         return self.queryset
     
     @action(detail=False, methods=['delete'], url_path='delete/(?P<planning_id>[^/.]+)')
     def delete(self, request, *args, **kwargs):
         planning_id = kwargs.get('planning_id')
-        SlurpitPlan.objects.filter(plan_id=planning_id).delete()
+        SlurpitPlanning.objects.filter(planning_id=planning_id).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -79,14 +79,14 @@ class SlurpitSnapshotViewSet(
     @action(detail=False, methods=['delete'], url_path='delete-all/(?P<hostname>[^/.]+)/(?P<planning_id>[^/.]+)')
     def delete_all(self, request, *args, **kwargs):
         """
-        A custom action to delete all SlurpitPlan objects.
+        A custom action to delete all SlurpitPlanning objects.
         Be careful with this operation: it cannot be undone!
         """
         hostname = kwargs.get('hostname')
-        plan_id = kwargs.get('planning_id')
+        planning_id = kwargs.get('planning_id')
 
-        if hostname and plan_id:
-            self.queryset = SlurpitSnapshot.objects.filter(hostname=hostname, plan_id=plan_id)
+        if hostname and planning_id:
+            self.queryset = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id)
             # Perform the deletion and return a response
             self.queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -4,6 +4,7 @@ import yaml
 from functools import partial
 from subprocess import PIPE, Popen
 from datetime import datetime
+from netaddr import IPNetwork
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
@@ -12,15 +13,14 @@ from django.utils.text import slugify
 
 from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
 from dcim.choices import DeviceStatusChoices
+from ipam.models import *
 
 from . import get_config
 from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting
 from .management.choices import *
 
-
-
 BATCH_SIZE = 256
-columns = ('slurpit_id', 'disabled', 'hostname', 'fqdn', 'device_os', 'device_type', 'brand', 'createddate', 'changeddate')
+columns = ('slurpit_id', 'disabled', 'hostname', 'fqdn', 'ipv4', 'device_os', 'device_type', 'brand', 'createddate', 'changeddate')
 
 
 def get_devices():
@@ -176,7 +176,7 @@ def handle_changed():
             result.copy_staged_values(device)
             result.save()
 
-            if result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
+            if result.mapped_device and result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
                 result.mapped_device.status=DeviceStatusChoices.STATUS_INVENTORY
                 result.mapped_device.save()
         offset += BATCH_SIZE

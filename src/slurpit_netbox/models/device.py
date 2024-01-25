@@ -18,6 +18,7 @@ class SlurpitStagedDevice(NetBoxModel):
     disabled = models.BooleanField(default=False)
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)
+    ipv4 = models.CharField(max_length=23)
     device_os = models.CharField(max_length=128)
     device_type = models.CharField(max_length=255)
     brand = models.CharField(max_length=255)
@@ -29,10 +30,11 @@ class SlurpitStagedDevice(NetBoxModel):
     
     
 class SlurpitImportedDevice(NetBoxModel):
-    slurpit_id = models.BigIntegerField (unique=True)
+    slurpit_id = models.BigIntegerField(unique=True)
     disabled = models.BooleanField(default=False)
     hostname = models.CharField(max_length=255, unique=True)
     fqdn = models.CharField(max_length=128)
+    ipv4 = models.CharField(max_length=23)
     device_os = models.CharField(max_length=128)
     device_type = models.CharField(max_length=255)
     brand = models.CharField(max_length=255)
@@ -63,12 +65,4 @@ class SlurpitImportedDevice(NetBoxModel):
         self.createddate = device.createddate
         self.changeddate = device.changeddate
 
-
-class SlurpitSnapshot(PrimaryModel):
-    hostname = models.TextField(max_length=255, null=True)
-    plan_id = models.TextField(max_length=10, null=True)
-    content = models.JSONField()
-
-    def __str__(self):
-        return f"{self.hostname}#{self.plan_id}"
     

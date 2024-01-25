@@ -311,10 +311,9 @@ class ImportDevices(View):
                 messages.info(request, "Synced the devices from Slurp'it.")
             else:
                 pass
-        except requests.exceptions.RequestException:
+        except requests.exceptions.RequestException as e:
             messages.error(request, "An error occured during querying Slurp'it!")
-            log_message = "An error occured during querying Slurp'it!"
-            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+            SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"An error occured during querying Slurp'it! {e}")
         return redirect(reverse('plugins:slurpit_netbox:importeddevice_list'))
     
 

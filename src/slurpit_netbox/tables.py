@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 
 
-from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSource, SlurpitLog
+from .models import SlurpitImportedDevice, SlurpitLog
 
 
 def check_link(**kwargs):
@@ -105,53 +105,6 @@ class MigratedDeviceTable(NetBoxTable):
         default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'slurpit_devicetype', 'last_updated')
 
 
-class SourceTable(NetBoxTable):
-    name = tables.Column(linkify=True)
-    status = columns.ChoiceFieldColumn()
-    # snapshot_count = tables.Column(verbose_name="SlurpitSnapshots")
-    tags = columns.TagColumn(url_name="core:datasource_list")
-
-    class Meta(NetBoxTable.Meta):
-        model = SlurpitSource
-        fields = (
-            "pk",
-            "id",
-            "name",
-            "description",
-            "comments",
-            "created",
-            "last_updated",
-        )
-        default_columns = ("pk", "name", "description")
-
-
-class PlanningTable(NetBoxTable):
-    pk = columns.ToggleColumn(visible=True,
-                              attrs={
-        "td__input": {
-            "onclick": lambda record: mark_safe(f'return {str(not record.disabled).lower()};'),
-            "__x": lambda record: mark_safe('" checked "x__' if record.selected else ''),
-        },
-    })
-    actions = columns.ActionsColumn(actions=[])
-    exempt_columns = {}
-    name = tables.Column()
-    disabled = columns.BooleanColumn()
-
-    class Meta(NetBoxTable.Meta):
-        model = SlurpitPlanning
-        fields = (
-            "pk",
-            "id",
-            "name",
-            "external_id",
-            "description",
-            "selected",
-            "disabled",
-            "comments",
-        )
-        default_columns = ("pk", "name", "external_id", "description")
-
 class LoggingTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
     level = tables.Column()
@@ -171,7 +124,7 @@ class LoggingTable(NetBoxTable):
         badge_html = f'<span class="{badge_class}">{value}</span>'
         return mark_safe(badge_html)
     
-class SlurpitPlanTable(tables.Table):
+class SlurpitPlanningTable(tables.Table):
 
     class Meta:
         attrs = {

@@ -10,7 +10,7 @@ from utilities.forms.fields import CommentField, DynamicModelChoiceField
 from utilities.forms.widgets import APISelect
 from tenancy.models import TenantGroup, Tenant
 from utilities.forms import BootstrapMixin
-from .models import SlurpitImportedDevice, SlurpitSource, SlurpitPlan, SlurpitSetting
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting
 from .management.choices import SlurpitApplianceTypeChoices
 
 class OnboardingForm(NetBoxModelBulkEditForm):
@@ -147,66 +147,9 @@ class OnboardingForm(NetBoxModelBulkEditForm):
     #     'location', 'tenant', 'platform', 'serial', 'airflow', 'description', 'comments',
     # )
 
-
-class SourceForm(NetBoxModelForm):
-    comments = CommentField()
-    auth = forms.CharField(
-        required=True,
-        label=_("API Token"),
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        help_text=_("API Token."),
-    )
-    verify = forms.BooleanField(
-        required=False,
-        initial=True,
-        help_text=_(
-            "Certificate validation. Uncheck if using self signed certificate."
-        ),
-    )
-
-    class Meta:
-        model = SlurpitSource
-        fields = [
-            "name",
-            "url",
-            "auth",
-            "verify",
-            "description",
-            "comments",
-        ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance.pk:
-            for name, form_field in self.instance.parameters.items():
-                self.fields[name].initial = self.instance.parameters.get(name)
-
-    def save(self, *args, **kwargs):
-        parameters = {}
-        for name in self.fields:
-            if name.startswith("auth"):
-                parameters["auth"] = self.cleaned_data[name]
-            if name.startswith("verify"):
-                parameters["verify"] = self.cleaned_data[name]
-
-        self.instance.parameters = parameters
-        self.instance.status = DataSourceStatusChoices.NEW
-
-        return super().save(*args, **kwargs)
-
-
-class SourceFilterForm(NetBoxModelFilterSetForm):
-    model = SlurpitSource
-    fieldsets = (
-        (None, ("q", "filter_id")),
-        ("Data Source", ("status",)),
-    )
-    status = forms.MultipleChoiceField(choices=DataSourceStatusChoices, required=False)
-
-
-class SlurpitPlanTableForm(BootstrapMixin, forms.Form):
+class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
     id = DynamicModelChoiceField(
-        queryset=SlurpitPlan.objects.all(),
+        queryset=SlurpitPlanning.objects.all(),
         required=True,
         label=_("Slurpit Plans"),
     )

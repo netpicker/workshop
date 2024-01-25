@@ -8,7 +8,7 @@ class SlurpitConfig(PluginConfig):
     name = "slurpit_netbox"
     verbose_name = "Slurp'it Plugin"
     description = "Sync Slurp'it into NetBox"
-    version = '0.8.1'
+    version = '0.8.3'
     base_url = "slurpit"    
     default_settings = {
         'DeviceType': {'model': "SlurpIT"},
@@ -29,13 +29,6 @@ class SlurpitConfig(PluginConfig):
         deps_app = apps.get_app_config("virtualization")
         post_migrate.connect(post_migration, sender=deps_app, weak=False)
         super().ready()
-        try:
-            from .models.planning import SlurpitPlanning
-            from .views.planning import make_planning_tabs
-            planning = SlurpitPlanning.get_planning()
-            make_planning_tabs(planning)
-        except:
-            pass
 
 
 config = SlurpitConfig

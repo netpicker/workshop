@@ -2,26 +2,9 @@ import django_filters
 from core.choices import DataSourceStatusChoices
 from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet, BaseFilterSet
-from .models import SlurpitSource, SlurpitLog, SlurpitPlan, SlurpitSnapshot, SlurpitImportedDevice
+from .models import SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice
 from django.utils.translation import gettext as _
 
-class SourceFilterSet(NetBoxModelFilterSet):
-    status = django_filters.MultipleChoiceFilter(
-        choices=DataSourceStatusChoices, null_value=None
-    )
-
-    class Meta:
-        model = SlurpitSource
-        fields = ("id", "name")
-
-    def search(self, queryset, name, value):
-        if not value.strip():
-            return queryset
-        return queryset.filter(
-            Q(name__icontains=value)
-            | Q(description__icontains=value)
-            | Q(comments__icontains=value)
-        )
 
 class LoggingFilterSet(BaseFilterSet):
     q = django_filters.CharFilter(
@@ -44,15 +27,15 @@ class LoggingFilterSet(BaseFilterSet):
             Q(message__icontains=value)
         )
 
-class SlurpitPlanFilterSet(BaseFilterSet):
+class SlurpitPlanningFilterSet(BaseFilterSet):
     q = django_filters.CharFilter(
         method='search',
         label=_('Search'),
     )
 
     class Meta:
-        model = SlurpitPlan
-        fields = ["id", "name", "plan_id"]
+        model = SlurpitPlanning
+        fields = ["id", "name", "planning_id"]
 
     def search(self, queryset, name, value):
         if not value.strip():
@@ -69,7 +52,7 @@ class SlurpitSnapshotFilterSet(BaseFilterSet):
 
     class Meta:
         model = SlurpitSnapshot
-        fields = ["id", "hostname", "plan_id"]
+        fields = ["id", "hostname", "planning_id"]
 
     def search(self, queryset, name, value):
         if not value.strip():
