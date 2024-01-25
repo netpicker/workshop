@@ -2,6 +2,7 @@ from functools import wraps
 from .models import SlurpitSetting
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
+from account.models import UserToken
 
 def slurpit_plugin_registered(view_func):
     @wraps(view_func)
@@ -30,6 +31,12 @@ def slurpit_plugin_registered(view_func):
                 if reset_param:
                     continue
                 
+                tokens = UserToken.objects.filter(user=request.user).count()
+
+                if tokens == 0:
+                    messages.warning(request, "To use the Slurp'it plugin, it is necessary to first generate Plugin API Key on the Setting Page.")
+                    return view_func(request, *args, **kwargs)
+
                 try:
                     setting = SlurpitSetting.objects.get()
                     server_url = setting.server_url
