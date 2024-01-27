@@ -18,8 +18,7 @@ __all__ = [
 def ensure_slurpit_tags(*items):
     if (tags := getattr(ensure_slurpit_tags, 'cache', None)) is None:
         name = 'slurpit'
-        defaults = dict(slug=name, description='Slurp\'it onboarded', color='F09640')
-        tag, _ = Tag.objects.get_or_create(defaults, name=name)
+        tag, _ = Tag.objects.get_or_create(name=name, slug=name, description='Slurp\'it onboarded', color='F09640')
 
         applicable_to = 'device', 'devicerole', 'devicetype', 'manufacturer', 'site'
         tagged_types = ContentType.objects.filter(app_label='dcim',
@@ -34,115 +33,49 @@ def ensure_slurpit_tags(*items):
 def create_custom_fields():   
     device = ContentType.objects.get(app_label='dcim', model='device')
     
-
-    # hostname custom field
-    default_choices = {
-        'description': 'hostname handlers',
-        'order_alphabetically': True,
-        'extra_choices':{},
-    }
-    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
-                        defaults=default_choices,
-                        name='slurpit_hostname_choice')
-
-    slurpit_hostname_custom_field = {
-        'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "",
-        'choice_set': choice,
-        'is_cloneable': True,
-        'label': 'Slurpit Hostname',
-    }
     cf, _ = CustomField.objects.get_or_create(
-                defaults=slurpit_hostname_custom_field,
-                name='slurpit_hostname')
+                name='slurpit_hostname',               
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Slurpit Hostname'
+        )
     cf.content_types.set({device})
 
-
-    # fqdn custome field
-    default_choices = {
-        'description': 'fqdn handlers',
-        'order_alphabetically': True,
-        'extra_choices':{},
-    }
-    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
-                        defaults=default_choices,
-                        name='slurpit_fqdn_choice')
-    
-    slurpit_fqdn_custom_field = {
-        'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'choice_set': choice,
-        'description': "",
-        'label': 'Slurpit Fqdn',
-        'is_cloneable': True,
-    }
     cf, _ = CustomField.objects.get_or_create(
-                defaults=slurpit_fqdn_custom_field,
-                name='slurpit_fqdn')
+                name='slurpit_fqdn',           
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Slurpit Fqdn'
+                )
     cf.content_types.set({device})
-    
-    # platform custom field
-    default_choices = {
-        'description': 'platform handlers',
-        'order_alphabetically': True,
-        'extra_choices':{},
-    }
-    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
-                        defaults=default_choices,
-                        name='slurpit_platform_choice')
-    
-    slurpit_platform_custom_field = {
-        'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "",
-        'choice_set': choice,
-        'is_cloneable': True,
-        'label': 'Slurpit Platform',
-    }
+        
     cf, _ = CustomField.objects.get_or_create(
-                defaults=slurpit_platform_custom_field,
-                name='slurpit_platform')
+                name='slurpit_platform',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Slurpit Platform'
+                )
     cf.content_types.set({device})
 
-    # manufactor custom field
-    default_choices = {
-        'description': 'fqdn handlers',
-        'order_alphabetically': True,
-        'extra_choices':{},
-    }
-    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
-                        defaults=default_choices,
-                        name='slurpit_manufactor_choice')
-    slurpit_manufactor_custom_field = {
-        'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "",
-        'choice_set': choice,
-        'is_cloneable': True,
-        'label': 'Slurpit Manufactor',
-    }
     cf, _ = CustomField.objects.get_or_create(
-                defaults=slurpit_manufactor_custom_field,
-                name='slurpit_manufactor')
+                name='slurpit_manufactor', 
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Slurpit Manufactor'
+                )
     cf.content_types.set({device})
-
-    # device type custom field
-    default_choices = {
-        'description': 'device type handlers',
-        'order_alphabetically': True,
-        'extra_choices':{},
-    }
-    choice, _new = CustomFieldChoiceSet.objects.get_or_create(
-                        defaults=default_choices,
-                        name='slurpit_device_type_choice')
     
-    slurpit_devicetype_custom_field = {
-        'type': CustomFieldTypeChoices.TYPE_SELECT,
-        'description': "",
-        'choice_set': choice,
-        'is_cloneable': True,
-        'label': 'Slurpit Device Type',
-    }
     cf, _ = CustomField.objects.get_or_create(
-                defaults=slurpit_devicetype_custom_field,
-                name='slurpit_devicetype')
+                name='slurpit_devicetype',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Slurpit Device Type'
+                )
     cf.content_types.set({device})
 
 
