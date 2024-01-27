@@ -256,7 +256,7 @@ class SettingsView(View):
             if r.get('status') == "up":
                 log_message ="Tested the connection to the Slurp'it server successfully."        
                 SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.SETTING, message=log_message)
-                messages.success(request, "Tested the connection to the slurpit server successfully.")
+                messages.success(request, "Tested the connection to the Slurp'it server successfully.")
             return 'connected'
         else:
             messages.error(request, "Failed testing the connection to the Slurp'it server.")

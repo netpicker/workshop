@@ -7,15 +7,15 @@
          <!-- sync button -->
         {# Object table controls #}
         <div class="dropdown mb-3">
-            <button type="button" class="btn btn-sm btn-yellow dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="mdi mdi-refresh"></i>&nbsp;{% trans "Migrate" %}
+            <button type="button" class="btn btn-sm btn-green dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="mdi mdi-check"></i>&nbsp;{% trans "Solve" %}
             </button>
             {% block bulk_buttons %}
             <ul class="dropdown-menu dropdown-menu-end">
               {% bulk_edit_button model query_params=request.GET %}
               <li>
                   <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?conflicted=create&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn">
-                    <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Create new device" %}
+                    <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Re-Create device" %}
                   </button>
               </li>
               <li>
