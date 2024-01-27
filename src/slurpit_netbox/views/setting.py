@@ -98,7 +98,8 @@ class SettingsView(View):
                     new_plannings = self.get_planning_list(request, server_url, api_key)
                     new_items = []
                     for item in new_plannings:
-                        new_items.append(SlurpitPlanning(name=item['name'], planning_id=item['id']))
+                        if item['disabled'] == '0':
+                            new_items.append(SlurpitPlanning(name=item['name'], planning_id=item['id'], comments=item['comment']))
                     
                     SlurpitPlanning.objects.bulk_create(new_items, ignore_conflicts=True)
 
@@ -269,10 +270,8 @@ class SettingsView(View):
                     'useragent': 'netbox/requests',
                     'accept': 'application/json'
                 }
-        connection_test = f"{server_url}/api/planning"
-
         try:
-            response = requests.get(connection_test, headers=headers)
+            response = requests.get(f"{server_url}/api/planning", headers=headers)
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed to get planning list of the Slurp'it server."          

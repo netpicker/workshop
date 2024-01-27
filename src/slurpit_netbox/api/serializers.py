@@ -15,10 +15,12 @@ __all__ = (
 )
 
 class SlurpitPlanningSerializer(NetBoxModelSerializer):
+    id = serializers.IntegerField(source='planning_id')
+    comment = serializers.CharField(source='comments')
 
     class Meta:
         model = SlurpitPlanning
-        fields = ["id", "name", "display", "planning_id"]
+        fields = ['id', "name", "comment"]
 
 class SlurpitStagedDeviceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,9 +34,10 @@ class SlurpitSnapshotSerializer(serializers.ModelSerializer):
 
 
 class SlurpitImportedDeviceSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='slurpit_id')
     class Meta:
         model = SlurpitImportedDevice
-        fields = '__all__'
+        fields = ['id', 'disabled', 'hostname', 'fqdn', 'ipv4', 'device_os', 'device_type', 'brand', 'createddate', 'changeddate']
 
 class SlurpitLogSerializer(NetBoxModelSerializer):
     class Meta:

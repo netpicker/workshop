@@ -30,12 +30,8 @@ class SlurpitRootView(APIRootView):
     def get_view_name(self):
         return 'Slurpit'
     
-#
-# Viewsets
-#
+
 class SlurpitPlanningViewSet(
-        BulkCreateModelMixin,
-        BulkDestroyModelMixin,
         NetBoxModelViewSet
     ):
     queryset = SlurpitPlanning.objects.all()
@@ -48,8 +44,8 @@ class SlurpitPlanningViewSet(
         A custom action to delete all SlurpitPlanning objects.
         Be careful with this operation: it cannot be undone!
         """
-        # Perform the deletion and return a response
         self.queryset.delete()
+        SlurpitSnapshot.objects.all().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     def get_queryset(self):
@@ -63,8 +59,35 @@ class SlurpitPlanningViewSet(
     def delete(self, request, *args, **kwargs):
         planning_id = kwargs.get('planning_id')
         SlurpitPlanning.objects.filter(planning_id=planning_id).delete()
+        SlurpitSnapshot.objects.filter(planning_id=planning_id).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+        
+    @action(detail=False, methods=['post'],  url_path='sync')
+    def sync(self, request):
+        if not isinstance(request.data, list):
+            return Response("Should be a list", status=status.HTTP_400_BAD_REQUEST)
+
+        ids = {row['id'] : row for row in request.data if row['disabled'] == '0'}
+
+        update_objects = self.queryset.filter(planning_id__in=ids.keys())
+        self.queryset.exclude(planning_id__in=ids.keys()).delete()
+        SlurpitSnapshot.objects.filter(planning_id__in=ids.keys()).delete()
+        
+        for planning in update_objects:
+            obj = ids.pop(planning.planning_id)
+            planning.name = obj['name']
+            planning.comments = obj['comment']
+            planning.save()
+        
+        for obj in ids.values():
+            planning = SlurpitPlanning()
+            planning.name = obj['name']
+            planning.comments = obj['comment']
+            planning.planning_id = obj['id']
+            planning.save()
+        
+        return JsonResponse({'status': 'success'})
 
 
 class SlurpitSnapshotViewSet(
@@ -121,10 +144,7 @@ class DeviceViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     def create(self, request):
-        # Load JSON data from the request body
-        devices = json.loads(request.body.decode('utf-8'))
-
-        errors = device_validator(devices)
+        errors = device_validator(request.data)
 
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)

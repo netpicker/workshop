@@ -3,8 +3,8 @@ from netbox.models import PrimaryModel
 from django.urls import reverse
 
 class SlurpitPlanning(PrimaryModel):
-    name = models.CharField(max_length=255)
-    planning_id = models.BigIntegerField()
+    name = models.CharField(max_length=255, unique=True)
+    planning_id = models.BigIntegerField(unique=True)
     selected = models.BooleanField(default=False)
 
     def __str__(self):
