@@ -36,12 +36,6 @@ from django.conf import settings
 
 BATCH_SIZE = 128
 
-def split_list(input_list, chunk_size):
-    # For item i in a range that is a length of input_list,
-    for i in range(0, len(input_list), chunk_size):
-        # Create an index range for l of n items:
-        yield input_list[i:i + chunk_size]
-
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SettingsView(View):
     
@@ -102,6 +96,7 @@ class SettingsView(View):
                             new_items.append(SlurpitPlanning(name=item['name'], planning_id=item['id'], comments=item['comment']))
                     
                     SlurpitPlanning.objects.bulk_create(new_items, ignore_conflicts=True)
+                    SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} plannings")
 
             plannings = SlurpitPlanning.objects.all().order_by('id')
             
@@ -136,6 +131,10 @@ class SettingsView(View):
                 {
                     "type": "DELETE",
                     "url": "api/plugins/slurpit/planning/delete/{planning_id}/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/planning/clear/{planning_id}/"
                 },
                 {
                     "type": "DELETE",
@@ -436,16 +435,12 @@ def sync_snapshot(cache_key, device_name, plan):
     temp = get_latest_data_on_planning(device_name, plan.planning_id)
     temp = temp[plan.name]["data"]
 
-    SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()
+    count = SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()[0]
+    SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync deleted {count} snapshots for planning {plan.name}")
 
-    # Store the latest data to DB
     new_items = []
     for item in temp:
-        new_items.append(
-            SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item)
-        )
+        new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item))
     
-    split_devices_arr = list(split_list(new_items, BATCH_SIZE))
-
-    for device_arr in split_devices_arr:
-        SlurpitSnapshot.objects.bulk_create(device_arr, batch_size=BATCH_SIZE, ignore_conflicts=True)
+    SlurpitSnapshot.objects.bulk_create(new_items, batch_size=BATCH_SIZE, ignore_conflicts=True)
+    SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} snapshots for planning {plan.name}")

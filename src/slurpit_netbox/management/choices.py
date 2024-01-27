@@ -25,6 +25,7 @@ class LogCategoryChoices(ChoiceSet):
     DATA_MAPPING = 'data_mapping'
     RECONCILE = 'reconcile'
     INIT = 'init'
+    PLANNING = 'planning'
 
     CHOICES = (
         (SETTING, _('setting')),
@@ -32,6 +33,7 @@ class LogCategoryChoices(ChoiceSet):
         (DATA_MAPPING, _('data_mapping')),
         (RECONCILE, _('reconcile')),
         (INIT, _('init')),
+        (PLANNING, _('planning')),
     )
 
 class SlurpitApplianceTypeChoices(ChoiceSet):
