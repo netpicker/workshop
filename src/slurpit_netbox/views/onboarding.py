@@ -266,12 +266,12 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     extra[name] = form.cleaned_data[name]
             # Update custom fields
             for name, customfield in custom_fields.items():
-                assert name.startswith('cf_')
-                cf_name = name[3:]  # Strip cf_ prefix
-                if name in form.nullable_fields and name in nullified_fields:
-                    extra[name]['custom_field_data'][cf_name] = None
-                elif name in form.changed_data:
-                    extra[name]['custom_field_data'][cf_name] = customfield.serialize(form.cleaned_data[name])
+                if name.startswith('cf_'):
+                    cf_name = name[3:]  # Strip cf_ prefix
+                    if name in form.nullable_fields and name in nullified_fields:
+                        extra[name]['custom_field_data'][cf_name] = None
+                    elif name in form.changed_data:
+                        extra[name]['custom_field_data'][cf_name] = customfield.serialize(form.cleaned_data[name])
 
             device = get_dcim_device(obj, **extra)
             obj.mapped_device = device

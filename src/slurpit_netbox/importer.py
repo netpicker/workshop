@@ -1,15 +1,12 @@
 import requests
-import yaml
 
-from functools import partial
-from subprocess import PIPE, Popen
 from datetime import datetime
-from netaddr import IPNetwork
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
-from django.db.models import F, ExpressionWrapper, fields, QuerySet
+from django.db.models import QuerySet
 from django.utils.text import slugify
+from django.utils import timezone
 
 from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
 from dcim.choices import DeviceStatusChoices
@@ -94,8 +91,8 @@ def import_devices(devices):
         device['slurpit_id'] = device.pop('id')
         
         try:
-            device['createddate'] = datetime.strptime(device['createddate'], '%Y-%m-%d %H:%M:%S')
-            device['changeddate'] = datetime.strptime(device['changeddate'], '%Y-%m-%d %H:%M:%S')            
+            device['createddate'] = timezone.make_aware(datetime.strptime(device['createddate'], '%Y-%m-%d %H:%M:%S'), timezone.get_current_timezone())
+            device['changeddate'] = timezone.make_aware(datetime.strptime(device['changeddate'], '%Y-%m-%d %H:%M:%S'), timezone.get_current_timezone())          
         except ValueError:
             SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"Failed to convert to datetime, cannot import {device.get('hostname')}")
             continue
@@ -162,7 +159,7 @@ def handle_new_comers():
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
 
 def handle_changed():
-    query = f"SELECT s.* FROM {SlurpitStagedDevice._meta.db_table} s INNER JOIN {SlurpitImportedDevice._meta.db_table} i ON s.hostname = i.hostname AND s.changeddate > i.changeddate"
+    query = "SELECT s.* FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.hostname = i.hostname AND s.changeddate > i.changeddate"
     qs = SlurpitStagedDevice.objects.raw(query)
     offset = 0
     count = len(qs)
