@@ -37,11 +37,9 @@
 {% block content-wrapper %}
     <div class="tab-content">
         {% if request.GET.tab == 'source' or request.GET.tab is None %}
-            {% include "slurpit_netbox/settings/source.html" %}
+            {% include "slurpit_netbox/settings/general.html" %}
         {% elif request.GET.tab == 'data_tabs' %}
             {% include "slurpit_netbox/settings/data_tabs.html" %}
-        {% elif request.GET.tab == 'webhooks' %}
-            {% include "slurpit_netbox/settings/webhooks.html" %}
         {% endif %}
   </div> 
 

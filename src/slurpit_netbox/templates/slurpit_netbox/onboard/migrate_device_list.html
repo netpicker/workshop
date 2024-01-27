@@ -15,7 +15,7 @@
               {% bulk_edit_button model query_params=request.GET %}
               <li>
                   <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?migrate=create&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn">
-                    <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Create new device" %}
+                    <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Re-Create device" %}
                   </button>
               </li>
               <li>
