@@ -211,8 +211,8 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
         # Retrieve objects being edited
         table = self.table(self.queryset.filter(mapped_device_id__isnull=True), orderable=False)
         if not table.rows:
-            messages.warning(request, "No onboardable {} were selected.".format(model._meta.verbose_name_plural))
-            log_message = "Failed onboarded since no onboardable device was selected."
+            messages.warning(request, "No {} were selected.".format(model._meta.verbose_name_plural))
+            log_message = "Failed to onboard since no devices were selected."
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
             return redirect(self.get_return_url(request))
 

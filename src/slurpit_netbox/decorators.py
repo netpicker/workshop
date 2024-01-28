@@ -34,7 +34,7 @@ def slurpit_plugin_registered(view_func):
                 tokens = UserToken.objects.filter(user=request.user).count()
 
                 if tokens == 0:
-                    messages.warning(request, "To use the Slurp'it plugin, it is necessary to first generate Plugin API Key on the Setting Page.")
+                    messages.warning(request, "To use the Slurp'it plugin, it is necessary to first generate a Plugin API Key on the Setting Page.")
                     return view_func(request, *args, **kwargs)
 
                 try:
