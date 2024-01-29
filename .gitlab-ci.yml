@@ -7,7 +7,6 @@
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
 - build
-- deploy
 - test
 image: python:latest
 before_script:
@@ -19,13 +18,6 @@ build:
   - poetry config repositories.gitlab $API_ENDPOINT/pypi
   - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
   - poetry publish --build --repository gitlab
-deploy:
-  stage: deploy
-  needs:
-  - build
-  trigger:
-    project: slurpit.io/slurpit-netbox-docker
-    branch: release
 sast:
   stage: test
 include:
