@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
-from django.db.models import QuerySet
+from django.db.models import QuerySet, F, OuterRef, Subquery
 from django.utils.text import slugify
 from django.utils import timezone
 from django.db.models.expressions import RawSQL
@@ -160,7 +160,15 @@ def handle_new_comers():
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
 
 def handle_changed():
-    qs = SlurpitStagedDevice.objects.filter(id__in=RawSQL("SELECT s.id FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.slurpit_id = i.slurpit_id AND s.changeddate > i.changeddate"))
+    #qs = SlurpitStagedDevice.objects.filter(id__in=RawSQL("SELECT s.* FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.slurpit_id = i.slurpit_id AND s.changeddate > i.changeddate"))
+    latest_changeddate_subquery = SlurpitImportedDevice.objects.filter(
+        slurpit_id=OuterRef('slurpit_id')
+    ).order_by('-changeddate').values('changeddate')[:1]
+    qs = SlurpitStagedDevice.objects.annotate(
+        latest_changeddate=Subquery(latest_changeddate_subquery)
+    ).filter(
+        changeddate__gt=F('latest_changeddate')
+    )
     offset = 0
     count = len(qs)
 
