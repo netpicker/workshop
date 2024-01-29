@@ -9,6 +9,7 @@ from .device import SlurpitImportedDevice, SlurpitStagedDevice
 from .planning import SlurpitPlanning, SlurpitSnapshot
 from .setting import SlurpitSetting
 from .logs import SlurpitLog
+from .mapping import SlurpitMapping
 
 __all__ = [
     'SlurpitImportedDevice', 'SlurpitStagedDevice',

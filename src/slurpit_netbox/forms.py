@@ -1,7 +1,7 @@
 from core.choices import DataSourceStatusChoices
 from django import forms
 from dcim.choices import DeviceStatusChoices, DeviceAirflowChoices
-from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack
+from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack, Device
 from django.utils.translation import gettext_lazy as _
 from netbox.api.fields import ChoiceField
 from netbox.forms import NetBoxModelBulkEditForm, NetBoxModelFilterSetForm, NetBoxModelForm
@@ -132,3 +132,36 @@ class SlurpitApplianceTypeForm(BootstrapMixin, forms.Form):
         choices=add_blank_choice(SlurpitApplianceTypeChoices),
         required=False
     )
+
+class SlurpitMappingForm(BootstrapMixin, forms.Form):
+    source_field = forms.CharField(
+        required=True,
+        label=_("Source Field"),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        help_text=_("Slurpit Device's Field"),
+    )
+    
+    target_field = forms.ChoiceField(
+        choices=[
+        ],
+        required=False,
+        label=f"Target Field",
+    )
+    
+    
+    def __init__(self, *args, **kwargs):
+        choice_name = kwargs.pop('choice_name', None) 
+        doaction = kwargs.pop('doaction', None) 
+        super(SlurpitMappingForm, self).__init__(*args, **kwargs)
+        
+        choices = []
+        
+        for field in Device._meta.get_fields():
+            if not field.is_relation or field.one_to_one or (field.many_to_one and field.related_model):
+                choices.append((f'device|{field.name}', f'device | {field.name}'))
+        
+        self.fields[f'target_field'].choices = choices
+
+        if doaction != "add":
+            self.fields[f'target_field'].label = choice_name
+            del self.fields[f'source_field']

@@ -1,0 +1,70 @@
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+{% load form_helpers %}
+
+<div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
+    <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:settings' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+        <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+    </a>
+    <div class="row mb-3">
+        
+        <div class="col col-md-6">
+            <form action="" method="get" id="mapping-form" class="form form-horizontal mb-3">
+                <div class="card">
+                
+                  <div class="card-header" style="display:flex;justify-content: space-between;">
+                      <h5>Mapping Fields</h5>
+                      <div class="action">
+                        
+                        <button class="btn btn-blue btn-sm px-3">
+                            {% trans "Save" %}
+                        </button>
+                      </div>
+                  </div>
+                  <div class="card-body">
+                    {% for choice_item in form %}
+                      {% render_form choice_item %}
+                    {% endfor %}
+                  </div>
+                  <div class="card-footer">
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
+                        <i class="mdi mdi-plus-thick"></i> Add
+                    </button>
+                    <button type="submit" name="_delete" formaction="/dcim/devices/delete/" class="btn btn-danger btn-sm">
+                        <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
+                    </button>
+                  </div>
+                </div>
+              </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="addMapModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title">Create a mapping</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+      </div>
+      <form  method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            {% render_form new_form %}
+          </div>
+  
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+              <button type="submit" class="btn btn-outline-primary" id="add_btn" >{% trans "Add" %}</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+      </form>
+      <!-- Modal Body -->
+      
+    </div>
+  </div>
+</div>

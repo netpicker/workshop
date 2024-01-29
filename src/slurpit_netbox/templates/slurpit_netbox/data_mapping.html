@@ -1,4 +1,4 @@
-{% extends 'generic/object_list.html' %}
+{% extends 'base/layout.html' %}
 {% load buttons %}
 {% load i18n %}
 {% load helpers %}
@@ -30,12 +30,12 @@
   <ul class="nav nav-tabs px-3">
         
     <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" href="?tab=new">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'slurpit_to_netbox' or request.GET.tab is None %}active{% endif %}" href="?tab=slurpit_to_netbox">
         Slurp’it to NetBox
       </a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link {% if request.GET.tab == 'migrate' %}active{% endif %}" href="?tab=migrate">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}" href="?tab=netbox_to_slurpit">
         NetBox to Slurp’it
       </a>
     </li>
@@ -46,12 +46,12 @@
 
 {% block content-wrapper %}
   <div class="tab-content">
-    {% if request.GET.tab == 'new' or request.GET.tab is None %}
+    {% if request.GET.tab == 'slurpit_to_netbox' or request.GET.tab is None %}
         <h1 class="w-100 text-center" style="padding-top: 10%;">Coming Soon</h1>
         <p class="w-100 text-center fs-6">Sign up for our newsletter and we will inform you when the next new functionalities are released.<br><br>
         <a href="https://slurpit.io/getting-started/#subscribe" target="_blank" class="btn btn-primary">Subscribe</a></p>
-    {% elif request.GET.tab == 'conflicted' %}
-      {% include "slurpit_netbox/onboard/conflict_device_list.html" %}
+    {% elif request.GET.tab == 'netbox_to_slurpit' %}
+      {% include "slurpit_netbox/mapping/netbox_to_slurpit.html" %}
     {% endif %}
   </div> 
 
