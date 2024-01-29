@@ -9,4 +9,4 @@ from django.utils.decorators import method_decorator
 class DataMappingView(generic.ObjectListView):
     queryset = models.SlurpitImportedDevice.objects
     table = tables.SlurpitImportedDeviceTable
-    template_name = "slurpit_netbox/comingsoon.html"
+    template_name = "slurpit_netbox/data_mapping.html"
