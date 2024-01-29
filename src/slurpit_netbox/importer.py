@@ -159,7 +159,7 @@ def handle_new_comers():
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
 
 def handle_changed():
-    query = "SELECT s.* FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.hostname = i.hostname AND s.changeddate > i.changeddate"
+    query = "SELECT s.* FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.slurpit_id = i.slurpit_id AND s.changeddate > i.changeddate"
     qs = SlurpitStagedDevice.objects.raw(query)
     offset = 0
     count = len(qs)
@@ -168,7 +168,7 @@ def handle_changed():
         batch_qs = qs[offset:offset + BATCH_SIZE]
         to_import = []        
         for device in batch_qs:
-            result = SlurpitImportedDevice.objects.get(hostname=device.hostname)
+            result = SlurpitImportedDevice.objects.get(slurpit_id=device.slurpit_id)
             result.copy_staged_values(device)
             result.save()
 
