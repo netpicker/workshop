@@ -12,3 +12,7 @@ class LoggingListView(generic.ObjectListView):
     filterset = LoggingFilterSet
     table = LoggingTable
     template_name = "slurpit_netbox/slurpitlog_list.html"
+
+    class Meta:
+        # Assuming column1 is the column you want to sort by default
+        order_by = ('log_time')
