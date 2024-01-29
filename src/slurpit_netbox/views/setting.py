@@ -312,37 +312,32 @@ def get_refresh_url(request, pk):
 class SlurpitPlanningning(View):
     template_name = "slurpit_netbox/planning_table.html"
     tab = ViewTab("Slurpit", permission="slurpit_netbox.view_devicetable")
+    form = SlurpitPlanningTableForm()
 
     def get(self, request, pk):
         device = get_object_or_404(Device, pk=pk)
-        form = (
-            SlurpitPlanningTableForm(request.GET)
-            if "id" in request.GET
-            else SlurpitPlanningTableForm()
-        )
+        
         data = None
         cached_time = None
         result_status = "No Data"
         columns = []
         refresh = request.GET.get('refresh')
         sync = request.GET.get('sync')
-
-        if form.is_valid():
-            plan = form.cleaned_data["id"]
+        if 'id' in request.GET and (planning := SlurpitPlanning.objects.filter(planning_id=request.GET.get('id')).first()):
+            self.form = SlurpitPlanningTableForm({'id': planning.id})
             result_type = request.GET.get('result_type')
             
-
             if result_type is None:
                 result_type = "planning"
 
             cache_key = (
-                f"slurpit_plan_{plan.planning_id}_{device.serial}_{result_type}"
+                f"slurpit_plan_{planning.planning_id}_{device.serial}_{result_type}"
             )
 
             url_no_refresh = get_refresh_url(request, pk)
 
             if sync == "sync":
-                sync_snapshot(cache_key, device.name, plan)
+                sync_snapshot(cache_key, device.name, planning)
                 
                 return HttpResponseRedirect(url_no_refresh)
             
@@ -358,13 +353,13 @@ class SlurpitPlanningning(View):
             if not data:
                 data = []
                 try: 
-                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=plan.planning_id)
+                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
                     result_key = f"{result_type}_result"
                     
                     # Empty case
                     if temp.count() == 0:
-                        sync_snapshot(cache_key, device.name, plan)
-                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=plan.planning_id)
+                        sync_snapshot(cache_key, device.name, planning)
+                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
 
                     for r in temp:
                         r = r.content
@@ -423,7 +418,7 @@ class SlurpitPlanningning(View):
             {
                 "object": device,
                 "tab": self.tab,
-                "form": form,
+                "form": self.form,
                 "table": table,
                 "result_status": result_status,
                 "cached_time": cached_time,
