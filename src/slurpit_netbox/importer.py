@@ -7,6 +7,7 @@ from django.db import connection
 from django.db.models import QuerySet
 from django.utils.text import slugify
 from django.utils import timezone
+from django.db.models.expressions import RawSQL
 
 from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
 from dcim.choices import DeviceStatusChoices
@@ -159,8 +160,8 @@ def handle_new_comers():
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
 
 def handle_changed():
-    query = "SELECT s.* FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.slurpit_id = i.slurpit_id AND s.changeddate > i.changeddate"
-    qs = SlurpitStagedDevice.objects.raw(query)
+    query = "SELECT s.id FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.slurpit_id = i.slurpit_id AND s.changeddate > i.changeddate"
+    qs = SlurpitStagedDevice.objects.filter(id__in=RawSQL(query))
     offset = 0
     count = len(qs)
 
