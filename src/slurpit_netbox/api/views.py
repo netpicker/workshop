@@ -74,7 +74,7 @@ class SlurpitPlanningViewSet(
         if not isinstance(request.data, list):
             return Response("Should be a list", status=status.HTTP_400_BAD_REQUEST)
 
-        ids = {row['id'] : row for row in request.data if row['disabled'] == '0'}
+        ids = {str(row['id']) : row for row in request.data if row['disabled'] == '0'}
 
         with transaction.atomic():
             count = self.queryset.exclude(planning_id__in=ids.keys()).delete()[0]
@@ -84,7 +84,7 @@ class SlurpitPlanningViewSet(
             update_objects = self.queryset.filter(planning_id__in=ids.keys())
             SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api updated {update_objects.count()} plannings")
             for planning in update_objects:
-                obj = ids.pop(planning.planning_id)
+                obj = ids.pop(str(planning.planning_id))
                 planning.name = obj['name']
                 planning.comments = obj['comment']
                 planning.save()
