@@ -225,75 +225,35 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
         })
 
     def _update_objects(self, form, request):
-        custom_fields = getattr(form, 'custom_fields', {})
-        standard_fields = [
-            field for field in form.fields if field not in list(custom_fields) + ['pk']
-        ]
-        nullified_fields = request.POST.getlist('_nullify')
-        updated_objects = []    
-        model_fields = {}
-        m2m_fields = {}
-
-        # Build list of model fields and m2m fields for later iteration
-        for name in standard_fields:
-            try:
-                model_field = self.queryset.model._meta.get_field(name)
-                if isinstance(model_field, (ManyToManyField, ManyToManyRel)):
-                    m2m_fields[name] = model_field
-                elif isinstance(model_field, GenericRel):
-                    # Ignore generic relations (these may be used for other purposes in the form)
-                    continue
-                else:
-                    model_fields[name] = model_field
-            except FieldDoesNotExist:
-                # This form field is used to modify a field rather than set its value directly
-                # model_fields[name] = None
-                pass
-
+        updated_objects = []
+        data = {
+            'device_type': form.cleaned_data['device_type'],
+            'role': form.cleaned_data['role'],
+            'site': form.cleaned_data['site'],
+            'location': form.cleaned_data['location'],
+            'rack': form.cleaned_data['rack'],
+            'position': form.cleaned_data['position'],
+            'latitude': form.cleaned_data['latitude'],
+            'longitude': form.cleaned_data['longitude'],
+            'tenant': form.cleaned_data['tenant'],
+            'description': form.cleaned_data['description'],
+            'airflow': form.cleaned_data['airflow'],
+        }
         for obj in self.queryset.filter(pk__in=form.cleaned_data['pk']):
             if obj.mapped_device_id is not None:
                 continue
 
-            extra = {'custom_field_data': {}}
-
-            # Update standard fields. If a field is listed in _nullify, delete its value.
-            for name, model_field in model_fields.items():
-                # Handle nullification
-                if name in form.nullable_fields and name in nullified_fields:
-                    extra[name] = None if model_field.null else ''
-                # Normal fields
-                elif name in form.changed_data:
-                    extra[name] = form.cleaned_data[name]
-            # Update custom fields
-            for name, customfield in custom_fields.items():
-                if name.startswith('cf_'):
-                    cf_name = name[3:]  # Strip cf_ prefix
-                    if name in form.nullable_fields and name in nullified_fields:
-                        extra[name]['custom_field_data'][cf_name] = None
-                    elif name in form.changed_data:
-                        extra[name]['custom_field_data'][cf_name] = customfield.serialize(form.cleaned_data[name])
-
-            device = get_dcim_device(obj, **extra)
+            device = get_dcim_device(obj, **data)
             obj.mapped_device = device
             obj.save()
+            updated_objects.append(obj)
 
-            log_message = f"Onboarded device - {obj.hostname} successfully."
-            SlurpitLog.objects.create(level=LogLevelChoices.LOG_SUCCESS, category=LogCategoryChoices.ONBOARD, message=log_message)
+            SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=f"Onboarded device - {obj.hostname} successfully.")
 
             # Take a snapshot of change-logged models
             if hasattr(device, 'snapshot'):
                 device.snapshot()
             
-            updated_objects.append(device)
-
-            # Handle M2M fields after save
-            for name, m2m_field in m2m_fields.items():
-                if name in form.nullable_fields and name in nullified_fields:
-                    getattr(device, name).clear()
-                elif form.cleaned_data[name]:
-                    getattr(device, name).set(form.cleaned_data[name])
-
-            # Add/remove tags
             if form.cleaned_data.get('add_tags', None):
                 device.tags.add(*form.cleaned_data['add_tags'])
             if form.cleaned_data.get('remove_tags', None):

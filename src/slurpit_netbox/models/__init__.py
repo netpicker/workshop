@@ -91,18 +91,7 @@ def add_default_mandatory_objects(tags):
     dtype.tags.set(tags)
 
     role, _ = DeviceRole.objects.get_or_create(**get_config('DeviceRole'))
-    role.tags.set(tags)
-
-    location, _= Location.objects.get_or_create(site=site, **get_config('Location'))
-
-    region, _= Region.objects.get_or_create(**get_config('Region'))
-
-    sitegroup, _= SiteGroup.objects.get_or_create(**get_config('SiteGroup'))
-
-    configtemplate, _= ConfigTemplate.objects.get_or_create(**get_config('ConfigTemplate'))
-
-    rack, _= Rack.objects.get_or_create(site=site, location=location, **get_config('Rack'))
-    
+    role.tags.set(tags)    
 
 def post_migration(sender, **kwargs):
     create_custom_fields()
