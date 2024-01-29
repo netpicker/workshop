@@ -20,7 +20,7 @@ class SlurpitPlanningSerializer(NetBoxModelSerializer):
 
     class Meta:
         model = SlurpitPlanning
-        fields = ['id', "name", "comment"]
+        fields = ['id', "name", "comment", "display"]
 
 class SlurpitStagedDeviceSerializer(serializers.ModelSerializer):
     class Meta:
