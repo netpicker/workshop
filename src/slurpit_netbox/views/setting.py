@@ -138,7 +138,7 @@ class SettingsView(View):
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/planning/clear/{planning_id}/"
+                    "url": "api/plugins/slurpit/planning-data/clear/{planning_id}/"
                 },
                 {
                     "type": "POST",
