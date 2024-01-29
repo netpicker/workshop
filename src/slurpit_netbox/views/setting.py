@@ -287,7 +287,9 @@ class SettingsView(View):
             for plan in r:
                 planning_list.append({
                     'id': plan['id'],
-                    'name': plan['name']
+                    'name': plan['name'],
+                    'comment': plan['comment'],
+                    'disabled': plan['disabled']
                 })
             
             return planning_list
