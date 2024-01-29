@@ -1,7 +1,8 @@
 ## Compatibility
 
-|-------------|-----------|
-| NetBox 3.7  | >= 0.8.0  |
+| NetBox Version | Plugin Version |
+|----------------|----------------|
+|   NetBox 3.7   |    >= 0.8.0    |
 
 ## How to install the plugin on your local NetBox server
 
