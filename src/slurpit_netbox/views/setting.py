@@ -114,14 +114,6 @@ class SettingsView(View):
             slurpit_apis = [
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/snapshot/"
-                },
-                {
-                    "type": "DELETE",
-                    "url": "api/plugins/slurpit/snapshot/delete-all/{hostname}/{planning_id}/"
-                },
-                {
-                    "type": "POST",
                     "url": "api/plugins/slurpit/planning/"
                 },
                 {
@@ -134,11 +126,19 @@ class SettingsView(View):
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/planning/clear/{planning_id}/"
+                    "url": "api/plugins/slurpit/planning/delete-all/"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/planning-data/"
                 },
                 {
                     "type": "DELETE",
-                    "url": "api/plugins/slurpit/planning/delete-all/"
+                    "url": "api/plugins/slurpit/planning-data/delete-all/{hostname}/{planning_id}/"
+                },
+                {
+                    "type": "DELETE",
+                    "url": "api/plugins/slurpit/planning/clear/{planning_id}/"
                 },
                 {
                     "type": "POST",

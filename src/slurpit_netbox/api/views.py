@@ -68,17 +68,6 @@ class SlurpitPlanningViewSet(
         count = SlurpitSnapshot.objects.filter(planning_id=planning_id).delete()[0]
         SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots and planning {planning.name}")
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    @action(detail=False, methods=['delete'], url_path='clear/(?P<planning_id>[^/.]+)')
-    def clear(self, request, *args, **kwargs):
-        planning_id = kwargs.get('planning_id')
-        planning = SlurpitPlanning.objects.filter(planning_id=planning_id).first()
-        if not planning:
-            return Response(f"Unknown planning id {planning_id}", status=status.HTTP_400_BAD_REQUEST)
-        count = SlurpitSnapshot.objects.filter(planning_id=planning_id).delete()[0]
-        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name}")
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
         
     @action(detail=False, methods=['post'],  url_path='sync')
     def sync(self, request):
@@ -133,6 +122,17 @@ class SlurpitSnapshotViewSet(
         count = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id).delete()[0]
 
         SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name} and hostname {hostname}")
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['delete'], url_path='clear/(?P<planning_id>[^/.]+)')
+    def clear(self, request, *args, **kwargs):
+        planning_id = kwargs.get('planning_id')
+        planning = SlurpitPlanning.objects.filter(planning_id=planning_id).first()
+        if not planning:
+            return Response(f"Unknown planning id {planning_id}", status=status.HTTP_400_BAD_REQUEST)
+        count = SlurpitSnapshot.objects.filter(planning_id=planning_id).delete()[0]
+        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name}")
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
