@@ -180,8 +180,17 @@ def handle_changed():
             result.copy_staged_values(device)
             result.save()
 
-            if result.mapped_device and result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
-                result.mapped_device.status=DeviceStatusChoices.STATUS_INVENTORY
+            if result.mapped_device:
+                if result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
+                    result.mapped_device.status=DeviceStatusChoices.STATUS_INVENTORY
+                result.mapped_device.custom_field_data.update({
+                    'slurpit_hostname': device.hostname,
+                    'slurpit_fqdn': device.fqdn,
+                    'slurpit_platform': device.device_os,
+                    'slurpit_manufactor': device.brand,
+                    'slurpit_devicetype': device.device_type,
+                    'slurpit_ipv4': device.ipv4
+                })    
                 result.mapped_device.save()
         offset += BATCH_SIZE
 
@@ -208,7 +217,8 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'slurpit_fqdn': staged.fqdn,
         'slurpit_platform': staged.device_os,
         'slurpit_manufactor': staged.brand,
-        'slurpit_devicetype': staged.device_type
+        'slurpit_devicetype': staged.device_type,
+        'slurpit_ipv4': staged.ipv4
     })    
         
     kw.update({

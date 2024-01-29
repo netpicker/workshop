@@ -77,6 +77,15 @@ def create_custom_fields():
                 label='Slurpit Device Type'
                 )
     cf.content_types.set({device})
+    
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_ipv4',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Slurpit Ipv4'
+                )
+    cf.content_types.set({device})
 
 
 

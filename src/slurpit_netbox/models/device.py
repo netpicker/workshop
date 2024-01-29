@@ -58,6 +58,7 @@ class SlurpitImportedDevice(NetBoxModel):
         self.slurpit_id = device.slurpit_id
         self.disabled = device.disabled
         self.hostname = device.hostname
+        self.ipv4 = device.ipv4
         self.fqdn = device.fqdn
         self.device_os = device.device_os
         self.device_type = device.device_type

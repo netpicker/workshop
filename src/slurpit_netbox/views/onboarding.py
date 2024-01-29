@@ -153,7 +153,8 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     cf['slurpit_fqdn'] = obj.fqdn
                     cf['slurpit_platform'] = obj.device_os
                     cf['slurpit_manufactor'] = obj.brand
-                    cf['slurpit_devicetype'] = obj.device_type                   
+                    cf['slurpit_devicetype'] = obj.device_type  
+                    cf['slurpit_ipv4'] = obj.ipv4                   
 
                     obj.mapped_device.custom_field_data = cf
                     obj.mapped_device.name = obj.hostname
@@ -181,6 +182,7 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     cf['slurpit_platform'] = obj.device_os
                     cf['slurpit_manufactor'] = obj.brand
                     cf['slurpit_devicetype'] = obj.device_type
+                    cf['slurpit_ipv4'] = obj.ipv4              
 
                     obj.mapped_device = device
                     obj.mapped_device.custom_field_data = cf

@@ -112,40 +112,11 @@ class OnboardingForm(NetBoxModelBulkEditForm):
         choices=add_blank_choice(DeviceAirflowChoices),
         required=False
     )
-
-    # platform = DynamicModelChoiceField(
-    #     label=_('Platform'),
-    #     queryset=Platform.objects.all(),
-    #     required=False
-    # )
     status = ChoiceField(
         label=_('Status'),
         choices=add_blank_choice(DeviceStatusChoices),
         required=False
     )
-    
-    # serial = forms.CharField(
-    #     max_length=50,
-    #     required=False,
-    #     label=_('Serial Number')
-    # )
-    
-    # config_template = DynamicModelChoiceField(
-    #     label=_('Config template'),
-    #     queryset=ConfigTemplate.objects.all(),
-    #     required=False
-    # )
-    # comments = CommentField()
-    #
-    # fieldsets = (
-    #     (_('Device'), ('role', 'status', 'tenant', 'platform', 'description')),
-    #     (_('Location'), ('site', 'location')),
-    #     (_('Hardware'), ('manufacturer', 'device_type', 'airflow', 'serial')),
-    #     (_('Configuration'), ('config_template',)),
-    # )
-    # nullable_fields = (
-    #     'location', 'tenant', 'platform', 'serial', 'airflow', 'description', 'comments',
-    # )
 
 class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
     id = DynamicModelChoiceField(
