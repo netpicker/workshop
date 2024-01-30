@@ -5,9 +5,11 @@
 {% load form_helpers %}
 
 <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
-    <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
-        <i class="mdi mdi-sync"></i> {% trans "Sync" %}
-    </a>
+    {% if appliance_type != 'cloud' %}
+      <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+          <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+      </a>
+    {% endif %}
     <div class="row mb-3">
         
         <div class="col col-md-6">
@@ -87,12 +89,15 @@
           <div class="modal-body">
             <div class="device_form" style="display:flex;justify-content: space-between; margin-bottom: 15px;">
               <div class="" style="width: 60%;">{% render_form device_form %}</div>
-              <button class="btn btn-outline-primary btn-sm" id="push_btn" >{% trans "Push" %}</button>
-              
+              {% if appliance_type != 'cloud' %}
+                <a class="btn btn-outline-primary btn-sm" id="push_btn" >{% trans "Push" %}</a>
+              {% endif %}
             </div>
             
-            <textarea name="payload-result" cols="40" rows="10" class=" form-control mb-2" placeholder="Payload Result" id="payload-result" style="height: 200px;"></textarea>
-            <textarea name="push-result" cols="40" rows="10" class=" form-control" placeholder="Push Result" id="push-result" style="height: 100px;"></textarea>
+            <textarea id="payload-result" name="payload-result" cols="40" rows="10" class=" form-control mb-2" placeholder="Payload Result" id="payload-result" style="height: 200px;"></textarea>
+            {% if appliance_type != 'cloud' %}
+              <textarea id="push-result" name="push-result" cols="40" rows="10" class=" form-control" placeholder="Push Result" id="push-result" style="height: 100px;"></textarea>
+            {% endif %}
           </div>
   
       </form>
@@ -124,6 +129,8 @@
   var delElement = document.getElementById('delete-btn');
   var form = document.getElementById('mapping-form');
   var actionInput = document.getElementById('actionInput');
+  var payloadResultTextarea = document.getElementById('payload-result');
+  var pushResultTextarea = document.getElementById('push-result');
 
   delElement.addEventListener('click', function(event) {
     const checkboxes = document.querySelectorAll('input[name="pk"]');
@@ -147,16 +154,46 @@
       data.append('csrfmiddlewaretoken', csrfToken);
       data.append('device_id', device_id);
       
-      fetch('', {
+      fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: data
       }).then(function(response) {
+        return response.json();
+      }).then(function(res){
+        const deviceRequestBody = JSON.stringify(res, null, 4); 
+        payloadResultTextarea.value = deviceRequestBody;
 
       }).catch(function(error) {
 
       });
+  });
+
+  var pushButton = document.getElementById('push_btn');
+  
+  pushButton.addEventListener('click', function(event) {
+    var device_id = (deviceElement.value == undefined ) ? "": deviceElement.value; // or event.target.value
+    var data = new URLSearchParams();
+    data.append('csrfmiddlewaretoken', csrfToken);
+    data.append('device_id', device_id);
+    data.append('test', 'test')
+
+    fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      const deviceRequestBody = JSON.stringify(res, null, 4); 
+      pushResultTextarea.value = deviceRequestBody;
+
+    }).catch(function(error) {
+
+    });
   });
 </script>

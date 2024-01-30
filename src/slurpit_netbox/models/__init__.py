@@ -103,6 +103,19 @@ def add_default_mandatory_objects(tags):
     role, _ = DeviceRole.objects.get_or_create(**get_config('DeviceRole'))
     role.tags.set(tags)    
 
+    SlurpitMapping.objects.all().delete()
+    
+    mappings = [
+        {"source_field": "hostname", "target_field": "device|name"},
+        {"source_field": "fqdn", "target_field": "device|primary_ip4"},
+        {"source_field": "ipv4", "target_field": "device|primary_ip4"},
+        {"source_field": "device_os", "target_field": "device|platform"},
+        {"source_field": "device_tye", "target_field": "device|device_type"},
+    ]
+    for mapping in mappings:
+        SlurpitMapping.objects.create(**mapping)
+
+
 def post_migration(sender, **kwargs):
     create_custom_fields()
     tags = ensure_slurpit_tags()
