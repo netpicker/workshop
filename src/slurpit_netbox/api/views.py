@@ -16,7 +16,7 @@ from django.db import transaction
 from django.http import JsonResponse
 import json
 from ..validator import device_validator
-from ..importer import process_import, import_devices
+from ..importer import process_import, import_devices, import_plannings
 from ..management.choices import *
 
 __all__ = (
@@ -73,40 +73,15 @@ class SlurpitPlanningViewSet(
     def sync(self, request):
         if not isinstance(request.data, list):
             return Response("Should be a list", status=status.HTTP_400_BAD_REQUEST)
-        self._handle_plannings(request.data)
+        import_plannings(request.data)
         return JsonResponse({'status': 'success'})
     
     def create(self, request):
         if not isinstance(request.data, list):
             return Response("Should be a list", status=status.HTTP_400_BAD_REQUEST)
 
-        self._handle_plannings(request.data, False)        
+        import_plannings(request.data, False)        
         return JsonResponse({'status': 'success'})
-
-    def _handle_plannings(self, plannings, delete=True):
-        ids = {str(row['id']) : row for row in plannings if row['disabled'] == '0'}
-
-        with transaction.atomic():
-            if delete:
-                count = self.queryset.exclude(planning_id__in=ids.keys()).delete()[0]
-                SlurpitSnapshot.objects.filter(planning_id__in=ids.keys()).delete()
-                SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api parted {count} plannings")
-        
-            update_objects = self.queryset.filter(planning_id__in=ids.keys())
-            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api updated {update_objects.count()} plannings")
-            for planning in update_objects:
-                obj = ids.pop(str(planning.planning_id))
-                planning.name = obj['name']
-                planning.comments = obj['comment']
-                planning.save()
-            
-            to_save = []
-            for obj in ids.values():
-                to_save.append(SlurpitPlanning(name=obj['name'], comments=obj['comment'], planning_id=obj['id']))
-            SlurpitPlanning.objects.bulk_create(to_save)
-            
-            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api imported {len(to_save)} plannings")
-            SlurpitLog.success(category=LogCategoryChoices.PLANNING, message=f"Sync job completed.")
 
 class SlurpitSnapshotViewSet(
         BulkCreateModelMixin,

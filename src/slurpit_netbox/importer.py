@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import QuerySet, F, OuterRef, Subquery
 from django.utils.text import slugify
 from django.utils import timezone
@@ -14,7 +14,7 @@ from dcim.choices import DeviceStatusChoices
 from ipam.models import *
 
 from . import get_config
-from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting
+from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting, SlurpitPlanning, SlurpitSnapshot
 from .management.choices import *
 
 BATCH_SIZE = 256
@@ -35,29 +35,6 @@ def get_devices():
         r.raise_for_status()
         data = r.json()
         log_message = "Syncing the devices from slurp'it in Netbox."
-        SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
-        return data
-    except ObjectDoesNotExist:
-        setting = None
-        log_message = "Need to set the setting parameter"
-        SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=log_message)
-        return None
-    
-def get_latest_data_on_planning(hostname, planning_id):
-    try:
-        setting = SlurpitSetting.objects.get()
-        uri_base = setting.server_url
-        headers = {
-                        'authorization': setting.api_key,
-                        'useragent': 'netbox/requests',
-                        'accept': 'application/json'
-                    }
-        uri_devices = f"{uri_base}/api/devices/snapshot/single/{hostname}/{planning_id}"
-
-        r = requests.get(uri_devices, headers=headers)
-        r.raise_for_status()
-        data = r.json()
-        log_message = "Get the latest data from slurp'it in Netbox on planning ID."
         SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
         return data
     except ObjectDoesNotExist:
@@ -256,3 +233,52 @@ def get_from_staged(
         device.mapped_device = get_dcim_device(staged, **extra)
     return device
 
+
+    
+def get_latest_data_on_planning(hostname, planning_id):
+    try:
+        setting = SlurpitSetting.objects.get()
+        uri_base = setting.server_url
+        headers = {
+                        'authorization': setting.api_key,
+                        'useragent': 'netbox/requests',
+                        'accept': 'application/json'
+                    }
+        uri_devices = f"{uri_base}/api/devices/snapshot/single/{hostname}/{planning_id}"
+
+        r = requests.get(uri_devices, headers=headers)
+        r.raise_for_status()
+        data = r.json()
+        log_message = "Get the latest data from slurp'it in Netbox on planning ID."
+        SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
+        return data
+    except ObjectDoesNotExist:
+        setting = None
+        log_message = "Need to set the setting parameter"
+        SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=log_message)
+        return None
+
+def import_plannings(plannings, delete=True):
+    ids = {str(row['id']) : row for row in plannings if row['disabled'] == '0'}
+
+    with transaction.atomic():
+        if delete:
+            count = SlurpitPlanning.objects.exclude(planning_id__in=ids.keys()).delete()[0]
+            SlurpitSnapshot.objects.filter(planning_id__in=ids.keys()).delete()
+            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api parted {count} plannings")
+    
+        update_objects = SlurpitPlanning.objects.filter(planning_id__in=ids.keys())
+        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api updated {update_objects.count()} plannings")
+        for planning in update_objects:
+            obj = ids.pop(str(planning.planning_id))
+            planning.name = obj['name']
+            planning.comments = obj['comment']
+            planning.save()
+        
+        to_save = []
+        for obj in ids.values():
+            to_save.append(SlurpitPlanning(name=obj['name'], comments=obj['comment'], planning_id=obj['id']))
+        SlurpitPlanning.objects.bulk_create(to_save)
+        
+        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api imported {len(to_save)} plannings")
+        SlurpitLog.success(category=LogCategoryChoices.PLANNING, message=f"Sync job completed.")

@@ -1,38 +1,35 @@
+import requests
+from datetime import datetime
+
 from django.contrib import messages
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.cache import cache
+from django.conf import settings
+from django.views.generic import View
+from django.utils.decorators import method_decorator
+from django_tables2 import RequestConfig, tables, Column
+from django.urls import reverse
+
 from netbox.views import generic
 from netbox.views.generic.base import BaseObjectView
+from users.models import Token
+from account.models import UserToken
+from dcim.models import Device
+from dcim.views import DeviceComponentsView
 from utilities.htmx import is_htmx
 from utilities.views import register_model_view, ViewTab
-from django.views.generic import View
+from utilities.paginator import EnhancedPaginator, get_paginate_count
+
 from ..forms import SlurpitPlanningTableForm, SlurpitApplianceTypeForm
 from ..models import SlurpitSetting, SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
 from ..tables import SlurpitPlanningTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
-from django.utils.decorators import method_decorator
 from ..utilities import generate_random_string
-from users.models import ObjectPermission, Token
-from dcim.models import Device
-from dcim.views import DeviceComponentsView
-from django.db.models.query import QuerySet
-from django.core.cache import cache
-import requests
-from django_tables2 import RequestConfig, tables, Column
-from utilities.paginator import EnhancedPaginator, get_paginate_count
-from ..importer import get_latest_data_on_planning
-from django.urls import reverse
-from django.http import HttpResponseRedirect
-from datetime import datetime
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from django.http import JsonResponse
-from account.models import UserToken
-from django.conf import settings
+from ..importer import get_latest_data_on_planning, import_plannings
+
 
 BATCH_SIZE = 128
 
@@ -87,16 +84,10 @@ class SettingsView(View):
         
         if tab_param == 'data_tabs':
             sync_param = request.GET.get('sync', None)
-            if sync_param == 'true':
-                if setting is not None:
-                    new_plannings = self.get_planning_list(request, server_url, api_key)
-                    new_items = []
-                    for item in new_plannings:
-                        if item['disabled'] == '0':
-                            new_items.append(SlurpitPlanning(name=item['name'], planning_id=item['id'], comments=item['comment']))
-                    
-                    SlurpitPlanning.objects.bulk_create(new_items, ignore_conflicts=True)
-                    SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} plannings")
+            if sync_param == 'true' and setting is not None:
+                new_plannings = self.get_planning_list(request, server_url, api_key)
+                if new_plannings is not None:
+                    import_plannings(new_plannings)
 
             plannings = SlurpitPlanning.objects.all().order_by('id')
             
@@ -278,7 +269,7 @@ class SettingsView(View):
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed to get planning list of the Slurp'it server."          
-            SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.SETTING, message=log_message)
+            SlurpitLog.failure(category=LogCategoryChoices.SETTING, message=log_message)
             return []
         
         if response.status_code == 200:
@@ -293,8 +284,7 @@ class SettingsView(View):
                 })
             
             return planning_list
-        else:
-            return []
+        return None
 
 def get_refresh_url(request, pk):
     get_params = request.GET.copy()
