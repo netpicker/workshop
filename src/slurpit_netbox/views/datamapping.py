@@ -11,7 +11,7 @@ from dcim.models import Device
 from django.forms.models import model_to_dict
 import requests
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils.safestring import mark_safe
 
 BATCH_SIZE = 128
@@ -26,6 +26,35 @@ def get_device_dict(instance):
 
 
     return device_dict
+
+def post_slurpit_device(row):
+    try:
+        setting = SlurpitSetting.objects.get()
+        uri_base = setting.server_url
+        headers = {
+                        'Authorization': f'Bearer {setting.api_key}',
+                        'useragent': 'netbox/requests',
+                        'accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    }
+
+        uri_devices = f"{uri_base}api/devices"
+        try:
+            r = requests.post(uri_devices, headers=headers, json=row)
+            r = r.json()
+            return r
+        except:
+            pass
+
+        log_message = "Syncing the devices from slurp'it in Netbox."
+        SlurpitLog.info(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
+
+    except ObjectDoesNotExist:
+        setting = None
+        log_message = "Need to set the setting parameter"
+        SlurpitLog.failure(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
+    
+    return None
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class DataMappingView(View):
@@ -51,40 +80,19 @@ class DataMappingView(View):
                     target_field = obj.target_field.split('|')[1]
                     row[obj.source_field] = str(device[target_field])
                 # request_body.append(row)
-            
 
+                res = post_slurpit_device(row)
 
-                try:
-                    setting = SlurpitSetting.objects.get()
-                    uri_base = setting.server_url
-                    headers = {
-                                    'Authorization': f'Bearer {setting.api_key}',
-                                    'useragent': 'netbox/requests',
-                                    'accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                }
+                if res is None:
+                    return redirect(f'{request.path}?tab={tab}')
+                
+                if res['status'] != 200:
+                    error_message = ''
+                    for error in res["messages"]:
+                        error_message += f'{error}: {res["messages"][error]} \r\n <br> '
 
-                    uri_devices = f"{uri_base}api/devices"
-                    try:
-                        r = requests.post(uri_devices, headers=headers, json=row)
-                        r = r.json()
-                        
-                        if r['status'] != 200:
-                            error_message = ''
-                            for error in r["messages"]:
-                                error_message += f'{error}: {r["messages"][error]} \r\n <br> '
-                            messages.error(request, mark_safe(error_message))
-                            return redirect(f'{request.path}?tab={tab}')
-                    except:
-                        pass
-
-                    log_message = "Syncing the devices from slurp'it in Netbox."
-                    SlurpitLog.info(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
-
-                except ObjectDoesNotExist:
-                    setting = None
-                    log_message = "Need to set the setting parameter"
-                    SlurpitLog.failure(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
+                    messages.error(request, mark_safe(error_message))
+                    return redirect(f'{request.path}?tab={tab}')
                 
             messages.success(request, "Sync from Netbox to Slurpit is done successfully.")
             return redirect(f'{request.path}?tab={tab}')
@@ -95,6 +103,13 @@ class DataMappingView(View):
 
         mappings = SlurpitMapping.objects.all()
         
+        appliance_type = ''
+        try:
+            setting = SlurpitSetting.objects.get()
+            appliance_type = setting.appliance_type
+        except ObjectDoesNotExist:
+            setting = None
+
         for mapping in mappings:
             form.append({
                 "choice": mapping,
@@ -103,13 +118,15 @@ class DataMappingView(View):
 
         new_form = SlurpitMappingForm(doaction="add")
         device_form = SlurpitDeviceForm()
+
         return render(
             request,
             self.template_name, 
             {
                 "form": form,
                 "new_form": new_form,
-                "device_form": device_form
+                "device_form": device_form,
+                "appliance_type": appliance_type,
             }
         )
     
@@ -117,8 +134,33 @@ class DataMappingView(View):
         tab = request.GET.get('tab', None)
 
         if tab == "netbox_to_slurpit":
-            action = request.POST.get("action")
+            test = request.POST.get('test')
+            device_id = request.POST.get('device_id')
 
+            if device_id is not None:
+                if device_id == "":
+                    return JsonResponse({})
+                
+                device = Device.objects.get(id=int(device_id))
+                device = get_device_dict(device)
+
+                row = {}
+                objs = SlurpitMapping.objects.all()
+                for obj in objs:
+                    target_field = obj.target_field.split('|')[1]
+                    row[obj.source_field] = str(device[target_field])
+
+                if test is not None:
+                    res = post_slurpit_device(row)
+
+                    if res is None:
+                        return JsonResponse({"error": "Server Internal Error."})
+                    
+                    return JsonResponse(res)
+
+                return JsonResponse(row)
+            
+            action = request.POST.get("action")
             if action is None:
                 source_field = request.POST.get("source_field")
                 target_field = request.POST.get("target_field")
