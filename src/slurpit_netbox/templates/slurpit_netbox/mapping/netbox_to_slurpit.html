@@ -11,6 +11,21 @@
       </a>
     {% endif %}
     <div class="row mb-3">
+      <div class="col col-md-6">
+        <div class="card">
+          
+          <div class="card-header">
+              <h6>Sync your NetBox devices to Slurp'it</h6>
+              <span>
+                In case you already have a filled NetBox system, and you want to sync those to Slurp'it to start collecting data then this is the page you are looking for.
+                Below on the left you see the required attributes for in Slurp'it and on the right you can map those against your data from NetBox. If you need more information we can advise you to <a href="https://learning.slurpit.io/courses/offers/783fcc2c-f0f8-4a41-bc7c-64f1d03e43e8" target="_BLANK">
+                click here</a> for our online course.
+              </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
         
         <div class="col col-md-6">
             <form action="" method="post" id="mapping-form" class="form form-horizontal mb-3">
@@ -83,14 +98,17 @@
 <div class="modal fade" tabindex="-1" id="testMapModal">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-
+      <div class="modal-header">
+        <h4 class="modal-title">Test device mapping</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
       <form  method="post">
           {% csrf_token %}
           <div class="modal-body">
             <div class="device_form" style="display:flex;justify-content: space-between; margin-bottom: 15px;">
               <div class="" style="width: 60%;">{% render_form device_form %}</div>
               {% if appliance_type != 'cloud' %}
-                <a class="btn btn-outline-primary btn-sm" id="push_btn" >{% trans "Push" %}</a>
+                <a class="btn btn-outline-primary btn-sm" style="height:35px;width:100px;" id="push_btn" >{% trans "Push" %}</a>
               {% endif %}
             </div>
             
