@@ -144,7 +144,7 @@ class SlurpitMappingForm(BootstrapMixin, forms.Form):
     target_field = forms.ChoiceField(
         choices=[
         ],
-        required=False,
+        required=True,
         label=f"Target Field",
     )
     

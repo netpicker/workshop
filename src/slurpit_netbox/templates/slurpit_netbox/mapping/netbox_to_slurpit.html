@@ -5,13 +5,13 @@
 {% load form_helpers %}
 
 <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
-    <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:settings' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+    <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
         <i class="mdi mdi-sync"></i> {% trans "Sync" %}
     </a>
     <div class="row mb-3">
         
         <div class="col col-md-6">
-            <form action="" method="get" id="mapping-form" class="form form-horizontal mb-3">
+            <form action="" method="post" id="mapping-form" class="form form-horizontal mb-3">
                 <div class="card">
                 
                   <div class="card-header" style="display:flex;justify-content: space-between;">
@@ -24,15 +24,21 @@
                       </div>
                   </div>
                   <div class="card-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save" id="actionInput" />
                     {% for choice_item in form %}
-                      {% render_form choice_item %}
+                      <div class="d-flex map-item">
+                        <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
+                        <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>
+                        {% render_form choice_item.form %}
+                      </div>
                     {% endfor %}
                   </div>
                   <div class="card-footer">
                     <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
                         <i class="mdi mdi-plus-thick"></i> Add
                     </button>
-                    <button type="submit" name="_delete" formaction="/dcim/devices/delete/" class="btn btn-danger btn-sm">
+                    <button id="delete-btn" class="btn btn-danger btn-sm">
                         <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
                     </button>
                   </div>
@@ -49,7 +55,7 @@
       <!-- Modal Header -->
       <div class="modal-header">
         <h4 class="modal-title">Create a mapping</h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form  method="post">
           {% csrf_token %}
@@ -68,3 +74,38 @@
     </div>
   </div>
 </div>
+
+<style>
+  .map-item {
+    width: 100% !important;
+    gap: 100px;
+  }
+  .map-item .mb-3 {
+    margin-bottom: 0px !important;
+    width: 100% !important;
+  }
+  html[data-netbox-color-mode=dark] .mb-3 {
+    margin-bottom: 0px !important;
+  }
+</style>
+
+<script>
+  var delElement = document.getElementById('delete-btn');
+  var form = document.getElementById('mapping-form');
+  var actionInput = document.getElementById('actionInput');
+
+  delElement.addEventListener('click', function(event) {
+    const checkboxes = document.querySelectorAll('input[name="pk"]');
+    
+    // Check if all checkboxes are unchecked
+    const allUnchecked = Array.from(checkboxes).every(checkbox => !checkbox.checked);
+
+    actionInput.value = "delete";
+    form.submit()
+    event.preventDefault()
+  });
+
+  
+
+
+</script>
