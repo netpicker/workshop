@@ -73,13 +73,24 @@ class SlurpitPlanningViewSet(
     def sync(self, request):
         if not isinstance(request.data, list):
             return Response("Should be a list", status=status.HTTP_400_BAD_REQUEST)
+        self._handle_plannings(request.data)
+        return JsonResponse({'status': 'success'})
+    
+    def create(self, request):
+        if not isinstance(request.data, list):
+            return Response("Should be a list", status=status.HTTP_400_BAD_REQUEST)
 
-        ids = {str(row['id']) : row for row in request.data if row['disabled'] == '0'}
+        self._handle_plannings(request.data, False)        
+        return JsonResponse({'status': 'success'})
+
+    def _handle_plannings(self, plannings, delete=True):
+        ids = {str(row['id']) : row for row in plannings if row['disabled'] == '0'}
 
         with transaction.atomic():
-            count = self.queryset.exclude(planning_id__in=ids.keys()).delete()[0]
-            SlurpitSnapshot.objects.filter(planning_id__in=ids.keys()).delete()
-            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api parted {count} plannings")
+            if delete:
+                count = self.queryset.exclude(planning_id__in=ids.keys()).delete()[0]
+                SlurpitSnapshot.objects.filter(planning_id__in=ids.keys()).delete()
+                SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api parted {count} plannings")
         
             update_objects = self.queryset.filter(planning_id__in=ids.keys())
             SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api updated {update_objects.count()} plannings")
@@ -96,8 +107,6 @@ class SlurpitPlanningViewSet(
             
             SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api imported {len(to_save)} plannings")
             SlurpitLog.success(category=LogCategoryChoices.PLANNING, message=f"Sync job completed.")
-        return JsonResponse({'status': 'success'})
-
 
 class SlurpitSnapshotViewSet(
         BulkCreateModelMixin,
