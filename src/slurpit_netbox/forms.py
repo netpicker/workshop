@@ -15,13 +15,10 @@ from .management.choices import SlurpitApplianceTypeChoices
 
 class OnboardingForm(NetBoxModelBulkEditForm):
     model = SlurpitImportedDevice
-    device_type = DynamicModelChoiceField(
+    device_type = forms.ChoiceField(
+        choices=[],
         label=_('Device type'),
-        queryset=DeviceType.objects.all(),
-        required=True,
-        query_params={
-            'manufacturer_id': '$manufacturer'
-        }
+        required=True
     )
     role = DynamicModelChoiceField(
         label=_('Device role'),
@@ -117,6 +114,15 @@ class OnboardingForm(NetBoxModelBulkEditForm):
         choices=add_blank_choice(DeviceStatusChoices),
         required=False
     )
+    def __init__(self, *args, **kwargs):
+        device_types = kwargs['initial'].pop('device_types', None)
+        super().__init__(*args, **kwargs)
+        choices = []
+        if device_types and len(device_types) > 1:
+            choices = [('keep_original', 'Keep Original Type')]
+        for dt in DeviceType.objects.all().order_by('id'):
+            choices.append((dt.id, dt.model))          
+        self.fields['device_type'].choices = choices
 
 class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
     planning_id = DynamicModelChoiceField(

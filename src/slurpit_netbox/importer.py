@@ -202,10 +202,11 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'name': staged.hostname,
         'platform': Platform.objects.get(name=staged.device_os),
         'custom_field_data': cf,
-        'device_type': staged.mapped_devicetype,
         **extra,
         # 'primary_ip4_id': int(ip_address(staged.fqdn)),
     })
+    if 'device_type' not in extra and staged.mapped_devicetype is not None:
+        kw['device_type'] = staged.mapped_devicetype
     kw.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)

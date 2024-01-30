@@ -106,6 +106,11 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
     model_form = forms.OnboardingForm
     form = forms.OnboardingForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['models_queryset'] = self.queryset
+        return kwargs
+
     def post(self, request, **kwargs):
         model = self.queryset.model
 
@@ -115,8 +120,9 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
             pk_list = request.POST.getlist('pk')
 
         self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
+        device_types = list(self.queryset.values_list('device_type').distinct())
 
-        form = self.form(request.POST, initial={'pk': pk_list})
+        form = self.form(request.POST, initial={'pk': pk_list, 'device_types': device_types})
         restrict_form_fields(form, request.user)
 
         if '_apply' in request.POST:
@@ -197,15 +203,16 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
 
                 return redirect(self.get_return_url(request))
                 
-
-        defaults = importer.get_defaults()
-        device_types = list(self.queryset.values_list('device_type').distinct())
-        if len(device_types) == 1 and (dt := DeviceType.objects.filter(model__iexact=device_types[0][0]).first()):
-            defaults['device_type'] = dt
-        initial_data = {'pk': pk_list}
-        for k, v in defaults.items():
+        initial_data = {'pk': pk_list, 'device_types': device_types}
+        for k, v in importer.get_defaults().items():
             initial_data.setdefault(k, str(v.id))
         initial_data.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
+
+        if len(device_types) > 1:
+            initial_data['device_type'] = 'keep_original'
+        if len(device_types) == 1 and (dt := DeviceType.objects.filter(model__iexact=device_types[0][0]).first()):
+            initial_data['device_type'] = dt.id
+        print(device_types)
 
         form = self.form(initial=initial_data)
         restrict_form_fields(form, request.user)
@@ -227,9 +234,11 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
         })
 
     def _update_objects(self, form, request):
+        device_type = None
+        if form.cleaned_data['device_type'] != 'keep_original':
+            device_type = DeviceType.objects.filter(id=form.cleaned_data['device_type']).first()
         updated_objects = []
         data = {
-            'device_type': form.cleaned_data['device_type'],
             'role': form.cleaned_data['role'],
             'site': form.cleaned_data['site'],
             'location': form.cleaned_data['location'],
@@ -245,7 +254,11 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
             if obj.mapped_device_id is not None:
                 continue
 
-            device = get_dcim_device(obj, **data)
+            dt = device_type
+            if not device_type:
+                dt = obj.mapped_devicetype
+                
+            device = get_dcim_device(obj, device_type=dt, **data)
             obj.mapped_device = device
             obj.save()
             updated_objects.append(obj)
