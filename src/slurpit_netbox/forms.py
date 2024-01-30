@@ -165,3 +165,11 @@ class SlurpitMappingForm(BootstrapMixin, forms.Form):
         if doaction != "add":
             self.fields[f'target_field'].label = choice_name
             del self.fields[f'source_field']
+
+
+class SlurpitDeviceForm(BootstrapMixin, forms.Form):
+    device = DynamicModelChoiceField(
+        queryset=Device.objects.all(),
+        required=True,
+        label=_("Device"),
+    )

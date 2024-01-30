@@ -18,6 +18,9 @@
                       <h5>Mapping Fields</h5>
                       <div class="action">
                         
+                        <a class="btn btn-purple btn-sm px-3" data-bs-toggle="modal" data-bs-target="#testMapModal">
+                          {% trans "Test" %}
+                        </a>
                         <button class="btn btn-blue btn-sm px-3">
                             {% trans "Save" %}
                         </button>
@@ -75,6 +78,30 @@
   </div>
 </div>
 
+<div class="modal fade" tabindex="-1" id="testMapModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <form  method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="device_form" style="display:flex;justify-content: space-between; margin-bottom: 15px;">
+              <div class="" style="width: 60%;">{% render_form device_form %}</div>
+              <button class="btn btn-outline-primary btn-sm" id="push_btn" >{% trans "Push" %}</button>
+              
+            </div>
+            
+            <textarea name="payload-result" cols="40" rows="10" class=" form-control mb-2" placeholder="Payload Result" id="payload-result" style="height: 200px;"></textarea>
+            <textarea name="push-result" cols="40" rows="10" class=" form-control" placeholder="Push Result" id="push-result" style="height: 100px;"></textarea>
+          </div>
+  
+      </form>
+      <!-- Modal Body -->
+      
+    </div>
+  </div>
+</div>
+
 <style>
   .map-item {
     width: 100% !important;
@@ -86,6 +113,10 @@
   }
   html[data-netbox-color-mode=dark] .mb-3 {
     margin-bottom: 0px !important;
+  }
+  .device_form label.text-lg-end {
+    text-align: left !important;
+    width: 75px !important;
   }
 </style>
 
@@ -105,7 +136,27 @@
     event.preventDefault()
   });
 
-  
 
+  var deviceElement = document.querySelector('select[name="device"]');
+  var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
+    // Then, add an event listener for the 'change' event.
+  deviceElement.addEventListener('change', function(event) {
+      var device_id = this.value; // or event.target.value
+      var data = new URLSearchParams();
+      data.append('csrfmiddlewaretoken', csrfToken);
+      data.append('device_id', device_id);
+      
+      fetch('', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: data
+      }).then(function(response) {
+
+      }).catch(function(error) {
+
+      });
+  });
 </script>

@@ -4,7 +4,7 @@ from .. import forms, importer, models, tables
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
-from ..forms import SlurpitMappingForm
+from ..forms import SlurpitMappingForm, SlurpitDeviceForm
 from ..management.choices import *
 from django.contrib import messages
 from dcim.models import Device
@@ -102,12 +102,14 @@ class DataMappingView(View):
             })
 
         new_form = SlurpitMappingForm(doaction="add")
+        device_form = SlurpitDeviceForm()
         return render(
             request,
             self.template_name, 
             {
                 "form": form,
                 "new_form": new_form,
+                "device_form": device_form
             }
         )
     
