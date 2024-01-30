@@ -119,8 +119,9 @@ class OnboardingForm(NetBoxModelBulkEditForm):
     )
 
 class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
-    id = DynamicModelChoiceField(
+    planning_id = DynamicModelChoiceField(
         queryset=SlurpitPlanning.objects.all(),
+        to_field_name='planning_id',
         required=True,
         label=_("Slurpit Plans"),
     )

@@ -313,8 +313,9 @@ class SlurpitPlanningning(View):
         columns = []
         refresh = request.GET.get('refresh')
         sync = request.GET.get('sync')
-        if 'id' in request.GET and (planning := SlurpitPlanning.objects.filter(planning_id=request.GET.get('id')).first()):
-            self.form = SlurpitPlanningTableForm({'id': planning.id})
+        if 'planning_id' in request.GET and (planning := SlurpitPlanning.objects.filter(planning_id=request.GET.get('planning_id')).first()):
+            self.form = SlurpitPlanningTableForm({'planning_id': planning.planning_id})
+            self.form.id = planning.planning_id
             result_type = request.GET.get('result_type')
             
             if result_type is None:
