@@ -42,7 +42,7 @@ def post_slurpit_device(row):
                         'Content-Type': 'application/json',
                     }
 
-        uri_devices = f"{uri_base}api/devices"
+        uri_devices = f"{uri_base}/api/devices"
         try:
             r = requests.post(uri_devices, headers=headers, json=row)
             r = r.json()
