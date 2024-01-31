@@ -19,10 +19,6 @@ build-main:
     - poetry install
     - poetry build
     - poetry check
-
-    - echo "[pypi]" > ~/.pypirc
-    - echo "username = __token__" >> ~/.pypirc
-    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
     - twine upload dist/*
   only:
     - main
