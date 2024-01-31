@@ -20,8 +20,13 @@
       {% block subtitle %}{% endblock %}
     </div>
 
-    {# Controls #}
-    {% block controls %}{% endblock controls %}
+    <div class="controls">
+      <div class="control-group">
+        <a type="submit" class="btn btn-primary btn-sm" href="?clear=true">
+          Clear
+        </a>
+      </div>
+    </div>
 
   </div>
 {% endblock header %}
