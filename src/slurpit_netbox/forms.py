@@ -12,6 +12,8 @@ from tenancy.models import TenantGroup, Tenant
 from utilities.forms import BootstrapMixin
 from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting
 from .management.choices import SlurpitApplianceTypeChoices
+from extras.models import CustomField
+from django.contrib.contenttypes.models import ContentType
 
 class OnboardingForm(NetBoxModelBulkEditForm):
     model = SlurpitImportedDevice
@@ -166,6 +168,13 @@ class SlurpitMappingForm(BootstrapMixin, forms.Form):
         for field in Device._meta.get_fields():
             if not field.is_relation or field.one_to_one or (field.many_to_one and field.related_model):
                 choices.append((f'device|{field.name}', f'device | {field.name}'))
+        
+        # Add custom fields
+        device = ContentType.objects.get(app_label='dcim', model='device')
+        device_custom_fields = CustomField.objects.filter(content_types=device)
+
+        for custom_field in device_custom_fields:
+            choices.append((f'device|cf_{custom_field.name}', f'device | {custom_field.name}'))
         
         self.fields[f'target_field'].choices = choices
 

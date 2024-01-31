@@ -13,6 +13,8 @@ import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
 from django.utils.safestring import mark_safe
+from django.contrib.contenttypes.models import ContentType
+from extras.models import CustomField
 
 BATCH_SIZE = 128
 
@@ -24,6 +26,8 @@ def get_device_dict(instance):
     device_dict['primary_ip4'] = str(instance.primary_ip4)
     device_dict['primary_ip6'] = str(instance.primary_ip6)
 
+    for custom_field in device_dict['custom_field_data']:
+        device_dict[f'cf_{custom_field}'] = device_dict['custom_field_data'][custom_field]
 
     return device_dict
 
