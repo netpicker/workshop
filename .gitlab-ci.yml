@@ -24,8 +24,8 @@ build-main:
     - echo "username = __token__" >> ~/.pypirc
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
     - twine upload dist/*
-only:
-  - main
+  only:
+    - main
 
 build-other:
   stage: build
