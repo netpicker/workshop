@@ -43,8 +43,8 @@ def post_slurpit_device(row):
             r = requests.post(uri_devices, headers=headers, json=row)
             r = r.json()
             return r
-        except:
-            pass
+        except Exception as e:
+            return {"error": str(e)}
 
         log_message = "Syncing the devices from slurp'it in Netbox."
         SlurpitLog.info(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
@@ -53,6 +53,8 @@ def post_slurpit_device(row):
         setting = None
         log_message = "Need to set the setting parameter"
         SlurpitLog.failure(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
+
+        return {"error": "Need to set the setting parameter"}
     
     return None
 
