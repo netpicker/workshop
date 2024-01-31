@@ -27,30 +27,29 @@
 {% endblock header %}
 
 {% block tabs %}
-  <ul class="nav nav-tabs px-3">
-        
+  <ul class="nav nav-tabs px-3">    
     <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link {% if request.GET.tab == 'slurpit_to_netbox' or request.GET.tab is None %}active{% endif %}" href="?tab=slurpit_to_netbox">
-        Slurp’it to NetBox
-      </a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-tab nav-link {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}" href="?tab=netbox_to_slurpit">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'netbox_to_slurpit' or request.GET.tab is None  %}active{% endif %}" href="?tab=netbox_to_slurpit">
         NetBox to Slurp’it
       </a>
     </li>
 
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'slurpit_to_netbox' %}active{% endif %}" href="?tab=slurpit_to_netbox">
+        Slurp’it to NetBox
+      </a>
+    </li>
     
   </ul>
 {% endblock tabs %}
 
 {% block content-wrapper %}
   <div class="tab-content">
-    {% if request.GET.tab == 'slurpit_to_netbox' or request.GET.tab is None %}
+    {% if request.GET.tab == 'slurpit_to_netbox'  %}
         <h1 class="w-100 text-center" style="padding-top: 10%;">Coming Soon</h1>
         <p class="w-100 text-center fs-6">Sign up for our newsletter and we will inform you when the next new functionalities are released.<br><br>
         <a href="https://slurpit.io/getting-started/#subscribe" target="_blank" class="btn btn-primary">Subscribe</a></p>
-    {% elif request.GET.tab == 'netbox_to_slurpit' %}
+    {% elif request.GET.tab == 'netbox_to_slurpit' or request.GET.tab is None %}
       {% include "slurpit_netbox/mapping/netbox_to_slurpit.html" %}
     {% endif %}
   </div> 
