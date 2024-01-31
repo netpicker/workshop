@@ -11,7 +11,7 @@ stages:
 
 image: python:latest
 before_script:
-- pip install poetry, twine
+- pip install poetry twine
 
 build-main:
   stage: build
