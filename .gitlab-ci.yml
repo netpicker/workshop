@@ -8,16 +8,37 @@
 stages:
 - build
 - test
+
 image: python:latest
 before_script:
-- pip install poetry
-build:
+- pip install poetry, twine
+
+build-main:
+  stage: build
+  script:
+    - poetry install
+    - poetry build
+    - poetry check
+
+    - echo "[pypi]" > ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
+    - twine upload dist/*
+only:
+  - main
+
+build-other:
   stage: build
   script:
   - API_ENDPOINT=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages
   - poetry config repositories.gitlab $API_ENDPOINT/pypi
   - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
   - poetry publish --build --repository gitlab
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: never
+    - when: on_success
+
 sast:
   stage: test
 include:
