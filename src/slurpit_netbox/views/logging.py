@@ -16,10 +16,10 @@ class LoggingListView(generic.ObjectListView):
     
     def get(self, request, *args, **kwargs):        
         clear = request.GET.get('clear', None)
-        
+
         if clear is not None:
             SlurpitLog.objects.all().delete()
-            SlurpitLog.success(category=LogCategoryChoices.LOGGING, message="Clear logs")
+            SlurpitLog.success(category=LogCategoryChoices.LOGGING, message=f'{request.user} cleared the logging')
             return redirect(request.path)
         
         return super().get(request, *args, **kwargs)
