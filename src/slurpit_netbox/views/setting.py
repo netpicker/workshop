@@ -146,6 +146,10 @@ class SettingsView(View):
                 {
                     "type": "GET",
                     "url": "api/plugins/slurpit/test/api/"
+                },
+                {
+                    "type": "GET",
+                    "url": "api/plugins/slurpit/netbox-device/all/"
                 }
             ]
 

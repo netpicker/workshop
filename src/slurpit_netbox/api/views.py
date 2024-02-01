@@ -1,8 +1,10 @@
 
 from netbox.api.viewsets import NetBoxModelViewSet
 from dcim.models import Device
+from dcim.api.serializers import DeviceSerializer
+from dcim.filtersets import DeviceFilterSet
 from dcim.choices import DeviceStatusChoices
-from slurpit_netbox.models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog
+from slurpit_netbox.models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping
 from slurpit_netbox.filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
 from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
 from rest_framework.routers import APIRootView
@@ -18,10 +20,15 @@ import json
 from ..validator import device_validator
 from ..importer import process_import, import_devices, import_plannings
 from ..management.choices import *
+from extras.models import CustomField
+from django.contrib.contenttypes.models import ContentType
+from django.forms.models import model_to_dict
+from ..views.datamapping import get_device_dict
 
 __all__ = (
     'SlurpitPlanningViewSet',
     'SlurpitRootView',
+    'SlurpitDeviceView'
 )
 
 class SlurpitRootView(APIRootView):
@@ -170,3 +177,29 @@ class SlurpitTestAPIView(NetBoxModelViewSet):
     @action(detail=False, methods=['get'], url_path='api')
     def api(self, request, *args, **kwargs):    
         return JsonResponse({'status': 'success'})
+    
+class SlurpitDeviceView(NetBoxModelViewSet):
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    filterset_class = DeviceFilterSet
+
+
+    @action(detail=False, methods=['get'], url_path='all')
+    def all(self, request, *args, **kwargs):    
+        
+        request_body = []
+
+        netbox_devices = Device.objects.all()
+        devices_array = [get_device_dict(device) for device in netbox_devices]
+
+        objs = SlurpitMapping.objects.all()
+        
+        for device in devices_array:
+            row = {}
+            for obj in objs:
+                target_field = obj.target_field.split('|')[1]
+                row[obj.source_field] = str(device[target_field])
+            request_body.append(row)
+
+
+        return JsonResponse({'data': request_body})
