@@ -63,10 +63,7 @@ class SettingsView(View):
             
         push_api_key = ''
         
-        if setting is None:
-            connection_status = ''
-        else:
-            connection_status = setting.connection_status
+        connection_status = "" if setting is None else setting.connection_status 
 
         tokens = UserToken.objects.filter(user=request.user).count()
 
@@ -393,15 +390,14 @@ class SlurpitPlanningning(View):
                 },
             )
 
-        appliance_type = ''
+        connection_status = appliance_type = ''
+        setting = None
         try:
             setting = SlurpitSetting.objects.get()
-            server_url = setting.server_url
-            api_key = setting.api_key
             appliance_type = setting.appliance_type
             connection_status = setting.connection_status
         except ObjectDoesNotExist:
-            setting = None
+            pass
 
         return render(
             request,
