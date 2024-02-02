@@ -195,7 +195,6 @@ class DataMappingView(View):
                 target_fields = request.POST.getlist('target_field')
                 count = len(source_fields)
                 offset = 0
-
                 qs = []
                 for i in range(count):
                     mapping, created = SlurpitMapping.objects.get_or_create(
