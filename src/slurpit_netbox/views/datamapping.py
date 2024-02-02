@@ -140,7 +140,7 @@ class DataMappingView(View):
     def post(self, request):
         tab = request.GET.get('tab', None)
 
-        if tab == "netbox_to_slurpit":
+        if tab == "netbox_to_slurpit" or tab is None:
             test = request.POST.get('test')
             device_id = request.POST.get('device_id')
 
