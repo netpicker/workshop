@@ -165,7 +165,8 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     device.custom_field_data['slurpit_devicetype'] = obj.device_type  
                     device.custom_field_data['slurpit_ipv4'] = obj.ipv4                  
 
-                    device.device_type = DeviceType.objects.get(model=obj.device_type)
+                    manu = Manufacturer.objects.get(name=obj.brand)
+                    device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
                     device.platform = Platform.objects.get(name=obj.device_os)
                     device.save()
                     obj.save()
@@ -194,7 +195,8 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     device.custom_field_data['slurpit_devicetype'] = obj.device_type
                     device.custom_field_data['slurpit_ipv4'] = obj.ipv4             
 
-                    device.device_type = DeviceType.objects.get(model=obj.device_type)
+                    manu = Manufacturer.objects.get(name=obj.brand)
+                    device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
                     device.platform = Platform.objects.get(name=obj.device_os)
                     device.save()
                     obj.save()
