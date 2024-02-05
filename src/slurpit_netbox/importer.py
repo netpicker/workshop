@@ -163,9 +163,6 @@ def handle_changed():
                 result.mapped_device.custom_field_data.update({
                     'slurpit_hostname': device.hostname,
                     'slurpit_fqdn': device.fqdn,
-                    'slurpit_platform': device.device_os,
-                    'slurpit_manufactor': device.brand,
-                    'slurpit_devicetype': device.device_type,
                     'slurpit_ipv4': device.ipv4
                 })    
                 result.mapped_device.save()

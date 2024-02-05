@@ -11,7 +11,7 @@ stages:
 
 image: python:latest
 before_script:
-- pip install poetry twine
+- pip install poetry
 
 build-main:
   stage: build
@@ -19,7 +19,8 @@ build-main:
     - poetry install
     - poetry build
     - poetry check
-    - twine upload dist/*
+    - poetry config pypi-token.pypi $PYPI_TOKEN
+    - poetry publish
   only:
     - main
 

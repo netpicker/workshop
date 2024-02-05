@@ -1,48 +1,26 @@
+# NetBox Discovery Plugin
+[Netbox](https://github.com/netbox-community/netbox) plugin to automatically discover your network with [Slurp'it](https://slurpit.io).
+
 ## Compatibility
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
 |   NetBox 3.7   |    >= 0.8.0    |
 
-## How to install the plugin on your local NetBox server
+## Installation
 
-### Activate the Virtual Environment
- 
-Firstly, to make the plugin available within NetBox, we must activate the Python virtual environment that was set up during the NetBox installation; you can do this by finding the path of the virtual environment, which typically is /opt/netbox/venv/ if you followed the default installation guide.
-
- ```
-$ source /opt/netbox/venv/bin/activate
- ```
-
- ### Run setup.py
-
- ```
-$ python setup.py develop
- ```
-
- ### Configure NetBox
- 
-To enable our new plugin, we have to configure NetBox by opening the configuration.py file located in the netbox/netbox directory and modifying the PLUGINS parameter.
-
- ```
-# configuration.py
-PLUGINS = [
-    'slurpit_netbox',
-]
- ``` 
-
- 
-
- ### Apply Migrations
-
-Use the 'migrate' management command to apply the migration file.
+The plugin is available as a Python package in [pypi](https://pypi.org/project/slurpit-netbox/) and can be installed with pip  
 
 ```
-python manage.py migrate slurpit_netbox
+pip install slurpit-netbox
 ```
+Enable the plugin in /opt/netbox/netbox/netbox/configuration.py:
+```
+PLUGINS = ['slurpit_netbox']
+```
+Restart NetBox and add `slurpit-netbox` to your requirements.txt
 
-After saving the file, start the NetBox development server if it isn't already running.
+See [NetBox Documentation](https://docs.netbox.dev/en/stable/plugins/#installing-plugins) for details
 
- ```
-$ python manage.py runserver 0.0.0.0:8000 --insecure
- ```
+## Getting started
+On our [getting started page](https://slurpit.io/getting-started/) you can take an Online Course to understand how the plugin works, or play with the plugin in a simulated network in our Sandbox.

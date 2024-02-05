@@ -39,7 +39,8 @@ def create_custom_fields():
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Slurpit Hostname'
+                label='Hostname',
+                group_name="Slurp'it",
         )
     cf.content_types.set({device})
 
@@ -48,7 +49,8 @@ def create_custom_fields():
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Slurpit Fqdn'
+                label='Fqdn',
+                group_name="Slurp'it",
                 )
     cf.content_types.set({device})
         
@@ -57,7 +59,8 @@ def create_custom_fields():
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Slurpit Platform'
+                label='Platform',
+                group_name="Slurp'it",
                 )
     cf.content_types.set({device})
 
@@ -66,7 +69,8 @@ def create_custom_fields():
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Slurpit Manufactor'
+                label='Manufactor',
+                group_name="Slurp'it",
                 )
     cf.content_types.set({device})
     
@@ -75,7 +79,8 @@ def create_custom_fields():
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Slurpit Device Type'
+                label='Device Type',
+                group_name="Slurp'it",
                 )
     cf.content_types.set({device})
     
@@ -84,7 +89,8 @@ def create_custom_fields():
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Slurpit Ipv4'
+                label='Ipv4',
+                group_name="Slurp'it",
                 )
     cf.content_types.set({device})
 
