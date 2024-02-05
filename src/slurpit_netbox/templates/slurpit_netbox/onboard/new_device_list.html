@@ -15,7 +15,11 @@
 
                 {% if appliance_type == 'both' or appliance_type == 'on-premise'  %}
                   {% if connection_status == 'connected' %}
-                    <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:import' %}"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a>
+                    <!-- <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:import' %}"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a> -->
+                    <button name="sync"  id="syncBtn" class="btn btn-orange btn-sm mx-2">
+                      <i class="mdi mdi-sync" aria-hidden="true"></i> 
+                      <span id="syncCaption">{% trans "Sync" %}</span>
+                    </button>
                   {% endif %}
                 {% endif %}
                 <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue btn-sm">
@@ -25,6 +29,8 @@
             {% endblock %}
         </div>
         </div>
+        <p id="syncStatusCaption">
+        </p>
       {% csrf_token %}
       {# "Select all" form #}
       {% if table.paginator.num_pages > 1 %}
@@ -72,3 +78,78 @@
       </div>
     </form>
   </div>
+
+  <script>
+    var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    var syncButton = document.getElementById("syncBtn");
+    var syncCaptionElement = document.getElementById("syncCaption")
+    var statusCaptionElement = document.getElementById("syncStatusCaption")
+    var statusCaptionText = ""
+    var status = ""
+    var offset = 0
+    const apiUrl = '/plugins/slurpit/devices/import';
+
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+    });
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: headers,
+    };
+
+
+    syncButton.addEventListener("click", function(event) {
+      event.preventDefault();
+      if(status != "") return;
+      status = "Importing Devices"
+      statusCaptionText = "Started to import devices from slurpit to netbox"
+      
+      syncCaptionElement.innerHTML = status;
+      statusCaptionElement.innerHTML = statusCaptionText;
+      
+      import_device();
+
+    });
+
+    function import_device(flag=true) {
+      var url = apiUrl+"?offset="+offset
+      if(!flag) url = apiUrl
+
+      fetch(url, fetchOptions)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        action = data["action"];
+
+        if(action == "import") {
+          newOffset = data["offset"];
+          
+          if(newOffset != offset) {
+            offset = newOffset;
+            statusCaptionText = "Imported "+newOffset+" devices from slurpit to netbox"
+            statusCaptionElement.innerHTML = statusCaptionText;
+
+            import_device();
+            
+          }else {
+            status = "Processing Devices"
+            syncCaptionElement.innerHTML = status;
+            import_device(false);
+          }
+        }else if(action == "process") {
+          location.reload();
+        }
+        
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+      });
+    }
+  </script>

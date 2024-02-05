@@ -21,7 +21,7 @@ BATCH_SIZE = 256
 columns = ('slurpit_id', 'disabled', 'hostname', 'fqdn', 'ipv4', 'device_os', 'device_type', 'brand', 'createddate', 'changeddate')
 
 
-def get_devices():
+def get_devices(offset):
     try:
         setting = SlurpitSetting.objects.get()
         uri_base = setting.server_url
@@ -30,7 +30,7 @@ def get_devices():
                         'useragent': 'netbox/requests',
                         'accept': 'application/json'
                     }
-        uri_devices = f"{uri_base}/api/devices"
+        uri_devices = f"{uri_base}/api/devices?offset={offset}&limit={BATCH_SIZE}"
         r = requests.get(uri_devices, headers=headers)
         r.raise_for_status()
         data = r.json()

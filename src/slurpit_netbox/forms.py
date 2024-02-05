@@ -1,6 +1,6 @@
 from core.choices import DataSourceStatusChoices
 from django import forms
-from dcim.choices import DeviceStatusChoices, DeviceAirflowChoices
+from dcim.choices import DeviceStatusChoices, DeviceAirflowChoices, DeviceStatusChoices
 from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack, Device
 from django.utils.translation import gettext_lazy as _
 from netbox.api.fields import ChoiceField
@@ -188,4 +188,11 @@ class SlurpitDeviceForm(BootstrapMixin, forms.Form):
         queryset=Device.objects.all(),
         required=True,
         label=_("Device"),
+    )
+
+class SlurpitDeviceStatusForm(BootstrapMixin, forms.Form):
+    device_status = forms.ChoiceField(
+        label=_('Status'),
+        choices=add_blank_choice(DeviceStatusChoices),
+        required=False
     )
