@@ -18,12 +18,13 @@ from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
-    get_dcim_device, import_from_queryset, run_import
+    get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import
 )
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.db.models.fields.json import KeyTextTransform
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse, JsonResponse
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
@@ -280,15 +281,23 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportDevices(View):
     def get(self, request, *args, **kwargs):
+        offset = request.GET.get("offset", None)
         try:
-            result = run_import()
-            if result == 'done':
-                messages.info(request, "Synced the devices from Slurp'it.")
-            else:
-                pass
+            if offset is not None:
+                offset = int(offset)
+                devices = get_devices(offset)
+                if devices is not None and len(devices) > 0:
+                    import_devices(devices)
+                    offset += len(devices)
+                return JsonResponse({"action": "import", "offset": offset})
+            
+            result = process_import()
+            messages.info(request, "Synced the devices from Slurp'it.")
+            return JsonResponse({"action": "process"})
         except requests.exceptions.RequestException as e:
             messages.error(request, "An error occured during querying Slurp'it!")
             SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"An error occured during querying Slurp'it! {e}")
-        return redirect(reverse('plugins:slurpit_netbox:importeddevice_list'))
+        
+        return JsonResponse({"action": "", "error": "ERROR"})
     
 
