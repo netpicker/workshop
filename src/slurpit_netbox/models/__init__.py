@@ -116,7 +116,7 @@ def add_default_mandatory_objects(tags):
         {"source_field": "fqdn", "target_field": "device|primary_ip4"},
         {"source_field": "ipv4", "target_field": "device|primary_ip4"},
         {"source_field": "device_os", "target_field": "device|platform"},
-        {"source_field": "device_tye", "target_field": "device|device_type"},
+        {"source_field": "device_type", "target_field": "device|device_type"},
     ]
     for mapping in mappings:
         SlurpitMapping.objects.create(**mapping)
