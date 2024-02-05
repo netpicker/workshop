@@ -154,17 +154,19 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     device.delete() #delete last to prevent cascade delete
             else:
                 for obj in self.queryset:
-                    cf = obj.mapped_device.custom_field_data
-                    cf['slurpit_hostname'] = obj.hostname
-                    cf['slurpit_fqdn'] = obj.fqdn
-                    cf['slurpit_platform'] = obj.device_os
-                    cf['slurpit_manufactor'] = obj.brand
-                    cf['slurpit_devicetype'] = obj.device_type  
-                    cf['slurpit_ipv4'] = obj.ipv4                   
+                    device = obj.mapped_device
+                    device.name = obj.hostname
 
-                    obj.mapped_device.custom_field_data = cf
-                    obj.mapped_device.name = obj.hostname
-                    obj.mapped_device.save()
+                    device.custom_field_data['slurpit_hostname'] = obj.hostname
+                    device.custom_field_data['slurpit_fqdn'] = obj.fqdn
+                    device.custom_field_data['slurpit_platform'] = obj.device_os
+                    device.custom_field_data['slurpit_manufactor'] = obj.brand
+                    device.custom_field_data['slurpit_devicetype'] = obj.device_type  
+                    device.custom_field_data['slurpit_ipv4'] = obj.ipv4                  
+
+                    device.device_type = DeviceType.objects.get(model=obj.device_type)
+                    device.platform = Platform.objects.get(name=obj.device_os)
+                    device.save()
                     obj.save()
 
                     log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
@@ -182,17 +184,18 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
             else:
                 for obj in self.queryset:
                     device = Device.objects.filter(name__iexact=obj.hostname).first()
-                    cf = device.custom_field_data
-                    cf['slurpit_hostname'] = obj.hostname
-                    cf['slurpit_fqdn'] = obj.fqdn
-                    cf['slurpit_platform'] = obj.device_os
-                    cf['slurpit_manufactor'] = obj.brand
-                    cf['slurpit_devicetype'] = obj.device_type
-                    cf['slurpit_ipv4'] = obj.ipv4              
-
                     obj.mapped_device = device
-                    obj.mapped_device.custom_field_data = cf
-                    obj.mapped_device.save()
+
+                    device.custom_field_data['slurpit_hostname'] = obj.hostname
+                    device.custom_field_data['slurpit_fqdn'] = obj.fqdn
+                    device.custom_field_data['slurpit_platform'] = obj.device_os
+                    device.custom_field_data['slurpit_manufactor'] = obj.brand
+                    device.custom_field_data['slurpit_devicetype'] = obj.device_type
+                    device.custom_field_data['slurpit_ipv4'] = obj.ipv4             
+
+                    device.device_type = DeviceType.objects.get(model=obj.device_type)
+                    device.platform = Platform.objects.get(name=obj.device_os)
+                    device.save()
                     obj.save()
 
                     log_message = f"Conflicted device resolved - {obj.hostname} successfully updated."
