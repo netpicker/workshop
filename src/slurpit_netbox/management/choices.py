@@ -26,6 +26,7 @@ class LogCategoryChoices(ChoiceSet):
     RECONCILE = 'reconcile'
     INIT = 'init'
     PLANNING = 'planning'
+    LOGGING = 'logging'
 
     CHOICES = (
         (SETTING, _('setting')),
@@ -34,6 +35,7 @@ class LogCategoryChoices(ChoiceSet):
         (RECONCILE, _('reconcile')),
         (INIT, _('init')),
         (PLANNING, _('planning')),
+        (LOGGING, _('logging')),
     )
 
 class SlurpitApplianceTypeChoices(ChoiceSet):
