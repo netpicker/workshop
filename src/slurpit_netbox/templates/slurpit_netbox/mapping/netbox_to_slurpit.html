@@ -6,8 +6,11 @@
 
 <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
     {% if appliance_type != 'cloud' %}
-      <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+      <!-- <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
           <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+      </a> -->
+      <a name="sync"  id="sync-btn" class="btn btn-sm btn-orange my-2" data-bs-toggle="modal" data-bs-target="#syncStatusModal">
+        <i class="mdi mdi-sync"></i> {% trans "Sync" %}
       </a>
     {% endif %}
     <div class="row my-2">
@@ -25,11 +28,26 @@
         </div>
       </div>
     </div>
+    <div class="row mt-1">
+      <div class="col col-md-6">
+        <div class="card management-status-card">
+          
+          <div class="card-header">
+            <h6>Management status</h6>
+            <div class="my-1">
+              Select here the device status you want to sync.
+            </div>
+            {% render_form device_status_form %}
+            
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="row mb-3">
-        
         <div class="col col-md-6">
             <form action="?tab=netbox_to_slurpit" method="post" id="mapping-form" class="form form-horizontal mb-3">
-                <div class="card">
+                
+                <div class="card mt-2">
                 
                   <div class="card-header" style="display:flex;justify-content: space-between;">
                       <h5>Mapping Fields</h5>
@@ -125,6 +143,44 @@
   </div>
 </div>
 
+<div class="modal fade" tabindex="-1" data-bs-backdrop="static" id="syncStatusModal" role="dialog" aria-hidden="true" >
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form  method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="circle-container">
+              <svg width="160" height="160">
+                <circle class="circle-bg"
+                        cx="80" cy="80" r="70"
+                        fill="none" stroke="#ddd" stroke-width="20"/>
+                <circle class="circle-bar"
+                        cx="80" cy="80" r="70"
+                        fill="none" stroke="#4CAF50" stroke-width="20"
+                        stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+              </svg>
+              <div class="progress-text" id="progressText">
+                Sending devices <br> from Netbox to Slurpit<br><span class="sync-percent" id="percent">0%</span><br>
+                <span> Total Devices: <span id="total-cnt">100</span></span><br>
+                <span> Done Devices: <span id="done-cnt">30</span></span><br>
+                <span> Failed Devices: <span id="failed-cnt">10</span></span>
+              </div>
+            </div>
+            
+            <p><b>Don't refresh website or close modal before 100%</b></p>
+          </div>
+  
+      </form>
+      <!-- Modal Body -->
+      
+    </div>
+  </div>
+</div>
+
+
 <style>
   .map-item {
     width: 100% !important;
@@ -141,6 +197,45 @@
     text-align: left !important;
     width: 75px !important;
   }
+
+  .circle-container {
+    position: relative;
+    width: 320px;
+    height: 350px;
+    margin: auto;
+    text-align: center;
+  }
+
+  .circle-bar {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  .progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 23px;
+  }
+  .circle-container  span {
+    font-weight: 500 !important;
+    font-size: 15px !important
+  }
+
+  span.sync-percent {
+    font-size: 25px !important;
+    font-weight: 700 !important;
+    line-height: 33px !important;
+    color: #4CAF50
+  }
+
+  .management-status-card label {
+    display: none !important;
+  }
 </style>
 
 <script>
@@ -149,6 +244,16 @@
   var actionInput = document.getElementById('actionInput');
   var payloadResultTextarea = document.getElementById('payload-result');
   var pushResultTextarea = document.getElementById('push-result');
+  var percentElement = document.getElementById('percent');
+
+  function setProgress(percent) {
+      const circle = document.querySelector('.circle-bar');
+      const textElem = document.getElementById("progressText");
+      const maxOffset = 2 * Math.PI * circle.getAttribute('r');
+      const offset = ((100 - percent) / 100) * maxOffset;
+      circle.style.strokeDashoffset = offset;
+  }
+  // setProgress(75);
 
   delElement.addEventListener('click', function(event) {
     const checkboxes = document.querySelectorAll('input[name="pk"]');
@@ -160,10 +265,11 @@
     form.submit()
     event.preventDefault()
   });
-
+  
 
   var deviceElement = document.querySelector('select[name="device"]');
   var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  var deviceStatus = document.querySelector('select[name="device_status"]').value;
 
     // Then, add an event listener for the 'change' event.
   deviceElement.addEventListener('change', function(event) {
@@ -214,4 +320,98 @@
 
     });
   });
+
+  var syncButton = document.getElementById("sync-btn");
+  var totalElement = document.getElementById("total-cnt");
+  var doneElement = document.getElementById("done-cnt");
+  var failedElement = document.getElementById("failed-cnt");
+  var total_count = 0;
+  var failed_count = 0;
+  var done_count = 0;
+  var percent = 0;
+  var devices;
+  var current_cnt = 0;
+  var url = '/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit';
+
+  function update_status() {
+    if(total_count == 0) percent = 0;
+    else percent = Math.round(100* current_cnt / total_count);
+
+    totalElement.innerHTML = total_count;
+    doneElement.innerHTML = done_count;
+    failedElement.innerHTML = failed_count;
+    percentElement.innerHTML = percent+"%";
+    setProgress(percent);
+
+  }
+
+  syncButton.addEventListener("click", function(event) {
+    total_count = 0;
+    failed_count = 0;
+    done_count = 0;
+    percent = 0;
+    devices = [];
+    current_cnt = 0;
+
+    update_status()
+    deviceStatus = document.querySelector('select[name="device_status"]').value;
+
+    var data = new URLSearchParams();
+    data.append('action', 'sync')
+    data.append('csrfmiddlewaretoken', csrfToken);
+    data.append('status', deviceStatus);
+    
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      devices = res["device"];
+      total_count = devices.length;
+      update_status();
+      send_device();
+
+    }).catch(function(error) {
+
+    });
+
+  });
+
+  function send_device() {
+    if(current_cnt >= devices.length) return;
+
+    var data = new URLSearchParams();
+    data.append('action', 'send')
+    data.append('csrfmiddlewaretoken', csrfToken);
+
+    data.append('device_id', devices[current_cnt]);
+    data.append('test', 'test')
+
+    fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      current_cnt++;
+      if(res["status"] == 200) done_count++;  
+      else failed_count++;
+      update_status();  
+      send_device();
+    }).catch(function(error) {
+      failed_count++;
+      current_cnt++;
+      update_status();
+      send_device();
+    });
+    
+  }
+
 </script>
