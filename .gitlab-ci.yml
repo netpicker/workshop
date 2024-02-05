@@ -21,6 +21,10 @@ build-main:
     - poetry check
     - poetry config pypi-token.pypi $PYPI_TOKEN
     - poetry publish
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
   only:
     - main
 
@@ -34,9 +38,46 @@ build-other:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "main"'
       when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - when: on_success
 
 sast:
   stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
 include:
 - template: Security/SAST.gitlab-ci.yml
+
+integration_test:
+  image: docker:latest
+  stage: test
+  services:
+    - docker:dind
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml pull
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml up -d --build
+    - sleep 300
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml run --rm netbox-test_container pytest --color=yes -v --durations 0 
+  after_script:
+    - mkdir $CI_PROJECT_DIR/logs 
+    - |
+      for container_id in $(docker compose ps -qa); do
+        container_name=$(docker inspect --format='{{.Config.Image}}' $container_id)
+        docker logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
+      done
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml down -v || true
+    - docker system prune --filter "until=24h" -f || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+      when: never
+    - when: always
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/logs/*
+    name: test-results
+    expire_in: 1 month
