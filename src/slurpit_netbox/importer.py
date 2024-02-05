@@ -156,7 +156,7 @@ def handle_changed():
             result = SlurpitImportedDevice.objects.get(slurpit_id=device.slurpit_id)
             result.copy_staged_values(device)
             result.save()
-
+            get_create_dcim_objects(device)
             if result.mapped_device:
                 if result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
                     result.mapped_device.status=DeviceStatusChoices.STATUS_INVENTORY
@@ -209,6 +209,15 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     ensure_slurpit_tags(device)
     return device
 
+def get_create_dcim_objects(staged: SlurpitStagedDevice):
+    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, slug=slugify(staged.brand))
+    if new:
+        ensure_slurpit_tags(manu)
+    platform, new = Platform.objects.get_or_create(name=staged.device_os, slug=staged.device_os)
+    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, slug=f'{staged.brand}-{staged.device_type}', default_platform=platform)
+    if new:
+        ensure_slurpit_tags(dtype)
+    return dtype
 
 def get_from_staged(
         staged: SlurpitStagedDevice,
@@ -217,15 +226,7 @@ def get_from_staged(
     device = SlurpitImportedDevice()
     device.copy_staged_values(staged)
 
-    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, slug=slugify(staged.brand))
-    if new:
-        ensure_slurpit_tags(manu)
-    platform, new = Platform.objects.get_or_create(name=staged.device_os, slug=staged.device_os)
-    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, slug=f'{staged.brand}-{staged.device_type}', default_platform=platform)
-    if new:
-        ensure_slurpit_tags(dtype)
-
-    device.mapped_devicetype = dtype
+    device.mapped_devicetype = get_create_dcim_objects(staged)
     if add_dcim:
         extra = {'device_type': device.mapped_devicetype} if device.mapped_devicetype else {}
         device.mapped_device = get_dcim_device(staged, **extra)
