@@ -42,7 +42,7 @@ def post_slurpit_device(row):
                         'Content-Type': 'application/json',
                     }
 
-        uri_devices = f"{uri_base}/api/devices"
+        uri_devices = f"{uri_base}/api/devices/sync"
         
         try:
             row["ignore_plugin"] = str(1)
@@ -51,9 +51,6 @@ def post_slurpit_device(row):
             return r
         except Exception as e:
             return {"error": str(e)}
-
-        log_message = "Syncing the devices from slurp'it in Netbox."
-        SlurpitLog.info(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
 
     except ObjectDoesNotExist:
         setting = None
