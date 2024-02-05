@@ -45,6 +45,7 @@ def post_slurpit_device(row):
         uri_devices = f"{uri_base}/api/devices"
         
         try:
+            row["ignore_plugin"] = str(1)
             r = requests.post(uri_devices, headers=headers, json=row)
             r = r.json()
             return r
