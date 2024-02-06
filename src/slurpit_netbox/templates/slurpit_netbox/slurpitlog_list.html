@@ -20,8 +20,13 @@
       {% block subtitle %}{% endblock %}
     </div>
 
-    {# Controls #}
-    {% block controls %}{% endblock controls %}
+    <div class="controls">
+      <div class="control-group">
+        <a type="submit" class="btn btn-danger btn-sm" href="?clear=true">
+          <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Clear all logging
+        </a>
+      </div>
+    </div>
 
   </div>
 {% endblock header %}

@@ -4,7 +4,7 @@ from .. import forms, importer, models, tables
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
-from ..forms import SlurpitMappingForm, SlurpitDeviceForm
+from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm
 from ..management.choices import *
 from django.contrib import messages
 from dcim.models import Device
@@ -42,17 +42,15 @@ def post_slurpit_device(row):
                         'Content-Type': 'application/json',
                     }
 
-        uri_devices = f"{uri_base}/api/devices"
+        uri_devices = f"{uri_base}/api/devices/sync"
         
         try:
-            r = requests.post(uri_devices, headers=headers, json=row)
+            row["ignore_plugin"] = str(1)
+            r = requests.post(uri_devices, headers=headers, json=row, verify=False)
             r = r.json()
             return r
         except Exception as e:
             return {"error": str(e)}
-
-        log_message = "Syncing the devices from slurp'it in Netbox."
-        SlurpitLog.info(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
 
     except ObjectDoesNotExist:
         setting = None
@@ -125,7 +123,8 @@ class DataMappingView(View):
 
         new_form = SlurpitMappingForm(doaction="add")
         device_form = SlurpitDeviceForm()
-
+        device_status_form = SlurpitDeviceStatusForm()
+        
         return render(
             request,
             self.template_name, 
@@ -133,6 +132,7 @@ class DataMappingView(View):
                 "form": form,
                 "new_form": new_form,
                 "device_form": device_form,
+                "device_status_form": device_status_form,
                 "appliance_type": appliance_type,
             }
         )
@@ -140,7 +140,7 @@ class DataMappingView(View):
     def post(self, request):
         tab = request.GET.get('tab', None)
 
-        if tab == "netbox_to_slurpit":
+        if tab == "netbox_to_slurpit" or tab is None:
             test = request.POST.get('test')
             device_id = request.POST.get('device_id')
 
@@ -195,7 +195,6 @@ class DataMappingView(View):
                 target_fields = request.POST.getlist('target_field')
                 count = len(source_fields)
                 offset = 0
-
                 qs = []
                 for i in range(count):
                     mapping, created = SlurpitMapping.objects.get_or_create(
@@ -217,5 +216,17 @@ class DataMappingView(View):
                     offset += BATCH_SIZE
                     
                 return redirect(f'{request.path}?tab={tab}')
+            elif action == "sync":
+                device_status = request.POST.get('status')
+                if device_status == "":
+                    netbox_devices = Device.objects.all().values("id", "status")
+                else:
+                    netbox_devices = Device.objects.filter(status=device_status).values("id")
+                device_names = []
+                if netbox_devices:
+                    for device in netbox_devices:
+                        device_names.append(device['id'])
+                
+                return JsonResponse({"device": device_names})
 
         return redirect(request.path)
