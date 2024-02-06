@@ -401,7 +401,7 @@
       return response.json();
     }).then(function(res){
       current_cnt++;
-      if(res["status"] == 200) done_count++;  
+      if(res["status"] == undefined) done_count++;  
       else failed_count++;
       update_status();  
       send_device();
