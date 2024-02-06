@@ -18,12 +18,13 @@ from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
-    get_dcim_device, import_from_queryset, run_import
+    get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import
 )
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.db.models.fields.json import KeyTextTransform
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse, JsonResponse
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
@@ -154,17 +155,20 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     device.delete() #delete last to prevent cascade delete
             else:
                 for obj in self.queryset:
-                    cf = obj.mapped_device.custom_field_data
-                    cf['slurpit_hostname'] = obj.hostname
-                    cf['slurpit_fqdn'] = obj.fqdn
-                    cf['slurpit_platform'] = obj.device_os
-                    cf['slurpit_manufactor'] = obj.brand
-                    cf['slurpit_devicetype'] = obj.device_type  
-                    cf['slurpit_ipv4'] = obj.ipv4                   
+                    device = obj.mapped_device
+                    device.name = obj.hostname
 
-                    obj.mapped_device.custom_field_data = cf
-                    obj.mapped_device.name = obj.hostname
-                    obj.mapped_device.save()
+                    device.custom_field_data['slurpit_hostname'] = obj.hostname
+                    device.custom_field_data['slurpit_fqdn'] = obj.fqdn
+                    device.custom_field_data['slurpit_platform'] = obj.device_os
+                    device.custom_field_data['slurpit_manufactor'] = obj.brand
+                    device.custom_field_data['slurpit_devicetype'] = obj.device_type  
+                    device.custom_field_data['slurpit_ipv4'] = obj.ipv4                  
+
+                    manu = Manufacturer.objects.get(name=obj.brand)
+                    device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
+                    device.platform = Platform.objects.get(name=obj.device_os)
+                    device.save()
                     obj.save()
 
                     log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
@@ -182,17 +186,19 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
             else:
                 for obj in self.queryset:
                     device = Device.objects.filter(name__iexact=obj.hostname).first()
-                    cf = device.custom_field_data
-                    cf['slurpit_hostname'] = obj.hostname
-                    cf['slurpit_fqdn'] = obj.fqdn
-                    cf['slurpit_platform'] = obj.device_os
-                    cf['slurpit_manufactor'] = obj.brand
-                    cf['slurpit_devicetype'] = obj.device_type
-                    cf['slurpit_ipv4'] = obj.ipv4              
-
                     obj.mapped_device = device
-                    obj.mapped_device.custom_field_data = cf
-                    obj.mapped_device.save()
+
+                    device.custom_field_data['slurpit_hostname'] = obj.hostname
+                    device.custom_field_data['slurpit_fqdn'] = obj.fqdn
+                    device.custom_field_data['slurpit_platform'] = obj.device_os
+                    device.custom_field_data['slurpit_manufactor'] = obj.brand
+                    device.custom_field_data['slurpit_devicetype'] = obj.device_type
+                    device.custom_field_data['slurpit_ipv4'] = obj.ipv4             
+
+                    manu = Manufacturer.objects.get(name=obj.brand)
+                    device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
+                    device.platform = Platform.objects.get(name=obj.device_os)
+                    device.save()
                     obj.save()
 
                     log_message = f"Conflicted device resolved - {obj.hostname} successfully updated."
@@ -280,15 +286,23 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ImportDevices(View):
     def get(self, request, *args, **kwargs):
+        offset = request.GET.get("offset", None)
         try:
-            result = run_import()
-            if result == 'done':
-                messages.info(request, "Synced the devices from Slurp'it.")
-            else:
-                pass
+            if offset is not None:
+                offset = int(offset)
+                devices = get_devices(offset)
+                if devices is not None and len(devices) > 0:
+                    import_devices(devices)
+                    offset += len(devices)
+                return JsonResponse({"action": "import", "offset": offset})
+            
+            result = process_import()
+            messages.info(request, "Synced the devices from Slurp'it.")
+            return JsonResponse({"action": "process"})
         except requests.exceptions.RequestException as e:
             messages.error(request, "An error occured during querying Slurp'it!")
             SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"An error occured during querying Slurp'it! {e}")
-        return redirect(reverse('plugins:slurpit_netbox:importeddevice_list'))
+        
+        return JsonResponse({"action": "", "error": "ERROR"})
     
 
