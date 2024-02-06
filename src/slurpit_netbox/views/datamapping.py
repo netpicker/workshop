@@ -46,7 +46,7 @@ def post_slurpit_device(row):
         
         try:
             row["ignore_plugin"] = str(1)
-            r = requests.post(uri_devices, headers=headers, json=row)
+            r = requests.post(uri_devices, headers=headers, json=row, verify=False)
             r = r.json()
             return r
         except Exception as e:
