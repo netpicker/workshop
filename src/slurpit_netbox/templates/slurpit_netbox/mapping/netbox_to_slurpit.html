@@ -169,10 +169,10 @@
                 <span> Failed Devices: <span id="failed-cnt">10</span></span>
               </div>
             </div>
-            
+            <textarea  name="logs" cols="40" rows="10" class=" form-control mb-2" placeholder="Logs" id="logs" style="height: 80px;"></textarea>
             <p><b>Don't refresh website or close modal before 100%</b></p>
           </div>
-  
+          
       </form>
       <!-- Modal Body -->
       
@@ -325,6 +325,8 @@
   var totalElement = document.getElementById("total-cnt");
   var doneElement = document.getElementById("done-cnt");
   var failedElement = document.getElementById("failed-cnt");
+  var logsElement = document.getElementById("logs");
+
   var total_count = 0;
   var failed_count = 0;
   var done_count = 0;
@@ -352,7 +354,7 @@
     percent = 0;
     devices = [];
     current_cnt = 0;
-
+    logsElement.innerHTML = "";
     update_status()
     deviceStatus = document.querySelector('select[name="device_status"]').value;
 
@@ -402,7 +404,10 @@
     }).then(function(res){
       current_cnt++;
       if(res["status"] == undefined) done_count++;  
-      else failed_count++;
+      else {
+        failed_count++;
+        logsElement.append("Failed to import "+res["device_name"]+"\n")
+      }
       update_status();  
       send_device();
     }).catch(function(error) {
