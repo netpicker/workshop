@@ -15,6 +15,8 @@ from django.http import HttpResponse, JsonResponse
 from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from extras.models import CustomField
+from extras.models.tags import Tag
+from ipam.models import IPRange
 
 BATCH_SIZE = 128
 
@@ -116,6 +118,10 @@ class DataMappingView(View):
         except ObjectDoesNotExist:
             setting = None
 
+        if tab == "devices":
+            slurpit_tag = Tag.objects.get(name="slurpit")
+            ip_ranges = IPRange.objects.filter(tags__in=[slurpit_tag])
+        
         for mapping in mappings:
             form.append({
                 "choice": mapping,

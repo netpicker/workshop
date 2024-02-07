@@ -4,87 +4,112 @@
 {% load static %}
 {% load form_helpers %}
 
-<div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
-    {% if appliance_type != 'cloud' %}
-      <!-- <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+<ul class="nav nav-tabs px-3 sub-nav">    
+
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.subtab == 'devices' or request.GET.subtab is None %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=devices">
+      Devices
+    </a>
+  </li>
+
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.subtab == 'ipam' %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=ipam">
+      IPAM
+    </a>
+  </li>
+  
+</ul>
+
+<div class="tab-content">
+  {% if request.GET.subtab == 'devices' or request.GET.subtab is None %}
+    <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
+      {% if appliance_type != 'cloud' %}
+        <!-- <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+            <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+        </a> -->
+        <a name="sync"  id="sync-btn" class="btn btn-sm btn-orange my-2" data-bs-toggle="modal" data-bs-target="#syncStatusModal">
           <i class="mdi mdi-sync"></i> {% trans "Sync" %}
-      </a> -->
-      <a name="sync"  id="sync-btn" class="btn btn-sm btn-orange my-2" data-bs-toggle="modal" data-bs-target="#syncStatusModal">
-        <i class="mdi mdi-sync"></i> {% trans "Sync" %}
-      </a>
-    {% endif %}
-    <div class="row my-2">
-      <div class="col col-md-6">
-        <div class="card">
-          
-          <div class="card-header">
-              <h6>Sync your NetBox devices to Slurp'it</h6>
-              <span>
-                In case you already have a filled NetBox system, and you want to sync those to Slurp'it to start collecting data then this is the page you are looking for.
-                Below on the left you see the required attributes for in Slurp'it and on the right you can map those against your data from NetBox. If you need more information we can advise you to <a href="https://learning.slurpit.io/courses/offers/783fcc2c-f0f8-4a41-bc7c-64f1d03e43e8" target="_BLANK">
-                click here</a> for our online course.
-              </span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row mt-1">
-      <div class="col col-md-6">
-        <div class="card management-status-card">
-          
-          <div class="card-header">
-            <h6>Management status</h6>
-            <div class="my-1">
-              Select here the device status you want to sync.
-            </div>
-            {% render_form device_status_form %}
-            
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row mb-3">
+        </a>
+      {% endif %}
+      <div class="row my-2">
         <div class="col col-md-6">
-            <form action="?tab=netbox_to_slurpit" method="post" id="mapping-form" class="form form-horizontal mb-3">
-                
-                <div class="card mt-2">
-                
-                  <div class="card-header" style="display:flex;justify-content: space-between;">
-                      <h5>Mapping Fields</h5>
-                      <div class="action">
-                        
-                        <a class="btn btn-purple btn-sm px-3" data-bs-toggle="modal" data-bs-target="#testMapModal">
-                          {% trans "Test" %}
-                        </a>
-                        <button class="btn btn-blue btn-sm px-3">
-                            {% trans "Save" %}
-                        </button>
-                      </div>
-                  </div>
-                  <div class="card-body">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="save" id="actionInput" />
-                    {% for choice_item in form %}
-                      <div class="d-flex map-item">
-                        <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
-                        <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>
-                        {% render_form choice_item.form %}
-                      </div>
-                    {% endfor %}
-                  </div>
-                  <div class="card-footer">
-                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
-                        <i class="mdi mdi-plus-thick"></i> Add
-                    </button>
-                    <button id="delete-btn" class="btn btn-danger btn-sm">
-                        <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
-                    </button>
-                  </div>
-                </div>
-              </form>
+          <div class="card">
+            
+            <div class="card-header">
+                <h6>Sync your NetBox devices to Slurp'it</h6>
+                <span>
+                  In case you already have a filled NetBox system, and you want to sync those to Slurp'it to start collecting data then this is the page you are looking for.
+                  Below on the left you see the required attributes for in Slurp'it and on the right you can map those against your data from NetBox. If you need more information we can advise you to <a href="https://learning.slurpit.io/courses/offers/783fcc2c-f0f8-4a41-bc7c-64f1d03e43e8" target="_BLANK">
+                  click here</a> for our online course.
+                </span>
+            </div>
+          </div>
         </div>
+      </div>
+      <div class="row mt-1">
+        <div class="col col-md-6">
+          <div class="card management-status-card">
+            
+            <div class="card-header">
+              <h6>Management status</h6>
+              <div class="my-1">
+                Select here the device status you want to sync.
+              </div>
+              {% render_form device_status_form %}
+              
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+          <div class="col col-md-6">
+              <form action="?tab=netbox_to_slurpit" method="post" id="mapping-form" class="form form-horizontal mb-3">
+                  
+                  <div class="card mt-2">
+                  
+                    <div class="card-header" style="display:flex;justify-content: space-between;">
+                        <h5>Mapping Fields</h5>
+                        <div class="action">
+                          
+                          <a class="btn btn-purple btn-sm px-3" data-bs-toggle="modal" data-bs-target="#testMapModal">
+                            {% trans "Test" %}
+                          </a>
+                          <button class="btn btn-blue btn-sm px-3">
+                              {% trans "Save" %}
+                          </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="save" id="actionInput" />
+                      {% for choice_item in form %}
+                        <div class="d-flex map-item">
+                          <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
+                          <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>
+                          {% render_form choice_item.form %}
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="card-footer">
+                      <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
+                          <i class="mdi mdi-plus-thick"></i> Add
+                      </button>
+                      <button id="delete-btn" class="btn btn-danger btn-sm">
+                          <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
+                      </button>
+                    </div>
+                  </div>
+                </form>
+          </div>
+      </div>
     </div>
+  {% elif request.GET.subtab == 'ipam'  %}
+    {% include "slurpit_netbox/mapping/commingsoon.html" %}
+  {% endif %}
+  
 </div>
+
+
 
 <div class="modal fade" tabindex="-1" id="addMapModal">
   <div class="modal-dialog modal-lg">
@@ -181,6 +206,7 @@
 </div>
 
 
+
 <style>
   .map-item {
     width: 100% !important;
@@ -235,6 +261,19 @@
 
   .management-status-card label {
     display: none !important;
+  }
+
+  .sub-nav .nav-tab.nav-link.active {
+    border: 0px !important;
+    border-bottom: 2px solid #0d6efd !important;
+    font-weight: bold !important;
+  }
+
+  .sub-tab-content {
+    padding: 1rem 0 !important;
+  }
+  .sub-nav {
+    background: transparent !important;
   }
 </style>
 

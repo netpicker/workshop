@@ -96,7 +96,15 @@
       form.submit();
     });
 
-    
+    var refreshElement = document.getElementById('refresh');
+    var refreshInput = document.getElementById('refreshInput');
+
+    refreshElement.addEventListener('click', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      refreshInput.value = "refresh";
+      form.submit();
+    });
+
 
     var syncElement = document.getElementById('sync');
     var syncInput = document.getElementById('syncInput');
@@ -107,15 +115,7 @@
       form.submit();
     });
 
-    var refreshElement = document.getElementById('refresh');
-    var refreshInput = document.getElementById('refreshInput');
-
-    refreshElement.addEventListener('click', function(event) {
-      // The event target is the select element, and its value is the selected option's value
-      refreshInput.value = "refresh";
-      form.submit();
-    });
-
+   
   </script>
 {% endblock %}
 
