@@ -1,20 +1,12 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
 - build
 - test
 
-image: python:latest
-before_script:
-- pip install poetry
-
 build-main:
+  image: python:latest
   stage: build
+  before_script:
+  - pip install poetry
   script:
     - poetry install
     - poetry build
@@ -24,13 +16,18 @@ build-main:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - when: on_success
-  only:
-    - main
+    - if: '$CI_COMMIT_REF_NAME != "main"'
+      when: never
+    - when: always
 
 build-other:
+  image: python:latest
   stage: build
+  before_script:
+  - pip install poetry
   script:
+  - PROJECT_NAME=slurpit_netbox-${CI_COMMIT_REF_NAME}
+  - sed -i 's/name = "\(.*\)"/name = "'"$PROJECT_NAME"'"/' pyproject.toml
   - API_ENDPOINT=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages
   - poetry config repositories.gitlab $API_ENDPOINT/pypi
   - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
@@ -40,16 +37,7 @@ build-other:
       when: never
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - when: on_success
-
-sast:
-  stage: test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-include:
-- template: Security/SAST.gitlab-ci.yml
+    - when: always
 
 integration_test:
   image: docker:latest
@@ -61,11 +49,11 @@ integration_test:
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml pull
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml up -d --build
     - sleep 300
-    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml run --rm netbox-test_container pytest --color=yes -v --durations 0 
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml run --rm test_container pytest --color=yes -v --durations 0 -rP
   after_script:
     - mkdir $CI_PROJECT_DIR/logs 
     - |
-      for container_id in $(docker compose ps -qa); do
+      for container_id in $(docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml ps -qa); do
         container_name=$(docker inspect --format='{{.Config.Image}}' $container_id)
         docker logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
       done
@@ -81,3 +69,8 @@ integration_test:
       - $CI_PROJECT_DIR/logs/*
     name: test-results
     expire_in: 1 month
+    
+include:
+- template: Security/SAST.gitlab-ci.yml
+sast:
+  stage: test

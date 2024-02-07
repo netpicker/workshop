@@ -12,7 +12,7 @@ services:
     env_file: docker/env/netbox.env
     user: 'unit:root'
     healthcheck:
-      start_period: 60s
+      start_period: 300s
       timeout: 3s
       interval: 15s
       test: "curl -f http://localhost:8080/api/ || exit 1"
