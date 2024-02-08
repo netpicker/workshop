@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
 from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
+from django.db.models import Q
 
 from .. import get_config
 from .device import SlurpitImportedDevice, SlurpitStagedDevice
@@ -19,11 +20,14 @@ __all__ = [
 def ensure_slurpit_tags(*items):
     if (tags := getattr(ensure_slurpit_tags, 'cache', None)) is None:
         name = 'slurpit'
-        tag, _ = Tag.objects.get_or_create(name=name, slug=name, description='Slurp\'it onboarded', color='F09640')
+        tag, _ = Tag.objects.get_or_create(name=name, defaults={'slug':name, 'description':'Slurp\'it onboarded', 'color': 'F09640'})
 
-        applicable_to = 'device', 'devicerole', 'devicetype', 'manufacturer', 'site'
-        tagged_types = ContentType.objects.filter(app_label='dcim',
-                                                  model__in=applicable_to)
+        dcim_applicable_to = 'device', 'devicerole', 'devicetype', 'manufacturer', 'site'
+        ipam_applicable = 'iprange'
+
+        dcim_Q = Q(app_label='dcim', model__in=dcim_applicable_to)
+        ipam_Q = Q(app_label='ipam', model=ipam_applicable)
+        tagged_types = ContentType.objects.filter(ipam_Q | dcim_Q)
         tag.object_types.set(tagged_types.all())
         tags = {tag}
         ensure_slurpit_tags.cache = tags
@@ -33,67 +37,68 @@ def ensure_slurpit_tags(*items):
 
 def create_custom_fields():   
     device = ContentType.objects.get(app_label='dcim', model='device')
-    
-    cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_hostname',               
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Hostname',
-                group_name="Slurp'it",
-        )
-    cf.content_types.set({device})
+    try:
+        cf, _ = CustomField.objects.get_or_create(
+                    name='slurpit_hostname',               
+                    type=CustomFieldTypeChoices.TYPE_TEXT,
+                    description="",
+                    is_cloneable=True,
+                    label='Hostname',
+                    group_name="Slurp'it",
+            )
+        cf.content_types.set({device})
 
-    cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_fqdn',           
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Fqdn',
-                group_name="Slurp'it",
-                )
-    cf.content_types.set({device})
+        cf, _ = CustomField.objects.get_or_create(
+                    name='slurpit_fqdn',           
+                    type=CustomFieldTypeChoices.TYPE_TEXT,
+                    description="",
+                    is_cloneable=True,
+                    label='Fqdn',
+                    group_name="Slurp'it",
+                    )
+        cf.content_types.set({device})
+            
+        cf, _ = CustomField.objects.get_or_create(
+                    name='slurpit_platform',
+                    type=CustomFieldTypeChoices.TYPE_TEXT,
+                    description="",
+                    is_cloneable=True,
+                    label='Platform',
+                    group_name="Slurp'it",
+                    )
+        cf.content_types.set({device})
+
+        cf, _ = CustomField.objects.get_or_create(
+                    name='slurpit_manufactor', 
+                    type=CustomFieldTypeChoices.TYPE_TEXT,
+                    description="",
+                    is_cloneable=True,
+                    label='Manufactor',
+                    group_name="Slurp'it",
+                    )
+        cf.content_types.set({device})
         
-    cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_platform',
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Platform',
-                group_name="Slurp'it",
-                )
-    cf.content_types.set({device})
-
-    cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_manufactor', 
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Manufactor',
-                group_name="Slurp'it",
-                )
-    cf.content_types.set({device})
-    
-    cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_devicetype',
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Device Type',
-                group_name="Slurp'it",
-                )
-    cf.content_types.set({device})
-    
-    cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_ipv4',
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Ipv4',
-                group_name="Slurp'it",
-                )
-    cf.content_types.set({device})
-
+        cf, _ = CustomField.objects.get_or_create(
+                    name='slurpit_devicetype',
+                    type=CustomFieldTypeChoices.TYPE_TEXT,
+                    description="",
+                    is_cloneable=True,
+                    label='Device Type',
+                    group_name="Slurp'it",
+                    )
+        cf.content_types.set({device})
+        
+        cf, _ = CustomField.objects.get_or_create(
+                    name='slurpit_ipv4',
+                    type=CustomFieldTypeChoices.TYPE_TEXT,
+                    description="",
+                    is_cloneable=True,
+                    label='Ipv4',
+                    group_name="Slurp'it",
+                    )
+        cf.content_types.set({device})
+    except:
+        pass
 
 
 def add_default_mandatory_objects(tags):
@@ -119,7 +124,7 @@ def add_default_mandatory_objects(tags):
         {"source_field": "device_type", "target_field": "device|device_type"},
     ]
     for mapping in mappings:
-        SlurpitMapping.objects.create(**mapping)
+        SlurpitMapping.objects.get_or_create(**mapping)
 
 
 def post_migration(sender, **kwargs):

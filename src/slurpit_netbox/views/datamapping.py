@@ -15,6 +15,8 @@ from django.http import HttpResponse, JsonResponse
 from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from extras.models import CustomField
+from extras.models.tags import Tag
+from ipam.models import IPRange
 
 BATCH_SIZE = 128
 
@@ -31,7 +33,7 @@ def get_device_dict(instance):
 
     return device_dict
 
-def post_slurpit_device(row):
+def post_slurpit_device(row, device_name):
     try:
         setting = SlurpitSetting.objects.get()
         uri_base = setting.server_url
@@ -48,16 +50,17 @@ def post_slurpit_device(row):
             row["ignore_plugin"] = str(1)
             r = requests.post(uri_devices, headers=headers, json=row, verify=False)
             r = r.json()
+            r["device_name"] = device_name
             return r
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": str(e), "device_name": device_name}
 
     except ObjectDoesNotExist:
         setting = None
         log_message = "Need to set the setting parameter"
         SlurpitLog.failure(category=LogCategoryChoices.DATA_MAPPING, message=log_message)
 
-        return {"error": "Need to set the setting parameter"}
+        return {"error": "Need to set the setting parameter", "device_name": device_name}
     
     return None
 
@@ -86,7 +89,7 @@ class DataMappingView(View):
                     row[obj.source_field] = str(device[target_field])
                 # request_body.append(row)
 
-                res = post_slurpit_device(row)
+                res = post_slurpit_device(row, device["name"])
 
                 if res is None:
                     return redirect(f'{request.path}?tab={tab}')
@@ -115,6 +118,10 @@ class DataMappingView(View):
         except ObjectDoesNotExist:
             setting = None
 
+        if tab == "devices":
+            slurpit_tag = Tag.objects.get(name="slurpit")
+            ip_ranges = IPRange.objects.filter(tags__in=[slurpit_tag])
+        
         for mapping in mappings:
             form.append({
                 "choice": mapping,
@@ -158,7 +165,7 @@ class DataMappingView(View):
                     row[obj.source_field] = str(device[target_field])
 
                 if test is not None:
-                    res = post_slurpit_device(row)
+                    res = post_slurpit_device(row, device["name"])
 
                     if res is None:
                         return JsonResponse({"error": "Server Internal Error."})
