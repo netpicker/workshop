@@ -1,30 +1,36 @@
 version: '3.4'
+name: netbox-test
 services:
-  netbox: &netbox
-    #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
+  test_container:
     build: .
-    depends_on:
-    - postgres
-    - redis
-    - redis-cache
+    container_name: netbox-test_container
+    env_file: ../docker/env-test/netbox.env
+    networks:
+    - slurpit-netbox-test-network
+    volumes:  
+      - ./:/tests/
+
+  netbox: &netbox
+    build: 
+      context: ../
+      dockerfile: Dockerfile.test
     ports:
       - 8080:8080
-    env_file: docker/env/netbox.env
+    depends_on:
+    - postgres_test
+    - redis_test
+    - redis-cache_test
+    env_file: ../docker/env-test/netbox.env
     user: 'unit:root'
     healthcheck:
       start_period: 300s
       timeout: 3s
       interval: 15s
       test: "curl -f http://localhost:8080/api/ || exit 1"
-    volumes:
-    - ./volumes/netbox-media-files:/opt/netbox/netbox/media:rw
-    - ./volumes/netbox-reports-files:/opt/netbox/netbox/reports:rw
-    - ./volumes/netbox-scripts-files:/opt/netbox/netbox/scripts:rw
-    - ./src/slurpit_netbox:/opt/netbox/netbox/slurpit_netbox:rw
     networks:
-      - slurpit_slurpit-network
+    - slurpit-netbox-test-network
     
-  netbox-worker:
+  netbox-worker_test:
     <<: *netbox
     depends_on:
       netbox:
@@ -41,9 +47,9 @@ services:
       interval: 15s
       test: "ps -aux | grep -v grep | grep -q rqworker || exit 1"
     networks:
-      - slurpit_slurpit-network
+    - slurpit-netbox-test-network
 
-  netbox-housekeeping:
+  netbox-housekeeping_test:
     <<: *netbox
     depends_on:
       netbox:
@@ -58,44 +64,40 @@ services:
       interval: 15s
       test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
     networks:
-      - slurpit_slurpit-network
+    - slurpit-netbox-test-network
 
   # postgres
-  postgres:
+  postgres_test:
     image: docker.io/postgres:15-alpine
-    env_file: docker/env/postgres.env
+    env_file: ../docker/env-test/postgres.env
     ports:
       - 5432:5432
-    volumes:
-    - ./volumes/netbox-postgres-data:/var/lib/postgresql/data
     networks:
-    - slurpit_slurpit-network
+    - slurpit-netbox-test-network
 
   # redis
-  redis:
+  redis_test:
     image: docker.io/redis:7-alpine
     command:
     - sh
     - -c # this is to evaluate the $REDIS_PASSWORD from the env
     - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
-    env_file: docker/env/redis.env
-    volumes:
-    - ./volumes/netbox-redis-data:/data
+    env_file: ../docker/env-test/redis.env
     networks:
-    - slurpit_slurpit-network
-  redis-cache:
+    - slurpit-netbox-test-network
+
+  redis-cache_test:
     image: docker.io/redis:7-alpine
     command:
     - sh
     - -c # this is to evaluate the $REDIS_PASSWORD from the env
     - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
-    env_file: docker/env/redis-cache.env
-    volumes:
-    - ./volumes/netbox-redis-cache-data:/data
+    env_file: ../docker/env-test/redis-cache.env
     networks:
-    - slurpit_slurpit-network
+    - slurpit-netbox-test-network
 
 networks:
-  slurpit_slurpit-network:
-    external: true
+  slurpit-netbox-test-network:
+    driver: bridge
+
 

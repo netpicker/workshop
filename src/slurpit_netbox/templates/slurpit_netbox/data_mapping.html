@@ -39,17 +39,14 @@
         Slurp’it to NetBox
       </a>
     </li>
-    
+
   </ul>
 {% endblock tabs %}
 
 {% block content-wrapper %}
-  <div class="tab-content">
+  <div class="tab-content sub-tab-content">
     {% if request.GET.tab == 'slurpit_to_netbox'  %}
-
-        <h1 class="w-100 text-center" style="padding-top: 10%;">Coming Soon</h1>
-        <p class="w-100 text-center fs-6">Sign up for our newsletter and we will inform you when the next new functionalities are released.<br><br>
-        <a href="https://slurpit.io/getting-started/#subscribe" target="_blank" class="btn btn-primary">Subscribe</a></p>
+      {% include "slurpit_netbox/mapping/commingsoon.html" %}
     {% elif request.GET.tab == 'netbox_to_slurpit' or request.GET.tab is None %}
       {% include "slurpit_netbox/mapping/netbox_to_slurpit.html" %}
     {% endif %}
@@ -84,3 +81,4 @@
     </div>
   {% endblock footer %}
 </footer>
+

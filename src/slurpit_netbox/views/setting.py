@@ -309,6 +309,15 @@ class SlurpitPlanningning(View):
     def get(self, request, pk):
         device = get_object_or_404(Device, pk=pk)
         
+        connection_status = appliance_type = ''
+        setting = None
+        try:
+            setting = SlurpitSetting.objects.get()
+            appliance_type = setting.appliance_type
+            connection_status = setting.connection_status
+        except ObjectDoesNotExist:
+            pass
+        
         data = None
         cached_time = None
         result_status = "No Data"
@@ -330,7 +339,8 @@ class SlurpitPlanningning(View):
             url_no_refresh = get_refresh_url(request, pk)
 
             if sync == "sync":
-                sync_snapshot(cache_key, device.name, planning)
+                if appliance_type != "cloud":
+                    sync_snapshot(cache_key, device.name, planning)
                 
                 return HttpResponseRedirect(url_no_refresh)
             
@@ -351,7 +361,8 @@ class SlurpitPlanningning(View):
                     
                     # Empty case
                     if temp.count() == 0:
-                        sync_snapshot(cache_key, device.name, planning)
+                        if appliance_type != "cloud":
+                            sync_snapshot(cache_key, device.name, planning)
                         temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
 
                     for r in temp:
@@ -395,14 +406,7 @@ class SlurpitPlanningning(View):
                 },
             )
 
-        connection_status = appliance_type = ''
-        setting = None
-        try:
-            setting = SlurpitSetting.objects.get()
-            appliance_type = setting.appliance_type
-            connection_status = setting.connection_status
-        except ObjectDoesNotExist:
-            pass
+        
 
         return render(
             request,
