@@ -37,68 +37,65 @@ def ensure_slurpit_tags(*items):
 
 def create_custom_fields():   
     device = ContentType.objects.get(app_label='dcim', model='device')
-    try:
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_hostname',               
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Hostname',
-                    group_name="Slurp'it",
-            )
-        cf.content_types.set({device})
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_hostname',               
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Hostname',
+                group_name="Slurp'it",
+        )
+    cf.content_types.set({device})
 
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_fqdn',           
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Fqdn',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-            
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_platform',
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Platform',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_fqdn',           
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Fqdn',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
+        
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_platform',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Platform',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
 
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_manufactor', 
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Manufactor',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-        
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_devicetype',
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Device Type',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-        
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_ipv4',
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Ipv4',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-    except:
-        pass
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_manufactor', 
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Manufactor',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
+    
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_devicetype',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Device Type',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
+    
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_ipv4',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Ipv4',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
 
 
 def add_default_mandatory_objects(tags):
