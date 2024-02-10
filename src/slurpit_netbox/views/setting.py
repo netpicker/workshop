@@ -240,7 +240,7 @@ class SettingsView(View):
                 }
         connection_test = f"{server_url}/api/platform/ping"
         try:
-            response = requests.get(connection_test, headers=headers, timeout=5, verify=False)
+            response = requests.get(connection_test, headers=headers, timeout=15, verify=False)
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed testing the connection to the Slurp'it server."          
@@ -267,7 +267,7 @@ class SettingsView(View):
                     'accept': 'application/json'
                 }
         try:
-            response = requests.get(f"{server_url}/api/planning", headers=headers, verify=False)
+            response = requests.get(f"{server_url}/api/planning", headers=headers, timeout=15, verify=False)
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed to get planning list of the Slurp'it server."          
@@ -338,11 +338,10 @@ class SlurpitPlanningning(View):
                 cache.delete(cache_key)
                 return HttpResponseRedirect(url_no_refresh)
 
-            try:
-                cached_time, data = cache.get(cache_key)
+            cached_time, data = cache.get(cache_key, (None, None))
+            if cached_time:
                 result_status = "Cached"
-            except:
-                pass
+
             if not data:
                 data = []
                 try: 

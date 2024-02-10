@@ -1,5 +1,6 @@
 import django_tables2 as tables
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 from django_tables2 import Column
 from django_tables2.columns import BoundColumn
 from django_tables2.columns.base import LinkTransform
@@ -32,8 +33,7 @@ class ConditionalToggle(ToggleColumn):
             record.mapped_device.custom_field_data['slurpit_platform'] != record.device_os or 
             record.mapped_device.custom_field_data['slurpit_manufactor'] != record.brand
         ):
-            result = super().render(value, bound_column, record)
-            return mark_safe(result)
+            return super().render(value, bound_column, record)
         return '✔'
 
 
@@ -119,10 +119,9 @@ class LoggingTable(NetBoxTable):
             'Success': 'badge bg-success',
             'Failure': 'badge bg-danger',
             # Add more mappings for other levels as needed
-        }.get(value, 'badge bg-secondary')  # Default to secondary if level is not recognized
-
-        badge_html = f'<span class="{badge_class}">{value}</span>'
-        return mark_safe(badge_html)
+        }.get(escape(value), 'badge bg-secondary')  # Default to secondary if level is not recognized
+        
+        return mark_safe(f'<span class="{badge_class}">{escape(value)}</span>') #nosec 
     
 class SlurpitPlanningTable(tables.Table):
 

@@ -31,7 +31,7 @@ def get_devices(offset):
                         'accept': 'application/json'
                     }
         uri_devices = f"{uri_base}/api/devices?offset={offset}&limit={BATCH_SIZE}"
-        r = requests.get(uri_devices, headers=headers, verify=False)
+        r = requests.get(uri_devices, headers=headers, timeout=15, verify=False)
         r.raise_for_status()
         data = r.json()
         log_message = "Syncing the devices from slurp'it in Netbox."
@@ -245,7 +245,7 @@ def get_latest_data_on_planning(hostname, planning_id):
                     }
         uri_devices = f"{uri_base}/api/devices/snapshot/single/{hostname}/{planning_id}"
 
-        r = requests.get(uri_devices, headers=headers, verify=False)
+        r = requests.get(uri_devices, headers=headers, timeout=15, verify=False)
         r.raise_for_status()
         data = r.json()
         log_message = "Get the latest data from slurp'it in Netbox on planning ID."
