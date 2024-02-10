@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "slurpit_netbox"
-version = "0.8.63"
+version = "0.8.67"
 description = ""
 authors = ["Pieter <pieter@slurpit.io>"]
 readme = "README.md"
@@ -21,3 +21,7 @@ django-tables2 = "^2.6.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B501"]

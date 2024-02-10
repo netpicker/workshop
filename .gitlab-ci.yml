@@ -39,6 +39,18 @@ build-other:
       when: never
     - when: always
 
+test:
+  stage: test
+  image: python:latest
+  before_script:
+    - pip install bandit
+  script:
+    - bandit -c pyproject.toml -r ./src
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: always
+
 integration_test:
   image: docker:latest
   stage: test
@@ -70,7 +82,3 @@ integration_test:
     name: test-results
     expire_in: 1 month
     
-include:
-- template: Security/SAST.gitlab-ci.yml
-sast:
-  stage: test

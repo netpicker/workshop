@@ -12,6 +12,7 @@ from django.forms.models import model_to_dict
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from extras.models import CustomField
@@ -48,7 +49,7 @@ def post_slurpit_device(row, device_name):
         
         try:
             row["ignore_plugin"] = str(1)
-            r = requests.post(uri_devices, headers=headers, json=row, verify=False)
+            r = requests.post(uri_devices, headers=headers, json=row, timeout=15, verify=False)
             r = r.json()
             r["device_name"] = device_name
             return r
@@ -95,11 +96,9 @@ class DataMappingView(View):
                     return redirect(f'{request.path}?tab={tab}')
                 
                 if res['status'] != 200:
-                    error_message = ''
                     for error in res["messages"]:
-                        error_message += f'{error}: {res["messages"][error]} \r\n <br> '
+                        messages.error(request, f'{escape(error)}: {escape(res["messages"][error])}')
 
-                    messages.error(request, mark_safe(error_message))
                     return redirect(f'{request.path}?tab={tab}')
                 
             messages.success(request, "Sync from Netbox to Slurpit is done successfully.")
