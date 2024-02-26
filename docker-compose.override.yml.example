@@ -1,0 +1,27 @@
+version: '3.4' # This is NOT the version of NetBox! No need to adjust :)
+
+x-plugin: &plugin-common
+    #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
+    build: .
+    networks:
+      - slurpit_slurpit-network
+
+services:
+  netbox:
+    <<: *plugin-common
+    ports:
+      - 8080:8080
+  netbox-worker:
+    <<: *plugin-common
+  netbox-housekeeping:
+    <<: *plugin-common
+    
+  postgres:
+    ports:
+      - 5432:5432
+
+
+networks:
+  slurpit_slurpit-network:
+    external: true
+
