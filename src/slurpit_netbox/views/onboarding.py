@@ -18,7 +18,7 @@ from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
 from ..management.choices import *
 from .. import forms, importer, models, tables
 from ..importer import (
-    get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import
+    get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import, start_device_import
 )
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
@@ -289,6 +289,8 @@ class ImportDevices(View):
         offset = request.GET.get("offset", None)
         try:
             if offset is not None:
+                if offset == 0:
+                    start_device_import()
                 offset = int(offset)
                 devices = get_devices(offset)
                 if devices is not None and len(devices) > 0:
@@ -296,7 +298,7 @@ class ImportDevices(View):
                     offset += len(devices)
                 return JsonResponse({"action": "import", "offset": offset})
             
-            result = process_import()
+            process_import()
             messages.info(request, "Synced the devices from Slurp'it.")
             return JsonResponse({"action": "process"})
         except requests.exceptions.RequestException as e:

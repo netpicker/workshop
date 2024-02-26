@@ -55,10 +55,11 @@ def get_defaults():
         'site': site,
     }
 
-
-def import_devices(devices):
+def start_device_import():
     with connection.cursor() as cursor:
         cursor.execute(f"truncate {SlurpitStagedDevice._meta.db_table} cascade")
+
+def import_devices(devices):
     to_insert = []
     for device in devices:
         if device.get('disabled') == '1':
@@ -91,6 +92,7 @@ def process_import(delete=True):
 def run_import():
     devices = get_devices()
     if devices is not None:
+        start_device_import()
         import_devices(devices)
         process_import()
         return 'done'

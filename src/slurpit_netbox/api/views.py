@@ -18,7 +18,7 @@ from django.db import transaction
 from django.http import JsonResponse
 import json
 from ..validator import device_validator
-from ..importer import process_import, import_devices, import_plannings
+from ..importer import process_import, import_devices, import_plannings, start_device_import
 from ..management.choices import *
 from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
@@ -158,13 +158,31 @@ class DeviceViewSet(
     
     def create(self, request):
         errors = device_validator(request.data)
-
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
 
         import_devices(request.data)
         process_import(delete=False)
         
+        return JsonResponse({'status': 'success'})
+    
+    @action(detail=False, methods=['post'],  url_path='sync')
+    def sync(self, request):            
+        errors = device_validator(request.data)
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        import_devices(request.data)        
+        return JsonResponse({'status': 'success'})
+
+    @action(detail=False, methods=['post'],  url_path='sync_start')
+    def sync_start(self, request):
+        start_device_import()
+        return JsonResponse({'status': 'success'})
+
+    @action(detail=False, methods=['post'],  url_path='sync_end')
+    def sync_end(self, request):
+        process_import()
         return JsonResponse({'status': 'success'})
     
 class SlurpitTestAPIView(NetBoxModelViewSet):

@@ -134,6 +134,18 @@ class SettingsView(View):
                     "url": "api/plugins/slurpit/device/"
                 },
                 {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/device/sync_start"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/device/sync"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/device/sync_end"
+                },
+                {
                     "type": "DELETE",
                     "url": "api/plugins/slurpit/device/delete/{hostname}/"
                 },

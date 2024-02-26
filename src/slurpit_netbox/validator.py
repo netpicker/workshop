@@ -7,6 +7,9 @@ def device_validator(data):
     required_fields = ['id', 'hostname', 'fqdn', 'device_os', 
                        'device_type', 'brand', 'disabled', 
                        'createddate', 'changeddate']
+
+    if not isinstance(data, list):
+        return ["Should be a list"]
     
     errors = []
     
