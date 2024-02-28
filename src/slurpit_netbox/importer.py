@@ -212,11 +212,11 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     return device
 
 def get_create_dcim_objects(staged: SlurpitStagedDevice):
-    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, slug=slugify(staged.brand))
+    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, defaults={'slug':slugify(staged.brand)})
     if new:
         ensure_slurpit_tags(manu)
-    platform, new = Platform.objects.get_or_create(name=staged.device_os, slug=staged.device_os)
-    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, slug=f'{staged.brand}-{staged.device_type}', default_platform=platform)
+    platform, new = Platform.objects.get_or_create(name=staged.device_os, defaults={'slug':slugify(staged.device_os)})
+    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, defaults={'slug':slugify(f'{staged.brand}-{staged.device_type}'), 'default_platform':platform})
     if new:
         ensure_slurpit_tags(dtype)
     return dtype
