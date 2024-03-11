@@ -218,7 +218,6 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
             initial_data['device_type'] = 'keep_original'
         if len(device_types) == 1 and (dt := DeviceType.objects.filter(model__iexact=device_types[0][0]).first()):
             initial_data['device_type'] = dt.id
-        print(device_types)
 
         form = self.form(initial=initial_data)
         restrict_form_fields(form, request.user)
@@ -289,9 +288,9 @@ class ImportDevices(View):
         offset = request.GET.get("offset", None)
         try:
             if offset is not None:
+                offset = int(offset)
                 if offset == 0:
                     start_device_import()
-                offset = int(offset)
                 devices = get_devices(offset)
                 if devices is not None and len(devices) > 0:
                     import_devices(devices)
