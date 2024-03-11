@@ -31,7 +31,7 @@ class ConditionalToggle(ToggleColumn):
             record.mapped_device.custom_field_data['slurpit_hostname'] != record.hostname or
             record.mapped_device.custom_field_data['slurpit_fqdn'] != record.fqdn or
             record.mapped_device.custom_field_data['slurpit_platform'] != record.device_os or 
-            record.mapped_device.custom_field_data['slurpit_manufactor'] != record.brand
+            record.mapped_device.custom_field_data['slurpit_manufacturer'] != record.brand
         ):
             return super().render(value, bound_column, record)
         return '✔'
@@ -60,7 +60,7 @@ class SlurpitImportedDeviceTable(NetBoxTable):
     device_type = DeviceTypeColumn()
 
     brand = tables.Column(
-        verbose_name = _('Manufactor')
+        verbose_name = _('Manufacturer')
     )
 
     device_os = tables.Column(
@@ -83,7 +83,7 @@ class MigratedDeviceTable(NetBoxTable):
     device_type = DeviceTypeColumn()
 
     brand = tables.Column(
-        verbose_name = _('Manufactor')
+        verbose_name = _('Manufacturer')
     )
 
     device_os = tables.Column(

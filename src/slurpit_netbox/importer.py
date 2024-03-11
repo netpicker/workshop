@@ -192,7 +192,7 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'slurpit_hostname': staged.hostname,
         'slurpit_fqdn': staged.fqdn,
         'slurpit_platform': staged.device_os,
-        'slurpit_manufactor': staged.brand,
+        'slurpit_manufacturer': staged.brand,
         'slurpit_devicetype': staged.device_type,
         'slurpit_ipv4': staged.ipv4
     })    

@@ -39,7 +39,7 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
                 slurpit_hostname=KeyTextTransform('slurpit_hostname', 'mapped_device__custom_field_data'),
                 slurpit_fqdn=KeyTextTransform('slurpit_fqdn', 'mapped_device__custom_field_data'),
                 slurpit_platform=KeyTextTransform('slurpit_platform', 'mapped_device__custom_field_data'),
-                slurpit_manufactor=KeyTextTransform('slurpit_manufactor', 'mapped_device__custom_field_data'),
+                slurpit_manufacturer=KeyTextTransform('slurpit_manufacturer', 'mapped_device__custom_field_data'),
                 fdevicetype=F('device_type'),
                 fhostname=F('hostname'),
                 ffqdn=F('fqdn'),
@@ -50,7 +50,7 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
                 Q(slurpit_hostname=F('fhostname')) & 
                 Q(slurpit_fqdn=F('ffqdn')) & 
                 Q(slurpit_platform=F('fdeviceos')) & 
-                Q(slurpit_manufactor=F('fbrand'))
+                Q(slurpit_manufacturer=F('fbrand'))
             )
     
     queryset = to_onboard_queryset
@@ -161,7 +161,7 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     device.custom_field_data['slurpit_hostname'] = obj.hostname
                     device.custom_field_data['slurpit_fqdn'] = obj.fqdn
                     device.custom_field_data['slurpit_platform'] = obj.device_os
-                    device.custom_field_data['slurpit_manufactor'] = obj.brand
+                    device.custom_field_data['slurpit_manufacturer'] = obj.brand
                     device.custom_field_data['slurpit_devicetype'] = obj.device_type  
                     device.custom_field_data['slurpit_ipv4'] = obj.ipv4                  
 
@@ -191,7 +191,7 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     device.custom_field_data['slurpit_hostname'] = obj.hostname
                     device.custom_field_data['slurpit_fqdn'] = obj.fqdn
                     device.custom_field_data['slurpit_platform'] = obj.device_os
-                    device.custom_field_data['slurpit_manufactor'] = obj.brand
+                    device.custom_field_data['slurpit_manufacturer'] = obj.brand
                     device.custom_field_data['slurpit_devicetype'] = obj.device_type
                     device.custom_field_data['slurpit_ipv4'] = obj.ipv4             
 

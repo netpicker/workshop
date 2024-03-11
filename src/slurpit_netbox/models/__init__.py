@@ -68,11 +68,11 @@ def create_custom_fields():
     cf.content_types.set({device})
 
     cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_manufactor', 
+                name='slurpit_manufacturer', 
                 type=CustomFieldTypeChoices.TYPE_TEXT,
                 description="",
                 is_cloneable=True,
-                label='Manufactor',
+                label='Manufacturer',
                 group_name="Slurp'it",
                 )
     cf.content_types.set({device})
