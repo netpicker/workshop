@@ -16,7 +16,7 @@ pip install slurpit-netbox
 ```
 Enable the plugin in /opt/netbox/netbox/netbox/configuration.py:
 ```
-PLUGINS = ['slurpit_netbox']
+PLUGINS = ['slurpit-netbox']
 ```
 Restart NetBox and add `slurpit-netbox` to your requirements.txt
 
