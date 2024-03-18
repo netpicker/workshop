@@ -160,7 +160,10 @@ class DeviceViewSet(
         errors = device_validator(request.data)
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
-
+        if len(request.data) != 1:
+            return JsonResponse({'status': 'error', 'errors': ['List size should be 1']}, status=400)
+        
+        start_device_import()
         import_devices(request.data)
         process_import(delete=False)
         
