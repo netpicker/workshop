@@ -28,7 +28,7 @@
               <span>Select the planning to add as a data tab.</span>
             </div>
             <div class="action">
-              {% if appliance_type == 'both' or appliance_type == 'on-premise'  %}
+              {% if appliance_type == 'both' or appliance_type == 'pull'  %}
                 {% if connection_status == 'connected' %}
                   <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:settings' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Sync" %}</a>
                 {% endif %}

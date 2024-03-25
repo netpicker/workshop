@@ -13,7 +13,7 @@
             <div class="" role="group">
                 {% bulk_edit_button model query_params=request.GET %}
 
-                {% if appliance_type == 'both' or appliance_type == 'on-premise'  %}
+                {% if appliance_type == 'both' or appliance_type == 'pull'  %}
                   {% if connection_status == 'connected' %}
                     <!-- <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:import' %}"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a> -->
                     <button name="sync"  id="syncBtn" class="btn btn-orange btn-sm mx-2">
