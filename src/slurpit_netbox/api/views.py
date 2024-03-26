@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, mixins
 
 from django.db import transaction
 from django.http import JsonResponse
@@ -36,7 +36,7 @@ class SlurpitRootView(APIRootView):
     Slurpit API root view
     """
     def get_view_name(self):
-        return 'slurpit'
+        return 'Slurpit'
     
 
 class SlurpitPlanningViewSet(
@@ -91,9 +91,9 @@ class SlurpitPlanningViewSet(
         return JsonResponse({'status': 'success'})
 
 class SlurpitSnapshotViewSet(
+        SlurpitViewSet,
         BulkCreateModelMixin,
         BulkDestroyModelMixin,
-        SlurpitViewSet
     ):
     queryset = SlurpitSnapshot.objects.all()
     serializer_class = SlurpitSnapshotSerializer
@@ -128,9 +128,9 @@ class SlurpitSnapshotViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class DeviceViewSet(
+        SlurpitViewSet,
         BulkCreateModelMixin,
         BulkDestroyModelMixin,
-        SlurpitViewSet
     ):
     queryset = SlurpitImportedDevice.objects.all()
     serializer_class = SlurpitImportedDeviceSerializer
