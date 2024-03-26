@@ -36,7 +36,7 @@ class SlurpitRootView(APIRootView):
     Slurpit API root view
     """
     def get_view_name(self):
-        return 'Slurpit'
+        return 'slurpit'
     
 
 class SlurpitPlanningViewSet(
