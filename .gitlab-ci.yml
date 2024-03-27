@@ -66,8 +66,8 @@ integration_test:
     - mkdir $CI_PROJECT_DIR/logs 
     - |
       for container_id in $(docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml ps -qa); do
-        container_name=$(docker inspect --format='{{.Config.Image}}' $container_id)
-        docker logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
+        container_name=$(docker inspect --format='{{.Config.Labels.com.docker.compose.service}}' $container_id)
+        docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
       done
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml down -v || true
     - docker system prune --filter "until=24h" -f || true
