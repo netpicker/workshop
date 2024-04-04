@@ -4,6 +4,8 @@ from .imports import *
 from .. import get_config
 from ..models import  SlurpitStagedDevice
 
+from django.utils.text import slugify
+
 def create_form(form, data, model, initial):
     return form(data, initial=initial)
 

@@ -5,7 +5,6 @@ from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction
 from django.db.models import QuerySet, F, OuterRef, Subquery
-from django.utils.text import slugify
 from django.utils import timezone
 from django.db.models.expressions import RawSQL
 
