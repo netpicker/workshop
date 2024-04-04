@@ -2,7 +2,7 @@ from . import base_name, plugin_type
 from .imports import *
 
 from .. import get_config
-from ..models import  SlurpitStagedDevice
+from ..models import  SlurpitStagedDevice, ensure_slurpit_tags
 
 from django.utils.text import slugify
 
