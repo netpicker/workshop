@@ -60,11 +60,9 @@ class ConflictedColumn(Column):
 
             if record.mapped_devicetype_id is not None:
                 link = LinkTransform(attrs=self.attrs.get("a", {}), accessor=Accessor("mapped_devicetype"))
-                content_html = f'{link(value, value=value, record=record, bound_column=bound_column)}<br />{original_value}'
-                return mark_safe(content_html)
+                return mark_safe(f'{link(escape(value), value=escape(value), record=record, bound_column=bound_column)}<br />{escape(original_value)}') #nosec 
             
-        content_html = f'<span">{value}<br/>{original_value}</span>'
-        return mark_safe(content_html)
+        return mark_safe(f'<span">{escape(value)}<br/>{escape(original_value)}</span>') #nosec 
     
 class DeviceTypeColumn(Column):
     def render(self, value, bound_column, record):
@@ -150,19 +148,16 @@ class MigratedDeviceTable(NetBoxTable):
         default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
 
     def render_device_os(self, value, record):
-        content_html = f'<span">{value}<br/>{record.mapped_device.custom_field_data["slurpit_platform"]}</span>'
-        return mark_safe(content_html)
+        return mark_safe(f'<span">{escape(value)}<br/>{escape(record.mapped_device.custom_field_data["slurpit_platform"])}</span>') #nosec
     
     def render_brand(self, value, record):
-        content_html = f'<span">{value}<br/>{record.mapped_device.custom_field_data["slurpit_manufactor"]}</span>'
-        return mark_safe(content_html)
+        return mark_safe(f'<span">{escape(value)}<br/>{escape(record.mapped_device.custom_field_data["slurpit_manufactor"])}</span>') #nosec
     
     def render_device_type(self, value, bound_column, record):
         if record.mapped_devicetype_id is None:
             return value
         link = LinkTransform(attrs=self.attrs.get("a", {}), accessor=Accessor("mapped_devicetype"))
-        content_html = f'<span>{link(value, value=value, record=record, bound_column=bound_column)}<br/>{record.mapped_device.custom_field_data["slurpit_devicetype"]}</span>'
-        return mark_safe(content_html)
+        return mark_safe(f'<span>{link(escape(value), value=escape(value), record=record, bound_column=bound_column)}<br/>{escape(record.mapped_device.custom_field_data["slurpit_devicetype"])}</span>') #nosec 
 
 class LoggingTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
