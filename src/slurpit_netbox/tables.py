@@ -7,7 +7,7 @@ from django_tables2.columns.base import LinkTransform
 from django_tables2.utils import Accessor
 from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
-
+from dcim.models import  Device
 
 from .models import SlurpitImportedDevice, SlurpitLog
 
@@ -44,7 +44,28 @@ class ConditionalLink(Column):
         link = LinkTransform(attrs=self.attrs.get("a", {}), accessor=Accessor("mapped_device"))
         return link(value, value=value, record=record, bound_column=bound_column)
 
+class ConflictedColumn(Column):
+    def render(self, value, bound_column, record):
+        device = Device.objects.filter(name=record.hostname).first()
 
+        original_value = ""
+        column_name = bound_column.verbose_name
+
+        if column_name == "Manufactor":
+            original_value = device.device_type.manufacturer
+        elif column_name == "Platform":
+            original_value = device.platform
+        else:
+            original_value = device.device_type
+
+            if record.mapped_devicetype_id is not None:
+                link = LinkTransform(attrs=self.attrs.get("a", {}), accessor=Accessor("mapped_devicetype"))
+                content_html = f'{link(value, value=value, record=record, bound_column=bound_column)}<br />{original_value}'
+                return mark_safe(content_html)
+            
+        content_html = f'<span">{value}<br/>{original_value}</span>'
+        return mark_safe(content_html)
+    
 class DeviceTypeColumn(Column):
     def render(self, value, bound_column, record):
         if record.mapped_devicetype_id is None:
@@ -76,6 +97,30 @@ class SlurpitImportedDeviceTable(NetBoxTable):
         fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
         default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
 
+class ConflictDeviceTable(NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    pk = ConditionalToggle()
+    hostname = ConditionalLink()
+    device_type = ConflictedColumn()
+
+    brand = ConflictedColumn(
+        verbose_name = _('Manufactor')
+    )
+
+    device_os = ConflictedColumn(
+        verbose_name = _('Platform')
+    )
+
+    last_updated = tables.Column(
+        verbose_name = _('Last seen')
+    )
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitImportedDevice
+        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
+
+
 class MigratedDeviceTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
     pk = ConditionalToggle()
@@ -94,16 +139,30 @@ class MigratedDeviceTable(NetBoxTable):
         verbose_name = _('Last seen')
     )
 
-    slurpit_devicetype = tables.Column(
-        accessor='slurpit_device_type', 
-        verbose_name='Original Device Type'
-    )
+    # slurpit_devicetype = tables.Column(
+    #     accessor='slurpit_device_type', 
+    #     verbose_name='Original Device Type'
+    # )
 
     class Meta(NetBoxTable.Meta):
         model = SlurpitImportedDevice
-        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'slurpit_devicetype', 'last_updated')
-        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'slurpit_devicetype', 'last_updated')
+        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
 
+    def render_device_os(self, value, record):
+        content_html = f'<span">{value}<br/>{record.mapped_device.custom_field_data["slurpit_platform"]}</span>'
+        return mark_safe(content_html)
+    
+    def render_brand(self, value, record):
+        content_html = f'<span">{value}<br/>{record.mapped_device.custom_field_data["slurpit_manufactor"]}</span>'
+        return mark_safe(content_html)
+    
+    def render_device_type(self, value, bound_column, record):
+        if record.mapped_devicetype_id is None:
+            return value
+        link = LinkTransform(attrs=self.attrs.get("a", {}), accessor=Accessor("mapped_devicetype"))
+        content_html = f'<span>{link(value, value=value, record=record, bound_column=bound_column)}<br/>{record.mapped_device.custom_field_data["slurpit_devicetype"]}</span>'
+        return mark_safe(content_html)
 
 class LoggingTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())

@@ -149,7 +149,7 @@ def handle_changed():
                     result.mapped_device.status=status_inventory()
                     
                 set_device_custom_fields(result.mapped_device, {
-                    'slurpit_hostname': device.hostname,
+                    # 'slurpit_hostname': device.hostname,
                     'slurpit_fqdn': device.fqdn,
                     'slurpit_ipv4': device.ipv4,
                 })   
