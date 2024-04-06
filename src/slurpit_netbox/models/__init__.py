@@ -5,6 +5,8 @@ from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
 from django.db.models import Q
 
+from django.db.models import CharField, Lookup, Field
+
 from .. import get_config
 from .device import SlurpitImportedDevice, SlurpitStagedDevice
 from .planning import SlurpitPlanning, SlurpitSnapshot
@@ -128,3 +130,13 @@ def post_migration(sender, **kwargs):
     create_custom_fields()
     tags = ensure_slurpit_tags()
     add_default_mandatory_objects(tags)
+
+@Field.register_lookup
+class IExactInLookup(Lookup):
+    lookup_name = 'iin'
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        params = list(lhs_params) + list(rhs_params)
+        return f"LOWER({lhs}) IN ({rhs})", [param.lower() for param in params]
