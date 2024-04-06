@@ -46,7 +46,7 @@ class ConditionalLink(Column):
 
 class ConflictedColumn(Column):
     def render(self, value, bound_column, record):
-        device = Device.objects.filter(name=record.hostname).first()
+        device = Device.objects.filter(name__iexact=record.hostname).first()
 
         original_value = ""
         column_name = bound_column.verbose_name

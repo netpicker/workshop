@@ -23,7 +23,7 @@ from ..references.imports import *
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
-    conflicted_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True, hostname__iin=Device.objects.values('name'))
+    conflicted_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True, hostname__lower__in=Device.objects.values('name__lower'))
     to_onboard_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True).exclude(pk__in=conflicted_queryset.values('pk'))
     onboarded_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=False)
     migrate_queryset = models.SlurpitImportedDevice.objects.filter(
@@ -180,7 +180,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
         elif 'conflicted' in request.GET:
             conflic = request.GET.get('conflicted')
             if conflic == 'create':
-                Device.objects.filter(name__in=self.queryset.values('hostname')).delete()
+                Device.objects.filter(name__lower__in=self.queryset.values('hostname__lower')).delete()
             else:
                 for obj in self.queryset:
                     device = Device.objects.filter(name__iexact=obj.hostname).first()

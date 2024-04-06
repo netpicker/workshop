@@ -3,9 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
 from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
-from django.db.models import Q
-
-from django.db.models import CharField, Lookup, Field
+from django.db.models import Q, Transform, CharField, TextField
 
 from .. import get_config
 from .device import SlurpitImportedDevice, SlurpitStagedDevice
@@ -131,12 +129,9 @@ def post_migration(sender, **kwargs):
     tags = ensure_slurpit_tags()
     add_default_mandatory_objects(tags)
 
-@Field.register_lookup
-class IExactInLookup(Lookup):
-    lookup_name = 'iin'
+class LowerCase(Transform):
+    lookup_name = "lower"
+    function = "LOWER"
 
-    def as_sql(self, compiler, connection):
-        lhs, lhs_params = self.process_lhs(compiler, connection)
-        rhs, rhs_params = self.process_rhs(compiler, connection)
-        params = list(lhs_params) + list(rhs_params)
-        return f"LOWER({lhs}) IN ({rhs})", [param.lower() for param in params]
+CharField.register_lookup(LowerCase)
+TextField.register_lookup(LowerCase)
