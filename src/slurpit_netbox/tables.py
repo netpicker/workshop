@@ -51,7 +51,7 @@ class ConflictedColumn(Column):
         original_value = ""
         column_name = bound_column.verbose_name
 
-        if column_name == "Manufactor":
+        if column_name == "Manufacturer":
             original_value = device.device_type.manufacturer
         elif column_name == "Platform":
             original_value = device.platform
@@ -102,7 +102,7 @@ class ConflictDeviceTable(NetBoxTable):
     device_type = ConflictedColumn()
 
     brand = ConflictedColumn(
-        verbose_name = _('Manufactor')
+        verbose_name = _('Manufacturer')
     )
 
     device_os = ConflictedColumn(
@@ -151,7 +151,7 @@ class MigratedDeviceTable(NetBoxTable):
         return mark_safe(f'<span">{escape(value)}<br/>{escape(record.mapped_device.custom_field_data["slurpit_platform"])}</span>') #nosec
     
     def render_brand(self, value, record):
-        return mark_safe(f'<span">{escape(value)}<br/>{escape(record.mapped_device.custom_field_data["slurpit_manufactor"])}</span>') #nosec
+        return mark_safe(f'<span">{escape(value)}<br/>{escape(record.mapped_device.custom_field_data["slurpit_manufacturer"])}</span>') #nosec
     
     def render_device_type(self, value, bound_column, record):
         if record.mapped_devicetype_id is None:
