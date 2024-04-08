@@ -98,7 +98,7 @@
 
                     <input type="hidden" name="action" value="save" id="actionInput" />
 
-                    {% for choice_item in forms %}
+                    {% for choice_item in form %}
                       <div class="d-flex map-item">
                         <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
                         <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>

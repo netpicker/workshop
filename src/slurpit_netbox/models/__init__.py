@@ -128,6 +128,8 @@ def post_migration(sender, **kwargs):
     create_custom_fields()
     tags = ensure_slurpit_tags()
     add_default_mandatory_objects(tags)
+    print("AA")
+    pass
 
 class LowerCase(Transform):
     lookup_name = "lower"

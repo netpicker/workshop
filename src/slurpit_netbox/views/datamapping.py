@@ -130,7 +130,7 @@ class DataMappingView(View):
         new_form = SlurpitMappingForm(doaction="add")
         device_form = SlurpitDeviceForm()
         device_status_form = SlurpitDeviceStatusForm()
-        
+
         return render(
             request,
             self.template_name, 
