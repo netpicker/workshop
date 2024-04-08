@@ -29,7 +29,10 @@ def setup():
 def do_request(url, method="GET", data={}):
     #base_url = 'http://localhost:8080/api/plugins/slurpit'
     base_url = 'http://netbox:8080/api/plugins/slurpit'
-    headers = {'Content-Type': 'application/json', 'Authorization': 'Token 0d8a4cd172ae30bff3293dd409d8e4f3416f6e18' }
+    headers = {
+        'Content-Type': 'application/json', 
+        'Authorization': 'Token 0d8a4cd172ae30bff3293dd409d8e4f3416f6e18',
+    }
 
     if method == "GET":
         return requests.get(f'{base_url}/{url}', headers=headers)
@@ -60,7 +63,7 @@ def test_plannings(setup):
         'disabled': '0'
     }]
     response = do_request('planning/', method="POST",data=insert_plannings)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     compare_plannings(insert_plannings, get_plannings())
@@ -72,7 +75,7 @@ def test_plannings(setup):
         'disabled': '0'
     }]
     response = do_request('planning/', method="POST",data=update_plannings)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     compare_plannings(update_plannings, get_plannings())
@@ -84,7 +87,7 @@ def test_plannings(setup):
         'disabled': '0'
     }]
     response = do_request('planning/sync/', method="POST",data=sync_plannings)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     compare_plannings(sync_plannings, get_plannings())
@@ -96,7 +99,7 @@ def test_plannings(setup):
         'disabled': '1'
     }]
     response = do_request('planning/sync/', method="POST",data=disable_plannings)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     assert len(get_plannings()) == 0
@@ -104,7 +107,7 @@ def test_plannings(setup):
 
 def compare_devices(array1, array2):
     assert len(array1) == len(array2), f"Device arrays were different sizes: {array1} - {array2}"
-
+    
     for row in array1:
         result = next((obj for obj in array2 if obj['slurpit_id'] == row['id']), None)
         assert result is not None, f"Unable to find slurpit_id {row['id']}"
@@ -122,7 +125,7 @@ def get_devices():
 
 def test_devices(setup):
     devices = [{
-        "id": "1",
+        "id": 1,
         "hostname": "MikroTikAB",
         "fqdn": "WWW",
         "ipv4": "192.168.34.56",
@@ -134,22 +137,22 @@ def test_devices(setup):
         "changeddate": "2024-04-04 16:27:23"
     }]
     response = do_request('device/', method="POST",data=devices)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     compare_devices(devices, get_devices())
 
     response = do_request('device/sync_start/', method="POST")
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     response = do_request('device/sync/', method="POST", data=devices)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
 
     response = do_request('device/sync_end/', method="POST")
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
     compare_devices(devices, get_devices())
