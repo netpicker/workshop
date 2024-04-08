@@ -440,15 +440,14 @@ def sync_snapshot(cache_key, device_name, plan):
     count = SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()[0]
     SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync deleted {count} snapshots for planning {plan.name}")
 
-    temp = get_latest_data_on_planning(device_name, plan.planning_id)
-    temp = temp[plan.name]["planning_results"]
+    data = get_latest_data_on_planning(device_name, plan.planning_id)
+    temp = data[plan.name]["planning_results"]
 
     new_items = []
     for item in temp:
         new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item, result_type="planning_result"))
-    
-    temp = get_latest_data_on_planning(device_name, plan.planning_id)
-    temp = temp[plan.name]["template_results"]
+
+    temp = data[plan.name]["template_results"]
 
     for item in temp:
         new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item, result_type="template_result"))
