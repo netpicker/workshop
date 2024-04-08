@@ -367,19 +367,19 @@ class SlurpitPlanningning(View):
             if not data:
                 data = []
                 try: 
-                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
                     result_key = f"{result_type}_result"
-                    
+                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
+
                     # Empty case
                     if temp.count() == 0:
                         if appliance_type != "cloud":
                             sync_snapshot(cache_key, device.name, planning)
-                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
+                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
 
                     for r in temp:
                         r = r.content
-                        raw = r[result_key]
-                        data.append({**raw})
+                        # raw = r[result_key]
+                        data.append({**r})
                     result_status = "Live"
                     cache.set(cache_key, (datetime.now(), data), 60 * 60 * 8)
                     
@@ -436,15 +436,22 @@ class SlurpitPlanningning(View):
 
 def sync_snapshot(cache_key, device_name, plan):
     cache.delete(cache_key)
-    temp = get_latest_data_on_planning(device_name, plan.planning_id)
-    temp = temp[plan.name]["data"]
-
+    
     count = SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()[0]
     SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync deleted {count} snapshots for planning {plan.name}")
 
+    temp = get_latest_data_on_planning(device_name, plan.planning_id)
+    temp = temp[plan.name]["planning_results"]
+
     new_items = []
     for item in temp:
-        new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item))
+        new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item, result_type="planning_result"))
+    
+    temp = get_latest_data_on_planning(device_name, plan.planning_id)
+    temp = temp[plan.name]["template_results"]
+
+    for item in temp:
+        new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item, result_type="template_result"))
     
     SlurpitSnapshot.objects.bulk_create(new_items, batch_size=BATCH_SIZE, ignore_conflicts=True)
     SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} snapshots for planning {plan.name}")

@@ -17,6 +17,7 @@ class SlurpitSnapshot(PrimaryModel):
     hostname = models.CharField(max_length=255)
     planning_id = models.BigIntegerField()
     content = models.JSONField()
+    result_type = models.CharField(max_length=255, default="template_result")
 
     def __str__(self):
         return f"{self.hostname}#{self.planning_id}"
