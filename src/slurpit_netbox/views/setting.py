@@ -23,7 +23,7 @@ from utilities.views import register_model_view, ViewTab
 from utilities.paginator import EnhancedPaginator, get_paginate_count
 
 from ..forms import SlurpitPlanningTableForm, SlurpitApplianceTypeForm
-from ..models import SlurpitSetting, SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
+from ..models import create_default_data_mapping, SlurpitSetting, SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
 from ..tables import SlurpitPlanningTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
@@ -49,6 +49,8 @@ class SettingsView(View):
             SlurpitLog.objects.all().delete()
             SlurpitSetting.objects.all().delete()
             SlurpitPlanning.objects.all().delete()
+
+            create_default_data_mapping()
 
             return HttpResponseRedirect(reverse("plugins:slurpit_netbox:settings"))
         

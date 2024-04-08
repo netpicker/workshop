@@ -97,6 +97,18 @@ def create_custom_fields():
                 )
     cf.content_types.set({device})
 
+def create_default_data_mapping():
+    SlurpitMapping.objects.all().delete()
+    
+    mappings = [
+        {"source_field": "hostname", "target_field": "device|name"},
+        {"source_field": "fqdn", "target_field": "device|primary_ip4"},
+        {"source_field": "ipv4", "target_field": "device|primary_ip4"},
+        {"source_field": "device_os", "target_field": "device|platform"},
+        {"source_field": "device_type", "target_field": "device|device_type"},
+    ]
+    for mapping in mappings:
+        SlurpitMapping.objects.get_or_create(**mapping)
 
 def add_default_mandatory_objects(tags):
     site, _ = Site.objects.get_or_create(**get_config('Site'))
@@ -111,17 +123,7 @@ def add_default_mandatory_objects(tags):
     role, _ = DeviceRole.objects.get_or_create(**get_config('DeviceRole'))
     role.tags.set(tags)    
 
-    SlurpitMapping.objects.all().delete()
-    
-    mappings = [
-        {"source_field": "hostname", "target_field": "device|name"},
-        {"source_field": "fqdn", "target_field": "device|primary_ip4"},
-        {"source_field": "ipv4", "target_field": "device|primary_ip4"},
-        {"source_field": "device_os", "target_field": "device|platform"},
-        {"source_field": "device_type", "target_field": "device|device_type"},
-    ]
-    for mapping in mappings:
-        SlurpitMapping.objects.get_or_create(**mapping)
+    create_default_data_mapping()
 
 
 def post_migration(sender, **kwargs):
