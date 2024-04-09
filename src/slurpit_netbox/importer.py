@@ -12,7 +12,7 @@ from . import get_config
 from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting, SlurpitPlanning, SlurpitSnapshot
 from .management.choices import *
 from .references import base_name, plugin_type, custom_field_data_name
-from .references.generic import get_default_objects, status_inventory, status_offline, get_create_dcim_objects
+from .references.generic import get_default_objects, status_inventory, status_offline, get_create_dcim_objects, set_device_custom_fields
 from .references.imports import *
 
 BATCH_SIZE = 256
