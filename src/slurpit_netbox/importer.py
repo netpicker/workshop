@@ -153,6 +153,7 @@ def handle_changed():
                     'slurpit_fqdn': device.fqdn,
                     'slurpit_ipv4': device.ipv4,
                 })   
+                result.mapped_device.name = device.hostname
                 result.mapped_device.save()
         offset += BATCH_SIZE
 
