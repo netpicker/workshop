@@ -225,7 +225,10 @@ def get_latest_data_on_planning(hostname, planning_id):
         uri_devices = f"{uri_base}/api/devices/snapshot/single/{hostname}/{planning_id}"
 
         r = requests.get(uri_devices, headers=headers, timeout=15, verify=False)
-        r.raise_for_status()
+        # r.raise_for_status()
+        if r.status_code != 200:
+            return None
+
         data = r.json()
         log_message = f"Get the latest data from Slurp'it in {plugin_type.capitalize()} on planning ID."
         SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)

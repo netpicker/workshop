@@ -313,11 +313,27 @@ def get_refresh_url(request, pk):
 
     return url_no_refresh
 
-
+class SlurpitViewTab(ViewTab):
+    def render(self, instance):
+        device = get_object_or_404(Device, pk=instance.pk)
+        if device:
+            slurpit_hostname = device.custom_field_data['slurpit_hostname']
+            if slurpit_hostname is None:
+                return None
+        """Return the attributes needed to render a tab in HTML."""
+        badge_value = self._get_badge_value(instance)
+        if self.badge and self.hide_if_empty and not badge_value:
+            return None
+        return {
+            'label': self.label,
+            'badge': badge_value,
+            'weight': self.weight,
+        }
+    
 @register_model_view(Device, "Slurpit")
 class SlurpitPlanningning(View):
     template_name = "slurpit_netbox/planning_table.html"
-    tab = ViewTab("Slurpit", permission="slurpit_netbox.view_devicetable")
+    tab = SlurpitViewTab("Slurpit", permission="slurpit_netbox.view_devicetable")
     form = SlurpitPlanningTableForm()
 
     def get(self, request, pk):
