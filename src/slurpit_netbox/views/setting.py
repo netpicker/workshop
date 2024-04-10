@@ -32,6 +32,15 @@ from ..importer import get_latest_data_on_planning, import_plannings
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+from json import JSONEncoder
+import json
+
+class OrderedEncoder(JSONEncoder):
+    def encode(self, o):
+        if isinstance(o, dict):
+            return "{" + ", ".join(f'{self.encode(k)}: {self.encode(v)}' for k, v in o.items()) + "}"
+        return super().encode(o)
+    
 BATCH_SIZE = 128
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
@@ -399,7 +408,10 @@ class SlurpitPlanningning(View):
                         temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
 
                     for r in temp:
-                        r = r.content
+                        try:
+                            r = json.loads(r.content)
+                        except:
+                            r = r.content
                         # raw = r[result_key]
                         data.append({**r})
                     result_status = "Live"
@@ -458,7 +470,7 @@ def sync_snapshot(cache_key, device_name, plan):
     cache.delete(cache_key)
     
     data = get_latest_data_on_planning(device_name, plan.planning_id)
-    
+  
     if data is not None:
         temp = data[plan.name]["planning_results"]
         
@@ -468,12 +480,14 @@ def sync_snapshot(cache_key, device_name, plan):
 
         new_items = []
         for item in temp:
-            new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item, result_type="planning_result"))
+            content = json.dumps(item, cls=OrderedEncoder)
+            new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=content, result_type="planning_result"))
 
         temp = data[plan.name]["template_results"]
 
         for item in temp:
-            new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item, result_type="template_result"))
+            content = json.dumps(item, cls=OrderedEncoder)
+            new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=content, result_type="template_result"))
         
         SlurpitSnapshot.objects.bulk_create(new_items, batch_size=BATCH_SIZE, ignore_conflicts=True)
         SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} snapshots for planning {plan.name}")

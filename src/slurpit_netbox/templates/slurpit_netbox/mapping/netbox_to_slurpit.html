@@ -12,13 +12,13 @@
     </a>
   </li>
 
-  {% if appliance_type != 'push' %}
+  <!-- {% if appliance_type != 'push' %}
     <li class="nav-item" role="presentation">
       <a class="nav-tab nav-link {% if request.GET.subtab == 'ipam' %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=ipam">
         IPAM
       </a>
     </li>
-  {% endif %}
+  {% endif %} -->
 </ul>
 
 <div class="tab-content">
@@ -339,7 +339,7 @@
   });
   
 
-  var mappingElement = document.querySelector('select[name="mapping_item"]');
+  var mappingElement = document.querySelector('select[name="device"]');
   var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
   var subtab = document.querySelector('input[name="subtab"]').value;
   var managementStatus;
@@ -349,7 +349,7 @@
     var mapping_id = this.value; // or event.target.value
     var data = new URLSearchParams();
     data.append('csrfmiddlewaretoken', csrfToken);
-    data.append('item_id', mapping_id);
+    data.append('device_id', mapping_id);
     data.append('subtab', subtab)
     
     fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
