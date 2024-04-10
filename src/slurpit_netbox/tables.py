@@ -16,10 +16,10 @@ def check_link(**kwargs):
     return {}
 
 def greenText(value):
-    return f'<span style="background-color:#d7ecd7; padding: 3px; color: black">{value}</span>'
+    return f'<span style="background-color:#d7ecd7; color: black">{value}</span>'
 
 def greenLink(link):
-    return f'<span class="greenLink" style="background-color:#d7ecd7; padding: 3px; color: blue">{link}</span>'
+    return f'<span class="greenLink" style="background-color:#d7ecd7; color: blue">{link}</span>'
 
 class ImportColumn(BoundColumn):
     pass
