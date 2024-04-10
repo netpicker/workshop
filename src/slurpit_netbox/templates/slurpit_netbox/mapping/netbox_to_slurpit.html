@@ -431,7 +431,7 @@
     current_cnt = 0;
     logsElement.innerHTML = "";
     update_status()
-    managementStatus = document.querySelector('select[name="management_status"]').value;
+    managementStatus = document.querySelector('select[name="device_status"]').value;
 
     var data = new URLSearchParams();
     data.append('action', 'sync')
@@ -448,7 +448,7 @@
     }).then(function(response) {
       return response.json();
     }).then(function(res){
-      items = res["items"];
+      items = res["device"];
       total_count = items.length;
       update_status();
       send_device();
