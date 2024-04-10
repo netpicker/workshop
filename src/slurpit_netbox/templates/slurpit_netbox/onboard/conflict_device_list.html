@@ -52,7 +52,7 @@
           </div>
         </div>
       {% endif %}
-
+      <span>In green is the incoming change from Slurp'it</span>
       <div class="form form-horizontal">
         {% csrf_token %}
         <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
