@@ -30,16 +30,19 @@ def get_devices(offset):
                     }
         uri_devices = f"{uri_base}/api/devices?offset={offset}&limit={BATCH_SIZE}"
         r = requests.get(uri_devices, headers=headers, timeout=15, verify=False)
-        r.raise_for_status()
+        # r.raise_for_status()
         data = r.json()
         log_message = f"Syncing the devices from Slurp'it in {plugin_type.capitalize()}."
         SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
-        return data
+        return data, ""
     except ObjectDoesNotExist:
         setting = None
         log_message = "Need to set the setting parameter"
         SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=log_message)
-        return None
+        return None, log_message
+    except Exception as e:
+        log_message = "Please confirm the Slurp'it server is running and reachable."
+        return None, log_message
 
 def start_device_import():
     with connection.cursor() as cursor:

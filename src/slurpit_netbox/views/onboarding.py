@@ -11,6 +11,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 
 from .. import get_config, forms, importer, models, tables
 from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
@@ -281,10 +282,14 @@ class ImportDevices(View):
                 offset = int(offset)
                 if offset == 0:
                     start_device_import()
-                devices = get_devices(offset)
+                devices, log_message = get_devices(offset)
                 if devices is not None and len(devices) > 0:
                     import_devices(devices)
                     offset += len(devices)
+                if devices is None:
+                    messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
+                    # return HttpResponseRedirect(reverse("plugins:slurpit_netbox:onboard"))
+                    return JsonResponse({"action": "error", "error": "ERROR"})
                 return JsonResponse({"action": "import", "offset": offset})
             
             process_import()

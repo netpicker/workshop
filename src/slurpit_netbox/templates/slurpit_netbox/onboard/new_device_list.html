@@ -127,8 +127,11 @@
       })
       .then(data => {
         action = data["action"];
-
-        if(action == "import") {
+        
+        if(action == 'error') {
+          location.reload();
+        }
+        else if(action == "import") {
           newOffset = data["offset"];
           
           if(newOffset != offset) {
@@ -149,7 +152,8 @@
         
       })
       .catch(error => {
-        console.error('Fetch error:', error);
+        // console.error('Fetch error:', error);
+        location.reload();
       });
     }
   </script>
