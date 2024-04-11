@@ -478,12 +478,14 @@
     }).then(function(response) {
       return response.json();
     }).then(function(res){
-      current_cnt++;
-      if(res["status"] == undefined) done_count++;  
+      
+      console.log(res)
+      if(res["status"] == undefine && res['error'] == undefine) done_count++;  
       else {
         failed_count++;
         logsElement.append("Failed to import "+res["device_name"]+"\n")
       }
+      current_cnt++;
       update_status();  
       send_device();
     }).catch(function(error) {
