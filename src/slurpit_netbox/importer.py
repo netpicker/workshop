@@ -5,17 +5,15 @@ from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction
 from django.db.models import QuerySet, F, OuterRef, Subquery
-from django.utils.text import slugify
 from django.utils import timezone
 from django.db.models.expressions import RawSQL
-
-from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Site, Platform
-from dcim.choices import DeviceStatusChoices
-from ipam.models import *
 
 from . import get_config
 from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting, SlurpitPlanning, SlurpitSnapshot
 from .management.choices import *
+from .references import base_name, plugin_type, custom_field_data_name
+from .references.generic import get_default_objects, status_inventory, status_offline, get_create_dcim_objects, set_device_custom_fields
+from .references.imports import *
 
 BATCH_SIZE = 256
 columns = ('slurpit_id', 'disabled', 'hostname', 'fqdn', 'ipv4', 'device_os', 'device_type', 'brand', 'createddate', 'changeddate')
@@ -27,38 +25,30 @@ def get_devices(offset):
         uri_base = setting.server_url
         headers = {
                         'authorization': setting.api_key,
-                        'useragent': 'netbox/requests',
+                        'useragent': f"{plugin_type}/requests",
                         'accept': 'application/json'
                     }
         uri_devices = f"{uri_base}/api/devices?offset={offset}&limit={BATCH_SIZE}"
-        r = requests.get(uri_devices, headers=headers, verify=False)
-        r.raise_for_status()
+        r = requests.get(uri_devices, headers=headers, timeout=15, verify=False)
+        # r.raise_for_status()
         data = r.json()
-        log_message = "Syncing the devices from slurp'it in Netbox."
+        log_message = f"Syncing the devices from Slurp'it in {plugin_type.capitalize()}."
         SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
-        return data
+        return data, ""
     except ObjectDoesNotExist:
         setting = None
         log_message = "Need to set the setting parameter"
         SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=log_message)
-        return None
+        return None, log_message
+    except Exception as e:
+        log_message = "Please confirm the Slurp'it server is running and reachable."
+        return None, log_message
 
-
-def get_defaults():
-    device_type = DeviceType.objects.get(**get_config('DeviceType'))
-    role = DeviceRole.objects.get(**get_config('DeviceRole'))
-    site = Site.objects.get(**get_config('Site'))
-
-    return {
-        'device_type': device_type,
-        'role': role,
-        'site': site,
-    }
-
-
-def import_devices(devices):
+def start_device_import():
     with connection.cursor() as cursor:
         cursor.execute(f"truncate {SlurpitStagedDevice._meta.db_table} cascade")
+
+def import_devices(devices):
     to_insert = []
     for device in devices:
         if device.get('disabled') == '1':
@@ -91,6 +81,7 @@ def process_import(delete=True):
 def run_import():
     devices = get_devices()
     if devices is not None:
+        start_device_import()
         import_devices(devices)
         process_import()
         return 'done'
@@ -107,10 +98,10 @@ def handle_parted():
     for device in parted_qs:
         if device.mapped_device is None:
             device.delete()
-        elif device.mapped_device.status == DeviceStatusChoices.STATUS_OFFLINE:
+        elif device.mapped_device.status == status_offline():
             continue
         else:
-            device.mapped_device.status=DeviceStatusChoices.STATUS_OFFLINE
+            device.mapped_device.status=status_offline()
             device.mapped_device.save()
         count += 1
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync parted {count} devices")
@@ -137,7 +128,6 @@ def handle_new_comers():
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync imported {count} devices")
 
 def handle_changed():
-    #qs = SlurpitStagedDevice.objects.filter(id__in=RawSQL("SELECT s.* FROM slurpit_netbox_slurpitstageddevice s INNER JOIN slurpit_netbox_slurpitimporteddevice i ON s.slurpit_id = i.slurpit_id AND s.changeddate > i.changeddate"))
     latest_changeddate_subquery = SlurpitImportedDevice.objects.filter(
         slurpit_id=OuterRef('slurpit_id')
     ).order_by('-changeddate').values('changeddate')[:1]
@@ -158,13 +148,15 @@ def handle_changed():
             result.save()
             get_create_dcim_objects(device)
             if result.mapped_device:
-                if result.mapped_device.status==DeviceStatusChoices.STATUS_OFFLINE:
-                    result.mapped_device.status=DeviceStatusChoices.STATUS_INVENTORY
-                result.mapped_device.custom_field_data.update({
+                if result.mapped_device.status==status_offline():
+                    result.mapped_device.status=status_inventory()
+                    
+                set_device_custom_fields(result.mapped_device, {
                     'slurpit_hostname': device.hostname,
                     'slurpit_fqdn': device.fqdn,
-                    'slurpit_ipv4': device.ipv4
-                })    
+                    'slurpit_ipv4': device.ipv4,
+                })   
+                result.mapped_device.name = device.hostname
                 result.mapped_device.save()
         offset += BATCH_SIZE
 
@@ -184,13 +176,13 @@ def import_from_queryset(qs: QuerySet, **extra):
         offset += BATCH_SIZE
 
 def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra) -> Device:
-    kw = get_defaults()
-    cf = extra.pop('custom_field_data', {})
+    kw = get_default_objects()
+    cf = extra.pop(custom_field_data_name, {})
     cf.update({
         'slurpit_hostname': staged.hostname,
         'slurpit_fqdn': staged.fqdn,
         'slurpit_platform': staged.device_os,
-        'slurpit_manufactor': staged.brand,
+        'slurpit_manufacturer': staged.brand,
         'slurpit_devicetype': staged.device_type,
         'slurpit_ipv4': staged.ipv4
     })    
@@ -198,26 +190,16 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     kw.update({
         'name': staged.hostname,
         'platform': Platform.objects.get(name=staged.device_os),
-        'custom_field_data': cf,
+        custom_field_data_name: cf,
         **extra,
         # 'primary_ip4_id': int(ip_address(staged.fqdn)),
     })
     if 'device_type' not in extra and staged.mapped_devicetype is not None:
         kw['device_type'] = staged.mapped_devicetype
-    kw.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
+    kw.setdefault('status', status_inventory())
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
     return device
-
-def get_create_dcim_objects(staged: SlurpitStagedDevice):
-    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, slug=slugify(staged.brand))
-    if new:
-        ensure_slurpit_tags(manu)
-    platform, new = Platform.objects.get_or_create(name=staged.device_os, slug=staged.device_os)
-    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, slug=f'{staged.brand}-{staged.device_type}', default_platform=platform)
-    if new:
-        ensure_slurpit_tags(dtype)
-    return dtype
 
 def get_from_staged(
         staged: SlurpitStagedDevice,
@@ -240,15 +222,18 @@ def get_latest_data_on_planning(hostname, planning_id):
         uri_base = setting.server_url
         headers = {
                         'authorization': setting.api_key,
-                        'useragent': 'netbox/requests',
+                        'useragent': f"{plugin_type}/requests",
                         'accept': 'application/json'
                     }
         uri_devices = f"{uri_base}/api/devices/snapshot/single/{hostname}/{planning_id}"
 
-        r = requests.get(uri_devices, headers=headers, verify=False)
-        r.raise_for_status()
+        r = requests.get(uri_devices, headers=headers, timeout=15, verify=False)
+        # r.raise_for_status()
+        if r.status_code != 200:
+            return None
+
         data = r.json()
-        log_message = "Get the latest data from slurp'it in Netbox on planning ID."
+        log_message = f"Get the latest data from Slurp'it in {plugin_type.capitalize()} on planning ID."
         SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=log_message)
         return data
     except ObjectDoesNotExist:

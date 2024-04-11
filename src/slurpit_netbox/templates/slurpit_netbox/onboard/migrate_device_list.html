@@ -2,7 +2,6 @@
 {% load i18n %}
 
 <div class=" show {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" id="new-device-list" role="tabpanel" aria-labelledby="new-device-list-tab">
-   
     <form method="post" class="form form-horizontal">
          <!-- sync button -->
         {# Object table controls #}
@@ -62,7 +61,7 @@
             {% if prerequisite_model %}
               {% include 'inc/missing_prerequisites.html' %}
             {% endif %}
-
+        <span>In green is the incoming change from Slurp'it</span>
         <div class="card">
           <div class="card-body htmx-container table-responsive" id="object_list">
             {% include 'htmx/table.html' %}

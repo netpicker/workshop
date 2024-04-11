@@ -137,7 +137,7 @@ class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
 class SlurpitApplianceTypeForm(BootstrapMixin, forms.Form):
     model =  SlurpitSetting
     appliance_type = forms.ChoiceField(
-        label=_('Appliance Type'),
+        label=_('Data synchronization'),
         choices=add_blank_choice(SlurpitApplianceTypeChoices),
         required=False
     )

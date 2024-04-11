@@ -7,30 +7,32 @@
 <ul class="nav nav-tabs px-3 sub-nav">    
 
   <li class="nav-item" role="presentation">
-    <a class="nav-tab nav-link {% if request.GET.subtab == 'devices' or request.GET.subtab is None %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=devices">
+    <a class="nav-tab nav-link {% if request.GET.subtab == 'device' or request.GET.subtab is None %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=device">
       Devices
     </a>
   </li>
 
-  <li class="nav-item" role="presentation">
-    <a class="nav-tab nav-link {% if request.GET.subtab == 'ipam' %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=ipam">
-      IPAM
-    </a>
-  </li>
-  
+  <!-- {% if appliance_type != 'push' %}
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.subtab == 'ipam' %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=ipam">
+        IPAM
+      </a>
+    </li>
+  {% endif %} -->
 </ul>
 
 <div class="tab-content">
-  {% if request.GET.subtab == 'devices' or request.GET.subtab is None %}
-    <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
-      {% if appliance_type != 'cloud' %}
-        <!-- <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
-            <i class="mdi mdi-sync"></i> {% trans "Sync" %}
-        </a> -->
-        <a name="sync"  id="sync-btn" class="btn btn-sm btn-orange my-2" data-bs-toggle="modal" data-bs-target="#syncStatusModal">
+  <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
+    {% if appliance_type != 'push' %}
+      <!-- <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
           <i class="mdi mdi-sync"></i> {% trans "Sync" %}
-        </a>
-      {% endif %}
+      </a> -->
+      <a name="sync"  id="sync-btn" class="btn btn-sm btn-orange my-2" data-bs-toggle="modal" data-bs-target="#syncStatusModal">
+        <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+      </a>
+    {% endif %}
+
+    {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
       <div class="row my-2">
         <div class="col col-md-6">
           <div class="card">
@@ -46,66 +48,77 @@
           </div>
         </div>
       </div>
-      <div class="row mt-1">
-        <div class="col col-md-6">
-          <div class="card management-status-card">
-            
-            <div class="card-header">
-              <h6>Management status</h6>
-              <div class="my-1">
-                Select here the device status you want to sync.
-              </div>
-              {% render_form device_status_form %}
-              
+    {% elif request.GET.subtab == 'ipam'  %}
+    {% endif %}
+    <div class="row mt-1">
+      <div class="col col-md-6">
+        <div class="card management-status-card">
+          
+          <div class="card-header">
+            <h6>Management status</h6>
+            <div class="my-1">
+              Select here the device status you want to sync.
             </div>
+            {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+              {% render_form device_status_form %}
+            {% elif request.GET.subtab == 'ipam' %}
+              {% render_form iprange_status_form %}
+            {% endif %}
+            
+            
           </div>
         </div>
       </div>
-      <div class="row mb-3">
-          <div class="col col-md-6">
-              <form action="?tab=netbox_to_slurpit" method="post" id="mapping-form" class="form form-horizontal mb-3">
-                  
-                  <div class="card mt-2">
-                  
-                    <div class="card-header" style="display:flex;justify-content: space-between;">
-                        <h5>Mapping Fields</h5>
-                        <div class="action">
-                          
-                          <a class="btn btn-purple btn-sm px-3" data-bs-toggle="modal" data-bs-target="#testMapModal">
-                            {% trans "Test" %}
-                          </a>
-                          <button class="btn btn-blue btn-sm px-3">
-                              {% trans "Save" %}
-                          </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="save" id="actionInput" />
-                      {% for choice_item in form %}
-                        <div class="d-flex map-item">
-                          <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
-                          <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>
-                          {% render_form choice_item.form %}
-                        </div>
-                      {% endfor %}
-                    </div>
-                    <div class="card-footer">
-                      <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
-                          <i class="mdi mdi-plus-thick"></i> Add
-                      </button>
-                      <button id="delete-btn" class="btn btn-danger btn-sm">
-                          <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
-                      </button>
-                    </div>
-                  </div>
-                </form>
-          </div>
-      </div>
     </div>
-  {% elif request.GET.subtab == 'ipam'  %}
-    {% include "slurpit_netbox/mapping/commingsoon.html" %}
-  {% endif %}
+    <div class="row mb-3">
+        <div class="col col-md-6">
+            <form action="?tab=netbox_to_slurpit" method="post" id="mapping-form" class="form form-horizontal mb-3">
+                
+                <div class="card mt-2">
+                
+                  <div class="card-header" style="display:flex;justify-content: space-between;">
+                      <h5>Mapping Fields</h5>
+                      <div class="action">
+                        
+                        <a class="btn btn-purple btn-sm px-3" data-bs-toggle="modal" data-bs-target="#testMapModal">
+                          {% trans "Test" %}
+                        </a>
+                        <button class="btn btn-blue btn-sm px-3">
+                            {% trans "Save" %}
+                        </button>
+                      </div>
+                  </div>
+                  <div class="card-body">
+                    {% csrf_token %}
+                    {% if request.GET.subtab is None %}
+                      <input type="hidden" name="subtab" value="device"/>
+                    {% else %}
+                      <input type="hidden" name="subtab" value="{{ request.GET.subtab }}"/>
+                    {% endif %}
+
+                    <input type="hidden" name="action" value="save" id="actionInput" />
+
+                    {% for choice_item in form %}
+                      <div class="d-flex map-item">
+                        <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
+                        <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>
+                        {% render_form choice_item.form %}
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="card-footer">
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
+                        <i class="mdi mdi-plus-thick"></i> Add
+                    </button>
+                    <button id="delete-btn" class="btn btn-danger btn-sm">
+                        <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
+                    </button>
+                  </div>
+                </div>
+              </form>
+        </div>
+    </div>
+  </div>
   
 </div>
 
@@ -123,6 +136,12 @@
       <form  method="post">
           {% csrf_token %}
           <div class="modal-body">
+            {% if request.GET.subtab is None %}
+              <input type="hidden" name="subtab" value="device"/>
+            {% else %}
+              <input type="hidden" name="subtab" value="{{ request.GET.subtab }}"/>
+            {% endif %}
+
             {% render_form new_form %}
           </div>
   
@@ -142,21 +161,35 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">Test device mapping</h4>
+        <h4 class="modal-title">
+          {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+            Test Device Mapping
+          {% elif request.GET.subtab == 'ipam'  %}
+            Test IP Range Mapping
+          {% endif %}
+        </h4>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form  method="post">
           {% csrf_token %}
           <div class="modal-body">
-            <div class="device_form" style="display:flex;justify-content: space-between; margin-bottom: 15px;">
-              <div class="" style="width: 60%;">{% render_form device_form %}</div>
-              {% if appliance_type != 'cloud' %}
+            <div class="mapping_form" style="display:flex;justify-content: space-between; margin-bottom: 15px;">
+              <div class="" style="width: 60%;">
+                {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+                  {% render_form device_form %}
+                {% elif request.GET.subtab == 'ipam'  %}
+                  {% render_form iprange_form %}
+                {% endif %}
+                
+                
+              </div>
+              {% if appliance_type != 'push' %}
                 <a class="btn btn-outline-primary btn-sm" style="height:35px;width:100px;" id="push_btn" >{% trans "Push" %}</a>
               {% endif %}
             </div>
             
             <textarea id="payload-result" name="payload-result" cols="40" rows="10" class=" form-control mb-2" placeholder="Payload Result" id="payload-result" style="height: 200px;"></textarea>
-            {% if appliance_type != 'cloud' %}
+            {% if appliance_type != 'push' %}
               <textarea id="push-result" name="push-result" cols="40" rows="10" class=" form-control" placeholder="Push Result" id="push-result" style="height: 100px;"></textarea>
             {% endif %}
           </div>
@@ -188,14 +221,14 @@
                         stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
               </svg>
               <div class="progress-text" id="progressText">
-                Sending devices <br> from Netbox to Slurpit<br><span class="sync-percent" id="percent">0%</span><br>
+                Sending devices <br> from Netbox to Slurp'it<br><span class="sync-percent" id="percent">0%</span><br>
                 <span> Total Devices: <span id="total-cnt">100</span></span><br>
                 <span> Done Devices: <span id="done-cnt">30</span></span><br>
                 <span> Failed Devices: <span id="failed-cnt">10</span></span>
               </div>
             </div>
             <textarea  name="logs" cols="40" rows="10" class=" form-control mb-2" placeholder="Logs" id="logs" style="height: 80px;"></textarea>
-            <p><b>Don't refresh website or close modal before 100%</b></p>
+            <p>Don't <b>refresh</b> or close the modal before 100%</p>
           </div>
           
       </form>
@@ -219,9 +252,9 @@
   html[data-netbox-color-mode=dark] .mb-3 {
     margin-bottom: 0px !important;
   }
-  .device_form label.text-lg-end {
+  .mapping_form label.text-lg-end {
     text-align: left !important;
-    width: 75px !important;
+    width: 85px !important;
   }
 
   .circle-container {
@@ -306,42 +339,45 @@
   });
   
 
-  var deviceElement = document.querySelector('select[name="device"]');
+  var mappingElement = document.querySelector('select[name="device"]');
   var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-  var deviceStatus = document.querySelector('select[name="device_status"]').value;
+  var subtab = document.querySelector('input[name="subtab"]').value;
+  var managementStatus;
 
-    // Then, add an event listener for the 'change' event.
-  deviceElement.addEventListener('change', function(event) {
-      var device_id = this.value; // or event.target.value
-      var data = new URLSearchParams();
-      data.append('csrfmiddlewaretoken', csrfToken);
-      data.append('device_id', device_id);
-      
-      fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: data
-      }).then(function(response) {
-        return response.json();
-      }).then(function(res){
-        const deviceRequestBody = JSON.stringify(res, null, 4); 
-        payloadResultTextarea.value = deviceRequestBody;
+  // Then, add an event listener for the 'change' event.
+  mappingElement.addEventListener('change', function(event) {
+    var mapping_id = this.value; // or event.target.value
+    var data = new URLSearchParams();
+    data.append('csrfmiddlewaretoken', csrfToken);
+    data.append('device_id', mapping_id);
+    data.append('subtab', subtab)
+    
+    fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      const deviceRequestBody = JSON.stringify(res, null, 4); 
+      payloadResultTextarea.value = deviceRequestBody;
 
-      }).catch(function(error) {
+    }).catch(function(error) {
 
-      });
+    });
   });
 
   var pushButton = document.getElementById('push_btn');
   
   pushButton.addEventListener('click', function(event) {
-    var device_id = (deviceElement.value == undefined ) ? "": deviceElement.value; // or event.target.value
+    var item_id = (mappingElement.value == undefined ) ? "": mappingElement.value; // or event.target.value
     var data = new URLSearchParams();
     data.append('csrfmiddlewaretoken', csrfToken);
-    data.append('device_id', device_id);
+    data.append('device_id', item_id);
     data.append('test', 'test')
+    data.append('subtab', subtab)
 
     fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
       method: 'POST',
@@ -370,7 +406,7 @@
   var failed_count = 0;
   var done_count = 0;
   var percent = 0;
-  var devices;
+  var items;
   var current_cnt = 0;
   var url = '/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit';
 
@@ -391,17 +427,18 @@
     failed_count = 0;
     done_count = 0;
     percent = 0;
-    devices = [];
+    items = [];
     current_cnt = 0;
     logsElement.innerHTML = "";
     update_status()
-    deviceStatus = document.querySelector('select[name="device_status"]').value;
+    managementStatus = document.querySelector('select[name="device_status"]').value;
 
     var data = new URLSearchParams();
     data.append('action', 'sync')
     data.append('csrfmiddlewaretoken', csrfToken);
-    data.append('status', deviceStatus);
-    
+    data.append('status', managementStatus);
+    data.append('subtab', subtab)
+
     fetch(url, {
       method: 'POST',
       headers: {
@@ -411,8 +448,8 @@
     }).then(function(response) {
       return response.json();
     }).then(function(res){
-      devices = res["device"];
-      total_count = devices.length;
+      items = res["device"];
+      total_count = items.length;
       update_status();
       send_device();
 
@@ -423,13 +460,13 @@
   });
 
   function send_device() {
-    if(current_cnt >= devices.length) return;
+    if(current_cnt >= items.length) return;
 
     var data = new URLSearchParams();
     data.append('action', 'send')
     data.append('csrfmiddlewaretoken', csrfToken);
 
-    data.append('device_id', devices[current_cnt]);
+    data.append('device_id', items[current_cnt]);
     data.append('test', 'test')
 
     fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
@@ -441,12 +478,14 @@
     }).then(function(response) {
       return response.json();
     }).then(function(res){
-      current_cnt++;
-      if(res["status"] == undefined) done_count++;  
+      
+      console.log(res)
+      if(res["status"] == undefine && res['error'] == undefine) done_count++;  
       else {
         failed_count++;
         logsElement.append("Failed to import "+res["device_name"]+"\n")
       }
+      current_cnt++;
       update_status();  
       send_device();
     }).catch(function(error) {

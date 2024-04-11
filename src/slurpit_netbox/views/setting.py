@@ -23,7 +23,7 @@ from utilities.views import register_model_view, ViewTab
 from utilities.paginator import EnhancedPaginator, get_paginate_count
 
 from ..forms import SlurpitPlanningTableForm, SlurpitApplianceTypeForm
-from ..models import SlurpitSetting, SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
+from ..models import create_default_data_mapping, SlurpitSetting, SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice
 from ..tables import SlurpitPlanningTable
 from ..management.choices import *
 from ..decorators import slurpit_plugin_registered
@@ -32,6 +32,15 @@ from ..importer import get_latest_data_on_planning, import_plannings
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+from json import JSONEncoder
+import json
+
+class OrderedEncoder(JSONEncoder):
+    def encode(self, o):
+        if isinstance(o, dict):
+            return "{" + ", ".join(f'{self.encode(k)}: {self.encode(v)}' for k, v in o.items()) + "}"
+        return super().encode(o)
+    
 BATCH_SIZE = 128
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
@@ -49,6 +58,8 @@ class SettingsView(View):
             SlurpitLog.objects.all().delete()
             SlurpitSetting.objects.all().delete()
             SlurpitPlanning.objects.all().delete()
+
+            create_default_data_mapping()
 
             return HttpResponseRedirect(reverse("plugins:slurpit_netbox:settings"))
         
@@ -132,6 +143,18 @@ class SettingsView(View):
                 {
                     "type": "POST",
                     "url": "api/plugins/slurpit/device/"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/device/sync_start"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/device/sync"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/device/sync_end"
                 },
                 {
                     "type": "DELETE",
@@ -240,7 +263,7 @@ class SettingsView(View):
                 }
         connection_test = f"{server_url}/api/platform/ping"
         try:
-            response = requests.get(connection_test, headers=headers, timeout=5, verify=False)
+            response = requests.get(connection_test, headers=headers, timeout=15, verify=False)
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed testing the connection to the Slurp'it server."          
@@ -267,7 +290,7 @@ class SettingsView(View):
                     'accept': 'application/json'
                 }
         try:
-            response = requests.get(f"{server_url}/api/planning", headers=headers, verify=False)
+            response = requests.get(f"{server_url}/api/planning", headers=headers, timeout=15, verify=False)
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed to get planning list of the Slurp'it server."          
@@ -299,11 +322,27 @@ def get_refresh_url(request, pk):
 
     return url_no_refresh
 
-
+class SlurpitViewTab(ViewTab):
+    def render(self, instance):
+        device = get_object_or_404(Device, pk=instance.pk)
+        if device:
+            slurpit_hostname = device.custom_field_data['slurpit_hostname']
+            if slurpit_hostname is None:
+                return None
+        """Return the attributes needed to render a tab in HTML."""
+        badge_value = self._get_badge_value(instance)
+        if self.badge and self.hide_if_empty and not badge_value:
+            return None
+        return {
+            'label': self.label,
+            'badge': badge_value,
+            'weight': self.weight,
+        }
+    
 @register_model_view(Device, "Slurpit")
 class SlurpitPlanningning(View):
     template_name = "slurpit_netbox/planning_table.html"
-    tab = ViewTab("Slurpit", permission="slurpit_netbox.view_devicetable")
+    tab = SlurpitViewTab("Slurpit", permission="slurpit_netbox.view_devicetable")
     form = SlurpitPlanningTableForm()
 
     def get(self, request, pk):
@@ -333,7 +372,7 @@ class SlurpitPlanningning(View):
                 result_type = "planning"
 
             cache_key = (
-                f"slurpit_plan_{planning.planning_id}_{device.serial}_{result_type}"
+                f"slurpit_plan_{planning.planning_id}_{device.name}_{result_type}"
             )
 
             url_no_refresh = get_refresh_url(request, pk)
@@ -345,30 +384,36 @@ class SlurpitPlanningning(View):
                 return HttpResponseRedirect(url_no_refresh)
             
             if refresh == "refresh":
-                cache.delete(cache_key)
+                if appliance_type != "cloud":
+                    sync_snapshot(cache_key, device.name, planning)
+                else:
+                    cache.delete(cache_key)
+                    
                 return HttpResponseRedirect(url_no_refresh)
 
-            try:
-                cached_time, data = cache.get(cache_key)
+            cached_time, data = cache.get(cache_key, (None, None))
+            if cached_time:
                 result_status = "Cached"
-            except:
-                pass
+
             if not data:
                 data = []
                 try: 
-                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
                     result_key = f"{result_type}_result"
-                    
+                    temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
+
                     # Empty case
                     if temp.count() == 0:
                         if appliance_type != "cloud":
                             sync_snapshot(cache_key, device.name, planning)
-                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id)
+                        temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
 
                     for r in temp:
-                        r = r.content
-                        raw = r[result_key]
-                        data.append({**raw})
+                        try:
+                            r = json.loads(r.content)
+                        except:
+                            r = r.content
+                        # raw = r[result_key]
+                        data.append({**r})
                     result_status = "Live"
                     cache.set(cache_key, (datetime.now(), data), 60 * 60 * 8)
                     
@@ -406,8 +451,6 @@ class SlurpitPlanningning(View):
                 },
             )
 
-        
-
         return render(
             request,
             self.template_name,
@@ -425,15 +468,26 @@ class SlurpitPlanningning(View):
 
 def sync_snapshot(cache_key, device_name, plan):
     cache.delete(cache_key)
-    temp = get_latest_data_on_planning(device_name, plan.planning_id)
-    temp = temp[plan.name]["data"]
-
-    count = SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()[0]
-    SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync deleted {count} snapshots for planning {plan.name}")
-
-    new_items = []
-    for item in temp:
-        new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=item))
     
-    SlurpitSnapshot.objects.bulk_create(new_items, batch_size=BATCH_SIZE, ignore_conflicts=True)
-    SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} snapshots for planning {plan.name}")
+    data = get_latest_data_on_planning(device_name, plan.planning_id)
+  
+    if data is not None:
+        temp = data[plan.name]["planning_results"]
+        
+        if temp is not None:
+            count = SlurpitSnapshot.objects.filter(hostname=device_name, planning_id=plan.planning_id).delete()[0]
+            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync deleted {count} snapshots for planning {plan.name}")
+
+        new_items = []
+        for item in temp:
+            content = json.dumps(item, cls=OrderedEncoder)
+            new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=content, result_type="planning_result"))
+
+        temp = data[plan.name]["template_results"]
+
+        for item in temp:
+            content = json.dumps(item, cls=OrderedEncoder)
+            new_items.append(SlurpitSnapshot(hostname=device_name, planning_id=plan.planning_id, content=content, result_type="template_result"))
+        
+        SlurpitSnapshot.objects.bulk_create(new_items, batch_size=BATCH_SIZE, ignore_conflicts=True)
+        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Sync imported {len(new_items)} snapshots for planning {plan.name}")

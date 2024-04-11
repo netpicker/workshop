@@ -11,7 +11,7 @@ services:
   netbox: &netbox
     build: 
       context: ../
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile
     depends_on:
     - postgres_test
     - redis_test
@@ -23,6 +23,8 @@ services:
       timeout: 3s
       interval: 15s
       test: "curl -f http://localhost:8080/api/ || exit 1"
+    volumes:
+    - ../src/slurpit_netbox:/opt/netbox/netbox/slurpit_netbox:rw
     networks:
     - slurpit-netbox-test-network
     

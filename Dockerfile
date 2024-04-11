@@ -7,11 +7,11 @@ COPY /docker/configuration/plugins.py /etc/netbox/config/plugins.py
 
 RUN pip install djangorestframework-bulk
 
-RUN apt-get update && apt-get install -y git
-RUN git clone https://github.com/netbox-community/devicetype-library.git /tmp/repository \
-    && mkdir -p /devicetype-library \
-    && cp -r /tmp/repository/device-types /devicetype-library/device-types \
-    && cp -r /tmp/repository/module-types /devicetype-library/module-types
+# RUN apt-get update && apt-get install -y git
+# RUN git clone https://github.com/netbox-community/devicetype-library.git /tmp/repository \
+#     && mkdir -p /devicetype-library \
+#     && cp -r /tmp/repository/device-types /devicetype-library/device-types \
+#     && cp -r /tmp/repository/module-types /devicetype-library/module-types
 
 # COPY src/ /slurpit_netbox/src/
 # COPY pyproject.toml /slurpit_netbox/pyproject.toml

@@ -13,7 +13,7 @@
             <div class="" role="group">
                 {% bulk_edit_button model query_params=request.GET %}
 
-                {% if appliance_type == 'both' or appliance_type == 'on-premise'  %}
+                {% if appliance_type == 'both' or appliance_type == 'pull'  %}
                   {% if connection_status == 'connected' %}
                     <!-- <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:import' %}"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a> -->
                     <button name="sync"  id="syncBtn" class="btn btn-orange btn-sm mx-2">
@@ -109,7 +109,7 @@
       
       syncCaptionElement.innerHTML = status;
       statusCaptionElement.innerHTML = statusCaptionText;
-      
+      offset = 0;
       import_device();
 
     });
@@ -127,8 +127,11 @@
       })
       .then(data => {
         action = data["action"];
-
-        if(action == "import") {
+        
+        if(action == 'error') {
+          location.reload();
+        }
+        else if(action == "import") {
           newOffset = data["offset"];
           
           if(newOffset != offset) {
@@ -149,7 +152,8 @@
         
       })
       .catch(error => {
-        console.error('Fetch error:', error);
+        // console.error('Fetch error:', error);
+        location.reload();
       });
     }
   </script>

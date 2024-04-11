@@ -44,12 +44,12 @@ def slurpit_plugin_registered(view_func):
                     appliance_type = setting.appliance_type
 
                     if appliance_type == '':
-                        messages.warning(request, "To use the Slurp'it plugin, it is necessary to first select the Appliance Type on the Setting Page.")
-                    elif appliance_type != 'cloud' and (api_key == '' or server_url == ''):
+                        messages.warning(request, "To use the Slurp'it plugin, it is necessary to first select the Data synchronization Type on the Setting Page.")
+                    elif appliance_type != 'push' and (api_key == '' or server_url == ''):
                         messages.warning(request, "To use the Slurp'it plugin, you should first configure the server settings. Go to settings and configure the Slurp'it server in the parameter section.")
                 except Exception as e:
                     setting = None
-                    messages.warning(request, "To use the Slurp'it plugin, it is necessary to first select the Appliance Type on the Setting Page.")
+                    messages.warning(request, "To use the Slurp'it plugin, it is necessary to first select the Data synchronization Type on the Setting Page.")
 
                 return view_func(request, *args, **kwargs)
 

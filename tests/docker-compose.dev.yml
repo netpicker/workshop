@@ -13,7 +13,7 @@ services:
   netbox: &netbox
     build: 
       context: ../
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile
     ports:
       - 8080:8080
     depends_on:
@@ -27,6 +27,8 @@ services:
       timeout: 3s
       interval: 15s
       test: "curl -f http://localhost:8080/api/ || exit 1"
+    volumes:
+    - ../src/slurpit_netbox:/opt/netbox/netbox/slurpit_netbox:rw
     networks:
     - slurpit-netbox-test-network
     

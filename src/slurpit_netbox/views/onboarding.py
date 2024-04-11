@@ -1,45 +1,40 @@
 import requests
-from dcim.choices import DeviceStatusChoices
-from dcim.models import  Manufacturer, Platform, DeviceType, Site, Device
+
 from django.contrib import messages
 from django.contrib.contenttypes.fields import GenericRel
-from django.core.exceptions import FieldDoesNotExist, ValidationError
+from django.core.exceptions import FieldDoesNotExist, ValidationError, ObjectDoesNotExist
 from django.db import transaction, connection
 from django.db.models import ManyToManyField, ManyToManyRel, F, Q
+from django.db.models.fields.json import KeyTextTransform
+from django.utils.decorators import method_decorator
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
-# from extras.signals import clear_webhooks
-from netbox.views import generic
-from utilities.exceptions import AbortRequest, PermissionsViolation
-from utilities.forms import restrict_form_fields
-from .. import get_config
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+
+from .. import get_config, forms, importer, models, tables
 from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
 from ..management.choices import *
-from .. import forms, importer, models, tables
-from ..importer import (
-    get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import
-)
+from ..importer import get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import, start_device_import
 from ..decorators import slurpit_plugin_registered
-from django.utils.decorators import method_decorator
-from django.db.models.fields.json import KeyTextTransform
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, JsonResponse
-
+from ..references import base_name, custom_field_data_name
+from ..references.generic import create_form, get_form_device_data, SlurpitViewMixim, get_default_objects, set_device_custom_fields, status_inventory
+from ..references.imports import * 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
-class SlurpitImportedDeviceListView(generic.ObjectListView):
-    conflicted_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True, hostname__in=Device.objects.values('name'))
+class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
+    conflicted_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True, hostname__lower__in=Device.objects.values('name__lower'))
     to_onboard_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=True).exclude(pk__in=conflicted_queryset.values('pk'))
     onboarded_queryset = models.SlurpitImportedDevice.objects.filter(mapped_device_id__isnull=False)
     migrate_queryset = models.SlurpitImportedDevice.objects.filter(
                 mapped_device_id__isnull=False
             ).annotate(
-                slurpit_devicetype=KeyTextTransform('slurpit_devicetype', 'mapped_device__custom_field_data'),
-                slurpit_hostname=KeyTextTransform('slurpit_hostname', 'mapped_device__custom_field_data'),
-                slurpit_fqdn=KeyTextTransform('slurpit_fqdn', 'mapped_device__custom_field_data'),
-                slurpit_platform=KeyTextTransform('slurpit_platform', 'mapped_device__custom_field_data'),
-                slurpit_manufactor=KeyTextTransform('slurpit_manufactor', 'mapped_device__custom_field_data'),
+                slurpit_devicetype=KeyTextTransform('slurpit_devicetype', 'mapped_device__' + custom_field_data_name),
+                slurpit_hostname=KeyTextTransform('slurpit_hostname', 'mapped_device__' + custom_field_data_name),
+                slurpit_fqdn=KeyTextTransform('slurpit_fqdn', 'mapped_device__' + custom_field_data_name),
+                slurpit_platform=KeyTextTransform('slurpit_platform', 'mapped_device__' + custom_field_data_name),
+                slurpit_manufacturer=KeyTextTransform('slurpit_manufacturer', 'mapped_device__' + custom_field_data_name),
                 fdevicetype=F('device_type'),
                 fhostname=F('hostname'),
                 ffqdn=F('fqdn'),
@@ -50,12 +45,13 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
                 Q(slurpit_hostname=F('fhostname')) & 
                 Q(slurpit_fqdn=F('ffqdn')) & 
                 Q(slurpit_platform=F('fdeviceos')) & 
-                Q(slurpit_manufactor=F('fbrand'))
+                Q(slurpit_manufacturer=F('fbrand'))
             )
     
     queryset = to_onboard_queryset
+    action_buttons = []
     table = tables.SlurpitImportedDeviceTable
-    template_name = "slurpit_netbox/onboard_device.html"
+    template_name = f"{base_name}/onboard_device.html"
 
     def get(self, request, *args, **kwargs):        
         self.queryset = self.to_onboard_queryset
@@ -65,7 +61,7 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
             self.table = tables.MigratedDeviceTable
         elif request.GET.get('tab') == "conflicted":
             self.queryset = self.conflicted_queryset
-            self.table = tables.SlurpitImportedDeviceTable
+            self.table = tables.ConflictDeviceTable
         elif request.GET.get('tab') == "onboarded":
             self.queryset = self.onboarded_queryset
 
@@ -77,7 +73,7 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
         import_from_queryset(qs)
         return redirect(request.path)
 
-    def get_extra_context(self, request):
+    def slurpit_extra_context(self):
         appliance_type = ''
         connection_status = ''
         try:
@@ -95,13 +91,14 @@ class SlurpitImportedDeviceListView(generic.ObjectListView):
             'migrate_count': self.migrate_queryset.count(),
             'conflicted_count': self.conflicted_queryset.count(),
             'appliance_type': appliance_type,
-            'connection_status': connection_status
+            'connection_status': connection_status,
+            **self.slurpit_data
         }
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
-class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
-    template_name = 'slurpit_netbox/bulk_edit.html'
+class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
+    template_name = f"{base_name}/bulk_edit.html"
     queryset = models.SlurpitImportedDevice.objects.all()
     table = tables.SlurpitImportedDeviceTable
     model_form = forms.OnboardingForm
@@ -123,7 +120,7 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
         self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
         device_types = list(self.queryset.values_list('device_type').distinct())
 
-        form = self.form(request.POST, initial={'pk': pk_list, 'device_types': device_types})
+        form = create_form(self.form, request.POST, models.SlurpitImportedDevice, {'pk': pk_list, 'device_types': device_types})
         restrict_form_fields(form, request.user)
 
         if '_apply' in request.POST:
@@ -141,7 +138,8 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                     messages.error(self.request, ", ".join(e.messages))
                     # clear_webhooks.send(sender=self)
 
-                except (AbortRequest, PermissionsViolation) as e:
+                except Exception as e:
+                    messages.error(self.request, e.message)
                     form.add_error(None, e.message)
                     # clear_webhooks.send(sender=self)
 
@@ -157,13 +155,14 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                 for obj in self.queryset:
                     device = obj.mapped_device
                     device.name = obj.hostname
-
-                    device.custom_field_data['slurpit_hostname'] = obj.hostname
-                    device.custom_field_data['slurpit_fqdn'] = obj.fqdn
-                    device.custom_field_data['slurpit_platform'] = obj.device_os
-                    device.custom_field_data['slurpit_manufactor'] = obj.brand
-                    device.custom_field_data['slurpit_devicetype'] = obj.device_type  
-                    device.custom_field_data['slurpit_ipv4'] = obj.ipv4                  
+                    set_device_custom_fields(device, {
+                        'slurpit_hostname': obj.hostname,
+                        'slurpit_fqdn': obj.fqdn,
+                        'slurpit_platform': obj.device_os,
+                        'slurpit_manufacturer': obj.brand,
+                        'slurpit_devicetype': obj.device_type,
+                        'slurpit_ipv4': obj.ipv4,
+                    })               
 
                     manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
@@ -182,18 +181,20 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
         elif 'conflicted' in request.GET:
             conflic = request.GET.get('conflicted')
             if conflic == 'create':
-                Device.objects.filter(name__in=self.queryset.values('hostname')).delete()
+                Device.objects.filter(name__lower__in=self.queryset.values('hostname__lower')).delete()
             else:
                 for obj in self.queryset:
                     device = Device.objects.filter(name__iexact=obj.hostname).first()
-                    obj.mapped_device = device
 
-                    device.custom_field_data['slurpit_hostname'] = obj.hostname
-                    device.custom_field_data['slurpit_fqdn'] = obj.fqdn
-                    device.custom_field_data['slurpit_platform'] = obj.device_os
-                    device.custom_field_data['slurpit_manufactor'] = obj.brand
-                    device.custom_field_data['slurpit_devicetype'] = obj.device_type
-                    device.custom_field_data['slurpit_ipv4'] = obj.ipv4             
+                    set_device_custom_fields(device, {
+                        'slurpit_hostname': obj.hostname,
+                        'slurpit_fqdn': obj.fqdn,
+                        'slurpit_platform': obj.device_os,
+                        'slurpit_manufacturer': obj.brand,
+                        'slurpit_devicetype': obj.device_type,
+                        'slurpit_ipv4': obj.ipv4,
+                    })      
+                    obj.mapped_device = device    
 
                     manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
@@ -210,17 +211,16 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
                 return redirect(self.get_return_url(request))
                 
         initial_data = {'pk': pk_list, 'device_types': device_types}
-        for k, v in importer.get_defaults().items():
+        for k, v in get_default_objects().items():
             initial_data.setdefault(k, str(v.id))
-        initial_data.setdefault('status', DeviceStatusChoices.STATUS_INVENTORY)
+        initial_data.setdefault('status', status_inventory())
 
         if len(device_types) > 1:
             initial_data['device_type'] = 'keep_original'
         if len(device_types) == 1 and (dt := DeviceType.objects.filter(model__iexact=device_types[0][0]).first()):
             initial_data['device_type'] = dt.id
-        print(device_types)
 
-        form = self.form(initial=initial_data)
+        form = create_form(self.form, None, models.SlurpitImportedDevice, initial_data)
         restrict_form_fields(form, request.user)
                 
         # Retrieve objects being edited
@@ -235,8 +235,9 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
             'model': model,
             'form': form,
             'table': table,
+            'obj_type_plural': self.queryset.model._meta.verbose_name_plural,
             'return_url': self.get_return_url(request),
-            **self.get_extra_context(request),
+            **self.slurpit_data
         })
 
     def _update_objects(self, form, request):
@@ -244,18 +245,7 @@ class SlurpitImportedDeviceOnboardView(generic.BulkEditView):
         if form.cleaned_data['device_type'] != 'keep_original':
             device_type = DeviceType.objects.filter(id=form.cleaned_data['device_type']).first()
         updated_objects = []
-        data = {
-            'role': form.cleaned_data['role'],
-            'site': form.cleaned_data['site'],
-            'location': form.cleaned_data['location'],
-            'rack': form.cleaned_data['rack'],
-            'position': form.cleaned_data['position'],
-            'latitude': form.cleaned_data['latitude'],
-            'longitude': form.cleaned_data['longitude'],
-            'tenant': form.cleaned_data['tenant'],
-            'description': form.cleaned_data['description'],
-            'airflow': form.cleaned_data['airflow'],
-        }
+        data = get_form_device_data(form)
         for obj in self.queryset.filter(pk__in=form.cleaned_data['pk']):
             if obj.mapped_device_id is not None:
                 continue
@@ -290,13 +280,19 @@ class ImportDevices(View):
         try:
             if offset is not None:
                 offset = int(offset)
-                devices = get_devices(offset)
+                if offset == 0:
+                    start_device_import()
+                devices, log_message = get_devices(offset)
                 if devices is not None and len(devices) > 0:
                     import_devices(devices)
                     offset += len(devices)
+                if devices is None:
+                    messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
+                    # return HttpResponseRedirect(reverse("plugins:slurpit_netbox:onboard"))
+                    return JsonResponse({"action": "error", "error": "ERROR"})
                 return JsonResponse({"action": "import", "offset": offset})
             
-            result = process_import()
+            process_import()
             messages.info(request, "Synced the devices from Slurp'it.")
             return JsonResponse({"action": "process"})
         except requests.exceptions.RequestException as e:

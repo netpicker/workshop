@@ -12,6 +12,7 @@ from django.forms.models import model_to_dict
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.contrib.contenttypes.models import ContentType
 from extras.models import CustomField
@@ -23,10 +24,10 @@ BATCH_SIZE = 128
 def get_device_dict(instance):
     device_dict = model_to_dict(instance)
     # Assuming 'device_type' is a ForeignKey, for example.
-    device_dict['device_type'] = str(instance.device_type)
-    device_dict['platform'] = str(instance.platform)
-    device_dict['primary_ip4'] = str(instance.primary_ip4)
-    device_dict['primary_ip6'] = str(instance.primary_ip6)
+    device_dict['device_type'] = str(instance.device_type) if instance.device_type is not None else None
+    device_dict['platform'] = str(instance.platform) if instance.platform is not None else None
+    device_dict['primary_ip4'] = str(instance.primary_ip4) if instance.primary_ip4 is not None else None
+    device_dict['primary_ip6'] = str(instance.primary_ip6) if instance.primary_ip6 is not None else None
 
     for custom_field in device_dict['custom_field_data']:
         device_dict[f'cf_{custom_field}'] = device_dict['custom_field_data'][custom_field]
@@ -48,7 +49,7 @@ def post_slurpit_device(row, device_name):
         
         try:
             row["ignore_plugin"] = str(1)
-            r = requests.post(uri_devices, headers=headers, json=row, verify=False)
+            r = requests.post(uri_devices, headers=headers, json=row, timeout=15, verify=False)
             r = r.json()
             r["device_name"] = device_name
             return r
@@ -86,7 +87,7 @@ class DataMappingView(View):
                 row = {}
                 for obj in objs:
                     target_field = obj.target_field.split('|')[1]
-                    row[obj.source_field] = str(device[target_field])
+                    row[obj.source_field] = str(device[target_field]) if device[target_field] is not None else None
                 # request_body.append(row)
 
                 res = post_slurpit_device(row, device["name"])
@@ -95,11 +96,9 @@ class DataMappingView(View):
                     return redirect(f'{request.path}?tab={tab}')
                 
                 if res['status'] != 200:
-                    error_message = ''
                     for error in res["messages"]:
-                        error_message += f'{error}: {res["messages"][error]} \r\n <br> '
+                        messages.error(request, f'{escape(error)}: {escape(res["messages"][error])}')
 
-                    messages.error(request, mark_safe(error_message))
                     return redirect(f'{request.path}?tab={tab}')
                 
             messages.success(request, "Sync from Netbox to Slurpit is done successfully.")
@@ -131,7 +130,7 @@ class DataMappingView(View):
         new_form = SlurpitMappingForm(doaction="add")
         device_form = SlurpitDeviceForm()
         device_status_form = SlurpitDeviceStatusForm()
-        
+
         return render(
             request,
             self.template_name, 
@@ -162,7 +161,7 @@ class DataMappingView(View):
                 objs = SlurpitMapping.objects.all()
                 for obj in objs:
                     target_field = obj.target_field.split('|')[1]
-                    row[obj.source_field] = str(device[target_field])
+                    row[obj.source_field] = str(device[target_field]) if device[target_field] is not None else None
 
                 if test is not None:
                     res = post_slurpit_device(row, device["name"])

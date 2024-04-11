@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
 from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
-from django.db.models import Q
+from django.db.models import Q, Transform, CharField, TextField
 
 from .. import get_config
 from .device import SlurpitImportedDevice, SlurpitStagedDevice
@@ -37,69 +37,78 @@ def ensure_slurpit_tags(*items):
 
 def create_custom_fields():   
     device = ContentType.objects.get(app_label='dcim', model='device')
-    try:
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_hostname',               
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Hostname',
-                    group_name="Slurp'it",
-            )
-        cf.content_types.set({device})
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_hostname',               
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Hostname',
+                group_name="Slurp'it",
+        )
+    cf.content_types.set({device})
 
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_fqdn',           
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Fqdn',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-            
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_platform',
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Platform',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_manufactor', 
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Manufactor',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_fqdn',           
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Fqdn',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
         
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_devicetype',
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Device Type',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-        
-        cf, _ = CustomField.objects.get_or_create(
-                    name='slurpit_ipv4',
-                    type=CustomFieldTypeChoices.TYPE_TEXT,
-                    description="",
-                    is_cloneable=True,
-                    label='Ipv4',
-                    group_name="Slurp'it",
-                    )
-        cf.content_types.set({device})
-    except:
-        pass
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_platform',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Platform',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
 
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_manufacturer', 
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Manufacturer',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
+    
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_devicetype',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Device Type',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
+    
+    cf, _ = CustomField.objects.get_or_create(
+                name='slurpit_ipv4',
+                type=CustomFieldTypeChoices.TYPE_TEXT,
+                description="",
+                is_cloneable=True,
+                label='Ipv4',
+                group_name="Slurp'it",
+                )
+    cf.content_types.set({device})
+
+def create_default_data_mapping():
+    SlurpitMapping.objects.all().delete()
+    
+    mappings = [
+        {"source_field": "hostname", "target_field": "device|name"},
+        {"source_field": "fqdn", "target_field": "device|primary_ip4"},
+        {"source_field": "ipv4", "target_field": "device|primary_ip4"},
+        {"source_field": "device_os", "target_field": "device|platform"},
+        {"source_field": "device_type", "target_field": "device|device_type"},
+    ]
+    for mapping in mappings:
+        SlurpitMapping.objects.get_or_create(**mapping)
 
 def add_default_mandatory_objects(tags):
     site, _ = Site.objects.get_or_create(**get_config('Site'))
@@ -114,20 +123,19 @@ def add_default_mandatory_objects(tags):
     role, _ = DeviceRole.objects.get_or_create(**get_config('DeviceRole'))
     role.tags.set(tags)    
 
-    SlurpitMapping.objects.all().delete()
-    
-    mappings = [
-        {"source_field": "hostname", "target_field": "device|name"},
-        {"source_field": "fqdn", "target_field": "device|primary_ip4"},
-        {"source_field": "ipv4", "target_field": "device|primary_ip4"},
-        {"source_field": "device_os", "target_field": "device|platform"},
-        {"source_field": "device_type", "target_field": "device|device_type"},
-    ]
-    for mapping in mappings:
-        SlurpitMapping.objects.get_or_create(**mapping)
+    create_default_data_mapping()
 
 
 def post_migration(sender, **kwargs):
     create_custom_fields()
     tags = ensure_slurpit_tags()
     add_default_mandatory_objects(tags)
+    print("AA")
+    pass
+
+class LowerCase(Transform):
+    lookup_name = "lower"
+    function = "LOWER"
+
+CharField.register_lookup(LowerCase)
+TextField.register_lookup(LowerCase)

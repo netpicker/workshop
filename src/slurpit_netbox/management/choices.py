@@ -40,12 +40,12 @@ class LogCategoryChoices(ChoiceSet):
 
 class SlurpitApplianceTypeChoices(ChoiceSet):
 
-    CLOUD = 'cloud'
-    ONPREMISE = 'on-premise'
+    PUSH = 'push'
+    PULL = 'pull'
     BOTH = 'both'
 
     CHOICES = (
-        (CLOUD, _('CLOUD')),
-        (ONPREMISE, _('ON PREMISE')),
+        (PUSH, _('PUSH')),
+        (PULL, _('PULL')),
         (BOTH, _('BOTH')),
     )

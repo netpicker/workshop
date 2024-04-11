@@ -1,29 +1,29 @@
+import json
 
-from netbox.api.viewsets import NetBoxModelViewSet
-from dcim.models import Device
-from dcim.api.serializers import DeviceSerializer
-from dcim.filtersets import DeviceFilterSet
-from dcim.choices import DeviceStatusChoices
-from slurpit_netbox.models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping
-from slurpit_netbox.filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
-from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
 from rest_framework.routers import APIRootView
 from rest_framework_bulk import BulkCreateModelMixin, BulkDestroyModelMixin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, mixins
+
 from django.db import transaction
 from django.http import JsonResponse
-import json
-from ..validator import device_validator
-from ..importer import process_import, import_devices, import_plannings
-from ..management.choices import *
-from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
+
+from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
+from ..validator import device_validator
+from ..importer import process_import, import_devices, import_plannings, start_device_import
+from ..management.choices import *
 from ..views.datamapping import get_device_dict
+from ..references import base_name 
+from ..references.generic import status_offline, SlurpitViewSet
+from ..references.imports import * 
+from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping
+from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
+
 
 __all__ = (
     'SlurpitPlanningViewSet',
@@ -40,7 +40,7 @@ class SlurpitRootView(APIRootView):
     
 
 class SlurpitPlanningViewSet(
-        NetBoxModelViewSet
+        SlurpitViewSet
     ):
     queryset = SlurpitPlanning.objects.all()
     serializer_class = SlurpitPlanningSerializer
@@ -91,9 +91,9 @@ class SlurpitPlanningViewSet(
         return JsonResponse({'status': 'success'})
 
 class SlurpitSnapshotViewSet(
+        SlurpitViewSet,
         BulkCreateModelMixin,
         BulkDestroyModelMixin,
-        NetBoxModelViewSet
     ):
     queryset = SlurpitSnapshot.objects.all()
     serializer_class = SlurpitSnapshotSerializer
@@ -128,9 +128,9 @@ class SlurpitSnapshotViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class DeviceViewSet(
+        SlurpitViewSet,
         BulkCreateModelMixin,
         BulkDestroyModelMixin,
-        NetBoxModelViewSet
     ):
     queryset = SlurpitImportedDevice.objects.all()
     serializer_class = SlurpitImportedDeviceSerializer
@@ -139,7 +139,7 @@ class DeviceViewSet(
     @action(detail=False, methods=['delete'], url_path='delete-all')
     def delete_all(self, request, *args, **kwargs):
         with transaction.atomic():
-            Device.objects.select_related('slurpitimporteddevice').update(status=DeviceStatusChoices.STATUS_OFFLINE)
+            Device.objects.select_related('slurpitimporteddevice').update(status=status_offline())
             SlurpitStagedDevice.objects.all().delete()
             SlurpitImportedDevice.objects.filter(mapped_device__isnull=True).delete()
 
@@ -150,7 +150,7 @@ class DeviceViewSet(
         hostname_to_delete = kwargs.get('hostname')
         with transaction.atomic():
             to_delete = SlurpitImportedDevice.objects.filter(hostname=hostname_to_delete)
-            Device.objects.filter(slurpitimporteddevice__in=to_delete).update(status=DeviceStatusChoices.STATUS_OFFLINE)
+            Device.objects.filter(slurpitimporteddevice__in=to_delete).update(status=status_offline())
             to_delete.filter(mapped_device__isnull=True).delete()
             SlurpitStagedDevice.objects.filter(hostname=hostname_to_delete).delete()
 
@@ -158,16 +158,37 @@ class DeviceViewSet(
     
     def create(self, request):
         errors = device_validator(request.data)
-
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
-
+        if len(request.data) != 1:
+            return JsonResponse({'status': 'error', 'errors': ['List size should be 1']}, status=400)
+        
+        start_device_import()
         import_devices(request.data)
         process_import(delete=False)
         
         return JsonResponse({'status': 'success'})
     
-class SlurpitTestAPIView(NetBoxModelViewSet):
+    @action(detail=False, methods=['post'],  url_path='sync')
+    def sync(self, request):            
+        errors = device_validator(request.data)
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        import_devices(request.data)        
+        return JsonResponse({'status': 'success'})
+
+    @action(detail=False, methods=['post'],  url_path='sync_start')
+    def sync_start(self, request):
+        start_device_import()
+        return JsonResponse({'status': 'success'})
+
+    @action(detail=False, methods=['post'],  url_path='sync_end')
+    def sync_end(self, request):
+        process_import()
+        return JsonResponse({'status': 'success'})
+    
+class SlurpitTestAPIView(SlurpitViewSet):
     queryset = SlurpitImportedDevice.objects.all()
     serializer_class = SlurpitImportedDeviceSerializer
     filterset_class = SlurpitImportedDeviceFilterSet
@@ -178,19 +199,17 @@ class SlurpitTestAPIView(NetBoxModelViewSet):
     def api(self, request, *args, **kwargs):    
         return JsonResponse({'status': 'success'})
     
-class SlurpitDeviceView(NetBoxModelViewSet):
+class SlurpitDeviceView(SlurpitViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
     filterset_class = DeviceFilterSet
 
 
     @action(detail=False, methods=['get'], url_path='all')
-    def all(self, request, *args, **kwargs):    
-        
+    def all(self, request, *args, **kwargs):
         request_body = []
 
-        netbox_devices = Device.objects.all()
-        devices_array = [get_device_dict(device) for device in netbox_devices]
+        devices_array = [get_device_dict(device) for device in Device.objects.all()]
 
         objs = SlurpitMapping.objects.all()
         
