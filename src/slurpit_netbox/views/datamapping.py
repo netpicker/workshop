@@ -24,10 +24,10 @@ BATCH_SIZE = 128
 def get_device_dict(instance):
     device_dict = model_to_dict(instance)
     # Assuming 'device_type' is a ForeignKey, for example.
-    device_dict['device_type'] = str(instance.device_type)
-    device_dict['platform'] = str(instance.platform)
-    device_dict['primary_ip4'] = str(instance.primary_ip4)
-    device_dict['primary_ip6'] = str(instance.primary_ip6)
+    device_dict['device_type'] = str(instance.device_type) if instance.device_type is not None else None
+    device_dict['platform'] = str(instance.platform) if instance.platform is not None else None
+    device_dict['primary_ip4'] = str(instance.primary_ip4) if instance.primary_ip4 is not None else None
+    device_dict['primary_ip6'] = str(instance.primary_ip6) if instance.primary_ip6 is not None else None
 
     for custom_field in device_dict['custom_field_data']:
         device_dict[f'cf_{custom_field}'] = device_dict['custom_field_data'][custom_field]
@@ -87,7 +87,7 @@ class DataMappingView(View):
                 row = {}
                 for obj in objs:
                     target_field = obj.target_field.split('|')[1]
-                    row[obj.source_field] = str(device[target_field])
+                    row[obj.source_field] = str(device[target_field]) if device[target_field] is not None else None
                 # request_body.append(row)
 
                 res = post_slurpit_device(row, device["name"])
@@ -161,7 +161,7 @@ class DataMappingView(View):
                 objs = SlurpitMapping.objects.all()
                 for obj in objs:
                     target_field = obj.target_field.split('|')[1]
-                    row[obj.source_field] = str(device[target_field])
+                    row[obj.source_field] = str(device[target_field]) if device[target_field] is not None else None
 
                 if test is not None:
                     res = post_slurpit_device(row, device["name"])
