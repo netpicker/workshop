@@ -372,7 +372,7 @@ class SlurpitPlanningning(View):
                 result_type = "planning"
 
             cache_key = (
-                f"slurpit_plan_{planning.planning_id}_{device.serial}_{result_type}"
+                f"slurpit_plan_{planning.planning_id}_{device.name}_{result_type}"
             )
 
             url_no_refresh = get_refresh_url(request, pk)
