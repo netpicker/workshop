@@ -375,7 +375,7 @@
     var item_id = (mappingElement.value == undefined ) ? "": mappingElement.value; // or event.target.value
     var data = new URLSearchParams();
     data.append('csrfmiddlewaretoken', csrfToken);
-    data.append('item_id', item_id);
+    data.append('device_id', item_id);
     data.append('test', 'test')
     data.append('subtab', subtab)
 
