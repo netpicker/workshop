@@ -466,7 +466,7 @@
     data.append('action', 'send')
     data.append('csrfmiddlewaretoken', csrfToken);
 
-    data.append('item_id', items[current_cnt]);
+    data.append('device_id', items[current_cnt]);
     data.append('test', 'test')
 
     fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
