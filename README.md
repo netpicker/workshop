@@ -12,7 +12,7 @@
 The plugin is available as a Python package in [pypi](https://pypi.org/project/slurpit_netbox/) and can be installed with pip  
 
 ```
-pip install slurpit_netbox
+pip install --no-cache-dir slurpit_netbox
 ```
 Enable the plugin in /opt/netbox/netbox/netbox/configuration.py:
 ```

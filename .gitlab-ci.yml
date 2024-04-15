@@ -51,13 +51,12 @@ test:
       when: never
     - when: always
 
-integration_test:
+integration_test_main:
   image: docker:latest
   stage: test
   services:
     - docker:dind
   script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml pull
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml up -d --build
     - sleep 300
@@ -66,13 +65,47 @@ integration_test:
     - mkdir $CI_PROJECT_DIR/logs 
     - |
       for container_id in $(docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml ps -qa); do
-        container_name=$(docker inspect --format='{{.Config.Labels.com.docker.compose.service}}' $container_id)
+        container_name=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.service"}}' $container_id)
         docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
       done
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml down -v || true
     - docker system prune --filter "until=24h" -f || true
   rules:
     - if: $CI_PIPELINE_SOURCE != "schedule"
+      when: never
+    - if: '$CI_COMMIT_REF_NAME != "main"'
+      when: never
+    - when: always
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/logs/*
+    name: test-results
+    expire_in: 1 month
+
+integration_test_other:
+  image: docker:latest
+  stage: test
+  services:
+    - docker:dind
+  script:
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml pull
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml up -d --build
+    - sleep 300
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml run --rm test_container pytest --color=yes -v --durations 0 -rP
+  after_script:
+    - mkdir $CI_PROJECT_DIR/logs 
+    - |
+      for container_id in $(docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml ps -qa); do
+        container_name=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.service"}}' $container_id)
+        docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
+      done
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml down -v || true
+    - docker system prune --filter "until=24h" -f || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+      when: never
+    - if: '$CI_COMMIT_REF_NAME == "main"'
       when: never
     - when: always
   artifacts:
