@@ -8,7 +8,7 @@ class SlurpitConfig(PluginConfig):
     name = "slurpit_netbox"
     verbose_name = "Slurp'it Plugin"
     description = "Sync Slurp'it into NetBox"
-    version = '0.8.107'
+    version = '0.8.114'
     base_url = "slurpit"   
     default_settings = {
         'DeviceType': {'model': "Slurp'it", 'slug': 'slurpit'},
@@ -30,9 +30,7 @@ class SlurpitConfig(PluginConfig):
         post_migrate.connect(post_migration, sender=deps_app, weak=False)
         super().ready()
 
-
 config = SlurpitConfig
-
 
 def get_config(cfg):
     return get_plugin_config(get_config.__module__, cfg)
