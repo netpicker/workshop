@@ -23,7 +23,8 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             """
             UPDATE dcim_device
-            SET custom_field_data = jsonb_set(custom_field_data, '{slurpit_manufacturer}', custom_field_data -> 'slurpit_manufactor', true)
+            SET custom_field_data = custom_field_data - 'slurpit_manufactor' || jsonb_build_object('slurpit_manufacturer', custom_field_data->'slurpit_manufactor')
+			WHERE custom_field_data ? 'slurpit_manufactor'
             """,
         ),
     ]
