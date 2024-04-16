@@ -2,7 +2,9 @@ version: '3.4'
 services:
   netbox: &netbox
     #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
-    build: .
+    build: 
+      context: ./
+      dockerfile: Dockerfile.test
     depends_on:
     - postgres
     - redis
@@ -18,6 +20,7 @@ services:
     - ./volumes/netbox-media-files:/opt/netbox/netbox/media:rw
     - ./volumes/netbox-reports-files:/opt/netbox/netbox/reports:rw
     - ./volumes/netbox-scripts-files:/opt/netbox/netbox/scripts:rw
+    - ./src/slurpit_netbox:/opt/netbox/netbox/slurpit_netbox:r
     networks:
       - slurpit_slurpit-network
     
