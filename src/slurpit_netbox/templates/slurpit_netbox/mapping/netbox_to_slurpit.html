@@ -480,7 +480,7 @@
     }).then(function(res){
       
       console.log(res)
-      if(res["status"] == undefine && res['error'] == undefine) done_count++;  
+      if(res["status"] == undefined && res['error'] == undefined) done_count++;  
       else {
         failed_count++;
         logsElement.append("Failed to import "+res["device_name"]+"\n")
