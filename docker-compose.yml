@@ -4,7 +4,7 @@ services:
     #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
     build: 
       context: ./
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile.dev
     depends_on:
     - postgres
     - redis
