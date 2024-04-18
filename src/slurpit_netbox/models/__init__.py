@@ -38,63 +38,69 @@ def ensure_slurpit_tags(*items):
 def create_custom_fields():   
     device = ContentType.objects.get(app_label='dcim', model='device')
     cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_hostname',               
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Hostname',
-                group_name="Slurp'it",
-        )
+                name='slurpit_hostname',   
+                defaults={            
+                    "type":CustomFieldTypeChoices.TYPE_TEXT,
+                    "description":"",
+                    "is_cloneable":True,
+                    "label":'Hostname',
+                    "group_name":"Slurp'it"
+                })
     cf.content_types.set({device})
 
     cf, _ = CustomField.objects.get_or_create(
-                name='slurpit_fqdn',           
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Fqdn',
-                group_name="Slurp'it",
-                )
+                name='slurpit_fqdn',  
+                defaults={                     
+                    "type":CustomFieldTypeChoices.TYPE_TEXT,
+                    "description":"",
+                    "is_cloneable":True,
+                    "label":'Fqdn',
+                    "group_name":"Slurp'it"
+                })
     cf.content_types.set({device})
         
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_platform',
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Platform',
-                group_name="Slurp'it",
-                )
+                defaults={            
+                    "type":CustomFieldTypeChoices.TYPE_TEXT,
+                    "description":"",
+                    "is_cloneable":True,
+                    "label":'Platform',
+                    "group_name":"Slurp'it",
+                })
     cf.content_types.set({device})
 
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_manufacturer', 
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Manufacturer',
-                group_name="Slurp'it",
-                )
+                defaults={            
+                    "type":CustomFieldTypeChoices.TYPE_TEXT,
+                    "description":"",
+                    "is_cloneable":True,
+                    "label":'Manufacturer',
+                    "group_name":"Slurp'it",
+                })
     cf.content_types.set({device})
     
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_devicetype',
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Device Type',
-                group_name="Slurp'it",
-                )
+                defaults={            
+                    "type":CustomFieldTypeChoices.TYPE_TEXT,
+                    "description":"",
+                    "is_cloneable":True,
+                    "label":'Device Type',
+                    "group_name":"Slurp'it",
+                })
     cf.content_types.set({device})
     
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_ipv4',
-                type=CustomFieldTypeChoices.TYPE_TEXT,
-                description="",
-                is_cloneable=True,
-                label='Ipv4',
-                group_name="Slurp'it",
-                )
+                defaults={            
+                    "type":CustomFieldTypeChoices.TYPE_TEXT,
+                    "description":"",
+                    "is_cloneable":True,
+                    "label":'Ipv4',
+                    "group_name":"Slurp'it",
+                })
     cf.content_types.set({device})
 
 def create_default_data_mapping():
