@@ -1,7 +1,7 @@
 from core.choices import DataSourceStatusChoices
 from django import forms
 from dcim.choices import DeviceStatusChoices, DeviceAirflowChoices, DeviceStatusChoices
-from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack, Device
+from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack, Device, Interface
 from django.utils.translation import gettext_lazy as _
 from netbox.api.fields import ChoiceField
 from netbox.forms import NetBoxModelBulkEditForm, NetBoxModelFilterSetForm, NetBoxModelForm
@@ -9,11 +9,17 @@ from utilities.forms import add_blank_choice
 from utilities.forms.fields import CommentField, DynamicModelChoiceField
 from utilities.forms.widgets import APISelect
 from tenancy.models import TenantGroup, Tenant
+from tenancy.forms import TenancyForm
 from utilities.forms import BootstrapMixin
-from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress
 from .management.choices import SlurpitApplianceTypeChoices
 from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from virtualization.models import VMInterface
+from ipam.models import FHRPGroup, VRF, IPAddress
+from ipam.choices import *
+from ipam.constants import *
 
 class OnboardingForm(NetBoxModelBulkEditForm):
     model = SlurpitImportedDevice
@@ -196,3 +202,29 @@ class SlurpitDeviceStatusForm(BootstrapMixin, forms.Form):
         choices=add_blank_choice(DeviceStatusChoices),
         required=False
     )
+
+class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
+    vrf = DynamicModelChoiceField(
+        queryset=VRF.objects.all(),
+        required=False,
+        label=_('VRF')
+    )
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming IPAM data')
+    )
+    comments = CommentField()
+
+    class Meta:
+        model = SlurpitInitIPAddress
+        fields = [
+            'vrf', 'status', 'role', 'enable_reconcile', 'tenant_group',
+            'tenant', 'tags',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        # Initialize helper selectors
+        initial = kwargs.get('initial', {}).copy()
+        kwargs['initial'] = initial
+
+        super().__init__(*args, **kwargs)

@@ -19,7 +19,7 @@ urlpatterns = (
 
     ## reconcile ##
     path('reconcile/',          views.ReconcileView.as_view(), name='reconcile_list'),
-
+    path('reconcile/<int:pk>/', views.ReconcileDetailView.as_view(), name='reconcile_detail'),
     ## logging ##
     path('slurpitlog/',         views.LoggingListView.as_view(), name='slurpitlog_list'),
     

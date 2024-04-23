@@ -9,8 +9,8 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 from dcim.models import  Device
 
-from .models import SlurpitImportedDevice, SlurpitLog
-
+from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress
+from tenancy.tables import TenancyColumnsMixin, TenantColumn
 
 def check_link(**kwargs):
     return {}
@@ -24,6 +24,7 @@ def greenLink(link):
 class ImportColumn(BoundColumn):
     pass
 
+AVAILABLE_LABEL = mark_safe('<span class="badge bg-success">Available</span>')
 
 def importing(*args, **kwargs):
     raise Exception([args, kwargs])
@@ -192,3 +193,30 @@ class SlurpitPlanningTable(tables.Table):
 
     def __init__(self, data, **kwargs):
         super().__init__(data, **kwargs)
+
+IPADDRESS_LINK = """
+<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}">{{ record.address }}</a>
+"""
+
+class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    
+    last_updated = tables.Column(
+        verbose_name = _('Last updated')
+    )
+
+    status = columns.ChoiceFieldColumn(
+        verbose_name=_('Status'),
+        default=AVAILABLE_LABEL
+    )
+
+    address = tables.TemplateColumn(
+        template_code=IPADDRESS_LINK,
+        verbose_name=_('IP Address')
+    )
+    # pk = ConditionalToggle()
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitInitIPAddress
+        fields = ('pk', 'id', 'address', 'vrf', 'status','dns_name', 'tenant', 'description', 'last_updated')
+        default_columns = ('address', 'vrf', 'status', 'dns_name', 'tenant', 'description', 'last_updated')

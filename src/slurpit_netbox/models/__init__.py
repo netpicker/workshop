@@ -11,9 +11,10 @@ from .planning import SlurpitPlanning, SlurpitSnapshot
 from .setting import SlurpitSetting
 from .logs import SlurpitLog
 from .mapping import SlurpitMapping
+from .ipam import SlurpitInitIPAddress
 
 __all__ = [
-    'SlurpitImportedDevice', 'SlurpitStagedDevice',
+    'SlurpitImportedDevice', 'SlurpitStagedDevice', 'SlurpitInitIPAddress'
     'post_migration', 'SlurpitLog', 'SlurpitSetting'
 ]
 

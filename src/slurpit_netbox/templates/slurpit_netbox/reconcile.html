@@ -1,0 +1,171 @@
+{% extends 'generic/object_list.html' %}
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+
+{% block title %}
+  Onboard Devices
+{% endblock %}
+
+{% block header %}
+  <div class="title-container px-3">
+
+    {# Title #}
+    
+    <div id="content-title">
+      {% include "slurpit_netbox/logo.html" %}
+      {# Center-align title in object-edit views #}
+      <h1 class="h2 w-100">Reconcile</h1>
+    </div>
+
+    {# Controls #}
+    {% block controls %}{% endblock controls %}
+
+  </div>
+{% endblock header %}
+
+{% block tabs %}
+<ul class="nav nav-tabs px-3">    
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link active" href="">
+      IPAM
+    </a>
+  </li>
+</ul>
+{% endblock tabs %}
+
+{% block content-wrapper %}
+  <div class="tab-content">
+    <div class="show active">
+        <form method="post" class="form form-horizontal" id="reconcile_form">
+            <div class="noprint bulk-buttons">
+                <div class="bulk-button-group">
+                    <div class="" role="group">
+                        <a class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#acceptModal">
+                            <i class="mdi mdi-check" aria-hidden="true"></i> 
+                            <span id="syncCaption">{% trans "Accept" %}</span>
+                        </a>
+
+                        <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#declineModal">
+                          <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Decline" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form form-horizontal">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="accept" id="action_input" />
+                <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
+        
+                {# Object table #}
+        
+                    {% if prerequisite_model %}
+                      {% include 'inc/missing_prerequisites.html' %}
+                    {% endif %}
+        
+                <div class="card">
+                  <div class="card-body htmx-container table-responsive" id="object_list">
+                    {% include 'htmx/table.html' %}
+                  </div>
+                </div>
+        
+                
+              </div>
+              
+        </form>
+    </div>
+  </div> 
+
+  <div class="modal fade" tabindex="-1" id="declineModal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+  
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h6 class="modal-title">Are you sure to decline the selected records?</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <a class="btn btn-danger btn-sm" id="decline_btn">{% trans "Decline" %}</a>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+  
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" tabindex="-1" id="acceptModal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+  
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h6 class="modal-title">Are you sure to accept the selected records?</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <a class="btn btn-success btn-sm" id="accept_btn">{% trans "Accept" %}</a>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+  
+        
+      </div>
+    </div>
+
+    
+  </div>
+
+  <script>
+    var reconcile_form = document.getElementById('reconcile_form')
+    var accept_btn = document.getElementById('accept_btn')
+    var decline_btn = document.getElementById('decline_btn')
+    var action_input = document.getElementById('action_input')
+
+    accept_btn.addEventListener("click", function(event) {
+      action_input.value = "accept"
+      reconcile_form.submit()
+    });
+
+    decline_btn.addEventListener("click", function(event) {
+      action_input.value = "decline"
+      reconcile_form.submit()
+    });
+
+  </script>
+{% endblock content-wrapper %}
+
+
+
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    <div class="row align-items-center justify-content-between mx-0">
+
+      <div class="col-sm-12 col-md-auto fs-4 noprint">
+        <nav class="nav justify-content-center justify-content-lg-start">
+          {% block footer_links %}
+            <a type="button" class="nav-link h6" href="https://slurpit.io" target="_blank">
+              https://slurpit.io
+            </a>
+          {% endblock footer_links %}
+        </nav>
+      </div>
+
+      <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
+        <span class="d-block d-md-inline">{% annotated_now %} {% now 'T' %}</span>
+        <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
+        <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
+      </div>
+
+    </div>
+  {% endblock footer %}
+</footer>
+   
+

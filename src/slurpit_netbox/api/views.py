@@ -14,16 +14,21 @@ from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 
 from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
-from ..validator import device_validator
-from ..importer import process_import, import_devices, import_plannings, start_device_import
+from ..validator import device_validator, ipam_validator
+from ..importer import process_import, import_devices, import_plannings, start_device_import, BATCH_SIZE
 from ..management.choices import *
 from ..views.datamapping import get_device_dict
 from ..references import base_name 
 from ..references.generic import status_offline, SlurpitViewSet
 from ..references.imports import * 
-from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping
+from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
+from django.core.serializers import serialize
 
+from ipam.models import FHRPGroup, VRF, IPAddress
+from ipam.forms import IPAddressForm
+from tenancy.models import Tenant
+from django.db.models import Q
 
 __all__ = (
     'SlurpitPlanningViewSet',
@@ -222,3 +227,186 @@ class SlurpitDeviceView(SlurpitViewSet):
 
 
         return JsonResponse({'data': request_body})
+    
+class SlurpitIPAMView(SlurpitViewSet):
+    queryset = IPAddress.objects.all()
+
+    def create(self, request):
+        # Validate request IPAM data
+        errors = ipam_validator(request.data)
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+
+        try:
+            # Get initial values for IPAM
+            enable_reconcile = False
+            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile').first()
+            initial_ipaddress_values = {}
+            if initial_obj:
+                enable_reconcile = initial_obj['enable_reconcile']
+                del initial_obj['enable_reconcile']
+                initial_ipaddress_values = {**initial_obj}
+
+                vrf = None
+                tenant = None
+                try:
+                    if initial_ipaddress_values['vrf'] is not None:
+                        vrf = VRF.objects.get(pk=initial_ipaddress_values['vrf'])
+                    if initial_ipaddress_values['tenant'] is not None:
+                        tenant = Tenant.objects.get(pk=initial_ipaddress_values['tenant'])
+                except: 
+                    pass
+
+                initial_ipaddress_values['vrf'] = vrf
+                initial_ipaddress_values['tenant'] = tenant
+
+            errors = {}
+            insert_ips = []
+            update_ips = []
+            total_ips = []
+
+            # Form validation 
+            for record in request.data:
+                obj = IPAddress()
+                new_data = {**initial_ipaddress_values, **record}
+                form = IPAddressForm(data=new_data, instance=obj)
+                total_ips.append(new_data)
+                
+                # Fail case
+                if form.is_valid() is False:
+                    form_errors = form.errors
+                    error_list_dict = {}
+
+                    for field, errors in form_errors.items():
+                        error_list_dict[field] = list(errors)
+
+                    # Duplicate IP Address
+                    keys = error_list_dict.keys()
+                    
+                    if len(keys) ==1 and 'address' in keys and len(error_list_dict['address']) == 1 and error_list_dict['address'][0].startswith("Duplicate"):
+                        update_ips.append(new_data)
+                        continue
+                    if 'address' in keys and len(error_list_dict['address']) == 1 and error_list_dict['address'][0].startswith("Duplicate"):
+                        del error_list_dict['address']
+                    
+                    error_key = f'{new_data["address"]}({"Global" if new_data["vrf"] is None else new_data["vrf"]})'
+                    errors[error_key] = error_list_dict
+
+                    return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+                else:
+                    insert_ips.append(new_data)
+
+
+
+            if enable_reconcile:
+                batch_update_qs = []
+                batch_insert_qs = []
+
+                for item in total_ips:
+                    vrf = None
+                    tenant = None
+                    try:
+                        if item['vrf'] is not None:
+                            vrf = VRF.objects.get(pk=item['vrf'])
+                        if item['tenant'] is not None:
+                            tenant = Tenant.objects.get(pk=item['tenant'])
+                    except: 
+                        pass
+                    
+                    item['vrf'] = vrf
+                    item['tenant'] = tenant
+
+                    slurpit_ipaddress_item = SlurpitInitIPAddress.objects.filter(address=item['address'], vrf=item['vrf'])
+                    
+                    if slurpit_ipaddress_item:
+                        slurpit_ipaddress_item = slurpit_ipaddress_item.first()
+                        slurpit_ipaddress_item.status = item['status']
+                        slurpit_ipaddress_item.role = item['role']
+                        slurpit_ipaddress_item.tennat = tenant
+
+                        if 'dns_name' in item:
+                            slurpit_ipaddress_item.dns_name = item['dns_name']
+                        if 'description' in item:
+                            slurpit_ipaddress_item.description = item['description']
+
+                        batch_update_qs.append(slurpit_ipaddress_item)
+                    else:
+                        
+                        batch_insert_qs.append(SlurpitInitIPAddress(
+                            address = item['address'], 
+                            vrf = vrf,
+                            status = item['status'], 
+                            role = item['role'],
+                            description = item['description'],
+                            tenant = tenant,
+                            dns_name = item['dns_name']
+                        ))
+                
+                count = len(batch_insert_qs)
+                offset = 0
+
+                while offset < count:
+                    batch_qs = batch_insert_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for ipaddress_item in batch_qs:
+                        to_import.append(ipaddress_item)
+
+                    SlurpitInitIPAddress.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+
+
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for ipaddress_item in batch_qs:
+                        to_import.append(ipaddress_item)
+
+                    SlurpitInitIPAddress.objects.bulk_update(to_import, fields={'status', 'role', 'tenant', 'dns_name', 'description'})
+                    offset += BATCH_SIZE
+
+            else:
+                # Batch Insert
+                count = len(insert_ips)
+                offset = 0
+                while offset < count:
+                    batch_qs = insert_ips[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for ipaddress_item in batch_qs:
+                        to_import.append(IPAddress(**ipaddress_item))
+                    IPAddress.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+                
+                # Batch Update
+                batch_update_qs = []
+                for update_item in update_ips:
+                    item = IPAddress.objects.get(address=update_item['address'], vrf=update_item['vrf'])
+
+                    # Update
+                    item.status = update_item['status']
+                    item.role = update_item['role']
+                    item.tennat = update_item['tenant']
+
+                    if 'dns_name' in update_item:
+                        item.dns_name = update_item['dns_name']
+                    if 'description' in update_item:
+                        item.description = update_item['description']
+
+                    batch_update_qs.append(item)
+
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for ipaddress_item in batch_qs:
+                        to_import.append(ipaddress_item)
+
+                    IPAddress.objects.bulk_update(to_import, fields={'status', 'role', 'tenant', 'dns_name', 'description'})
+                    offset += BATCH_SIZE
+
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'errors': [e]}, status=400)

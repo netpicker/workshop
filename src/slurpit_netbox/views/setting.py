@@ -114,6 +114,10 @@ class SettingsView(View):
             slurpit_apis = [
                 {
                     "type": "POST",
+                    "url": "api/plugins/slurpit/ipam/"
+                },
+                {
+                    "type": "POST",
                     "url": "api/plugins/slurpit/planning/"
                 },
                 {
