@@ -265,13 +265,10 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                 vrf = None
                 tenant = None
-                try:
-                    if initial_ipaddress_values['vrf'] is not None:
-                        vrf = VRF.objects.get(pk=initial_ipaddress_values['vrf'])
-                    if initial_ipaddress_values['tenant'] is not None:
-                        tenant = Tenant.objects.get(pk=initial_ipaddress_values['tenant'])
-                except: 
-                    pass
+                if initial_ipaddress_values['vrf'] is not None:
+                    vrf = VRF.objects.get(pk=initial_ipaddress_values['vrf'])
+                if initial_ipaddress_values['tenant'] is not None:
+                    tenant = Tenant.objects.get(pk=initial_ipaddress_values['tenant'])
 
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
@@ -321,13 +318,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                 for item in total_ips:
                     vrf = None
                     tenant = None
-                    try:
-                        if item['vrf'] is not None:
-                            vrf = VRF.objects.get(pk=item['vrf'])
-                        if item['tenant'] is not None:
-                            tenant = Tenant.objects.get(pk=item['tenant'])
-                    except: 
-                        pass
+                    if item['vrf'] is not None:
+                        vrf = VRF.objects.get(pk=item['vrf'])
+                    if item['tenant'] is not None:
+                        tenant = Tenant.objects.get(pk=item['tenant'])
                     
                     item['vrf'] = vrf
                     item['tenant'] = tenant

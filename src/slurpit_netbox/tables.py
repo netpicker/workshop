@@ -24,7 +24,7 @@ def greenLink(link):
 class ImportColumn(BoundColumn):
     pass
 
-AVAILABLE_LABEL = mark_safe('<span class="badge bg-success">Available</span>')
+AVAILABLE_LABEL = mark_safe('<span class="badge bg-success">Available</span>') #nosec
 
 def importing(*args, **kwargs):
     raise Exception([args, kwargs])
