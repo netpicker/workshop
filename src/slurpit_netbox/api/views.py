@@ -24,7 +24,7 @@ from ..references.imports import *
 from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
 from django.core.serializers import serialize
-
+from ..views.setting import sync_snapshot
 from ipam.models import FHRPGroup, VRF, IPAddress
 from ipam.forms import IPAddressForm
 from tenancy.models import Tenant
@@ -131,6 +131,22 @@ class SlurpitSnapshotViewSet(
         SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name}")
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def create(self, request):
+        # Get Plannning
+
+        planning_snapshots = request.data['planning_snapshots']
+        device_name = list(planning_snapshots.keys())[0]
+        planning_id = planning_snapshots[device_name]['planning_id']
+
+        try:
+            plan = SlurpitPlanning.objects.get(planning_id=planning_id)
+            sync_snapshot("", device_name, plan, True, planning_snapshots)
+            
+        except:
+            return JsonResponse({'status': 'error'}, status=500)
+
+        return JsonResponse({'status': 'success'}, status=200)
 
 class DeviceViewSet(
         SlurpitViewSet,
@@ -260,7 +276,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
 
-            errors = {}
+            total_errors = {}
             insert_ips = []
             update_ips = []
             total_ips = []
@@ -290,9 +306,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                         del error_list_dict['address']
                     
                     error_key = f'{new_data["address"]}({"Global" if new_data["vrf"] is None else new_data["vrf"]})'
-                    errors[error_key] = error_list_dict
+                    total_errors[error_key] = error_list_dict
 
-                    return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+                    return JsonResponse({'status': 'error', 'errors': total_errors}, status=400)
                 else:
                     insert_ips.append(new_data)
 
@@ -409,4 +425,5 @@ class SlurpitIPAMView(SlurpitViewSet):
 
             return JsonResponse({'status': 'success'})
         except Exception as e:
-            return JsonResponse({'status': 'error', 'errors': [e]}, status=400)
+            return JsonResponse({'status': 'error', 'errors': str(e)}, status=400)
+        

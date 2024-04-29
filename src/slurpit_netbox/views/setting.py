@@ -470,10 +470,12 @@ class SlurpitPlanningning(View):
             },
         )
 
-def sync_snapshot(cache_key, device_name, plan):
-    cache.delete(cache_key)
+def sync_snapshot(cache_key, device_name, plan, test=False, data={}):
+    if cache_key != "":
+        cache.delete(cache_key)
     
-    data = get_latest_data_on_planning(device_name, plan.planning_id)
+    if test == False:
+        data = get_latest_data_on_planning(device_name, plan.planning_id)
   
     if data is not None:
         temp = data[plan.name]["planning_results"]
