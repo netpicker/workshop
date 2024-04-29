@@ -170,28 +170,28 @@ def check_onboard_device(device):
         )
         imported_device =  cur.fetchone()
 
-        assert imported_device != None, f'Imported device is not existed.'
+        assert imported_device != None, f'Imported device does not exist.'
         
         cur.execute(
             "SELECT * FROM dcim_devicetype WHERE model=%s",
             ('slurpit',)
         )
         devicetype =  cur.fetchone()
-        assert devicetype != None, f'Slurpit Device Type is not existed.'
+        assert devicetype != None, f'Slurpit Device Type does not exist.'
 
         cur.execute(
             "SELECT * FROM dcim_devicerole WHERE name=%s",
             ("Slurp'it",)
         )
         devicerole =  cur.fetchone()
-        assert devicerole != None, f'Slurpit Device Role is not existed.'
+        assert devicerole != None, f'Slurpit Device Role does not exist.'
         
         cur.execute(
             "SELECT * FROM dcim_site WHERE name=%s",
             ("Slurp'it",)
         )
         devicesite =  cur.fetchone()
-        assert devicesite != None, f'Slurpit Site is not existed.'
+        assert devicesite != None, f'Slurpit Site does not exist.'
 
         # do_request('onboard', 'POST', {
         #     'pk': imported_device['id'],
@@ -224,14 +224,14 @@ def check_direct_sync_ipam(ipams):
         for ipam in ipams:
             cur.execute('SELECT * FROM ipam_ipaddress WHERE address=%s', (str(ipam['address']),)) 
             cnt = len(cur.fetchall())
-            assert cnt > 0, f'{ipam["address"]} is not existed in NetBox.'
+            assert cnt > 0, f'{ipam["address"]} does not exist in NetBox.'
 
 def check_reconcile_sync_ipam(ipams):
     with connection() as conn, conn.cursor() as cur:
         for ipam in ipams:
             cur.execute('SELECT * FROM slurpit_netbox_slurpitinitipaddress WHERE address=%s', (str(ipam['address']),)) 
             cnt = len(cur.fetchall())
-            assert cnt > 0, f'{ipam["address"]} is not existed in Reconcile Table.'
+            assert cnt > 0, f'{ipam["address"]} does not exist in Reconcile Table.'
 
 def test_ipams(setup):
     #IPAM Direct Sync Test
