@@ -28,10 +28,17 @@
 {% block tabs %}
 <ul class="nav nav-tabs px-3">    
   <li class="nav-item" role="presentation">
-    <a class="nav-tab nav-link active" href="">
+    <a class="nav-tab nav-link {% if request.GET.tab == 'ipam' or request.GET.tab is None %}active{% endif %}" href="?tab=ipam">
       IPAM
     </a>
   </li>
+
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.tab == 'interface' %}active{% endif %}" href="?tab=interface">
+      Interfaces
+    </a>
+  </li>
+
 </ul>
 {% endblock tabs %}
 
@@ -57,6 +64,7 @@
             <div class="form form-horizontal">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="accept" id="action_input" />
+                <input type="hidden" name="tab" value="{{ request.GET.tab }}" id="tab_input" />
                 <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
         
                 {# Object table #}

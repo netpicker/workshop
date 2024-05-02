@@ -14,18 +14,20 @@ from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 
 from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
-from ..validator import device_validator, ipam_validator
+from ..validator import device_validator, ipam_validator, interface_validator
 from ..importer import process_import, import_devices, import_plannings, start_device_import, BATCH_SIZE
 from ..management.choices import *
 from ..views.datamapping import get_device_dict
 from ..references import base_name 
 from ..references.generic import status_offline, SlurpitViewSet
 from ..references.imports import * 
-from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress
+from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
 from django.core.serializers import serialize
 from ..views.setting import sync_snapshot
 from ipam.models import FHRPGroup, VRF, IPAddress
+from dcim.models import Interface
+from dcim.forms import InterfaceForm
 from ipam.forms import IPAddressForm
 from tenancy.models import Tenant
 from django.db.models import Q
@@ -244,6 +246,199 @@ class SlurpitDeviceView(SlurpitViewSet):
 
         return JsonResponse({'data': request_body})
     
+
+class SlurpitInterfaceView(SlurpitViewSet):
+    queryset = SlurpitInterface.objects.all()
+
+    def create(self, request):
+        # Validate request Interface data
+        errors = interface_validator(request.data)
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+
+        try:
+            # Get initial values for Interface
+            enable_reconcile = False
+            initial_obj = SlurpitInterface.objects.filter(name='').values('device', 'module', 'type', 'speed', 'duplex', 'enable_reconcile').first()
+            initial_interface_values = {}
+
+            if initial_obj:
+                enable_reconcile = initial_obj['enable_reconcile']
+                del initial_obj['enable_reconcile']
+                initial_interface_values = {**initial_obj}
+
+                device = None
+                try:
+                    if initial_interface_values['device'] is not None:
+                        device = Device.objects.get(pk=initial_interface_values['device'])
+                except: 
+                    pass
+
+                initial_interface_values['device'] = device
+
+            total_errors = {}
+            insert_data = []
+            update_data = []
+            total_data = []
+
+            # Form validation 
+            for record in request.data:
+                obj = Interface()
+                new_data = {**initial_interface_values, **record}
+                form = InterfaceForm(data=new_data, instance=obj)
+                total_data.append(new_data)
+                
+                # Fail case
+                if form.is_valid() is False:
+                    form_errors = form.errors
+                    error_list_dict = {}
+
+                    for field, errors in form_errors.items():
+                        error_list_dict[field] = list(errors)
+
+                    # Duplicate Interface
+                    keys = error_list_dict.keys()
+                    
+                    if len(keys) ==1 and '__all__' in keys and len(error_list_dict['__all__']) == 1 and error_list_dict['__all__'][0].endswith("already exists."):
+                        update_data.append(new_data)
+                        continue
+                    if '__all__' in keys and len(error_list_dict['__all__']) == 1 and error_list_dict['__all__'][0].endswith("already exists."):
+                        del error_list_dict['__all__']
+                    
+                    error_key = f'{new_data["name"]}({"Global" if new_data["device"] is None else new_data["device"]})'
+                    total_errors[error_key] = error_list_dict
+
+                    return JsonResponse({'status': 'error', 'errors': total_errors}, status=400)
+                else:
+                    insert_data.append(new_data)
+        
+            if enable_reconcile:
+                batch_update_qs = []
+                batch_insert_qs = []
+
+                for item in total_data:
+                    device = None
+
+                    try:
+                        if item['device'] is not None:
+                            device = Device.objects.get(name=item['device'])
+                    except: 
+                        pass
+
+                    item['device'] = device
+
+                    slurpit_interface_item = SlurpitInterface.objects.filter(name=item['name'], device=item['device'])
+                    
+                    if slurpit_interface_item:
+                        slurpit_interface_item = slurpit_interface_item.first()
+
+                        if 'label' in item:
+                            slurpit_interface_item.label = item['label']
+                        if 'description' in item:
+                            slurpit_interface_item.description = item['description']
+                        if 'speed' in item:
+                            slurpit_interface_item.speed = item['speed']
+                        if 'type' in item:
+                            slurpit_interface_item.type = item['type']
+                        if 'duplex' in item:
+                            slurpit_interface_item.duplex = item['duplex']
+                        if 'module' in item:
+                            slurpit_interface_item.module = item['module']
+
+                        batch_update_qs.append(slurpit_interface_item)
+                    else:
+                        
+                        batch_insert_qs.append(SlurpitInterface(
+                            name = item['name'], 
+                            device = device,
+                            label = item['label'], 
+                            speed = item['speed'],
+                            description = item['description'],
+                            type = item['type'],
+                            duplex = item['duplex'],
+                            module = item['module'],
+                        ))
+                
+                count = len(batch_insert_qs)
+                offset = 0
+
+                while offset < count:
+                    batch_qs = batch_insert_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for interface_item in batch_qs:
+                        to_import.append(interface_item)
+
+                    SlurpitInterface.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+
+
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for interface_item in batch_qs:
+                        to_import.append(interface_item)
+
+                    SlurpitInterface.objects.bulk_update(to_import, 
+                        fields={'label', 'speed', 'type', 'duplex', 'description', 'module'}
+                    )
+                    offset += BATCH_SIZE
+
+            else:
+
+                # Batch Insert
+                count = len(insert_data)
+                offset = 0
+                while offset < count:
+                    batch_qs = insert_data[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for interface_item in batch_qs:
+                        to_import.append(Interface(**interface_item))
+                    Interface.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+                
+                
+                # Batch Update
+                batch_update_qs = []
+                for update_item in update_data:
+                    item = Interface.objects.get(name=update_item['name'], device=update_item['device'])
+                    
+                    # Update
+                    if 'label' in update_item:
+                        item.label = update_item['label']
+                    if 'description' in update_item:
+                        item.description = update_item['description']
+                    if 'speed' in update_item:
+                        item.speed = update_item['speed']
+                    if 'type' in update_item:
+                        item.type = update_item['type']
+                    if 'duplex' in update_item:
+                        item.duplex = update_item['duplex']
+                    if 'module' in update_item:
+                        item.module = update_item['module']
+
+                    batch_update_qs.append(item)
+
+                
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for interface_item in batch_qs:
+                        to_import.append(interface_item)
+
+                    Interface.objects.bulk_update(to_import, 
+                        fields={'label', 'speed', 'type', 'duplex', 'description', 'module'}
+                    )
+                    offset += BATCH_SIZE
+
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'errors', 'errors': str(e)}, status=400)
+        
 class SlurpitIPAMView(SlurpitViewSet):
     queryset = IPAddress.objects.all()
 

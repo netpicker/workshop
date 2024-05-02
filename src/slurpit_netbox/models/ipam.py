@@ -97,4 +97,4 @@ class SlurpitInitIPAddress(PrimaryModel):
         return IPAddressStatusChoices.colors.get(self.status)
     
     def get_absolute_url(self):
-        return reverse('plugins:slurpit_netbox:reconcile_detail', args=[self.pk])
+        return reverse('plugins:slurpit_netbox:reconcile_detail', args=[self.pk, 'ipam'])

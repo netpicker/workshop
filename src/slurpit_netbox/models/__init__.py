@@ -12,6 +12,7 @@ from .setting import SlurpitSetting
 from .logs import SlurpitLog
 from .mapping import SlurpitMapping
 from .ipam import SlurpitInitIPAddress
+from .interface import SlurpitInterface
 
 __all__ = [
     'SlurpitImportedDevice', 'SlurpitStagedDevice', 'SlurpitInitIPAddress'

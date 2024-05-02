@@ -9,5 +9,6 @@ router.register("device", views.DeviceViewSet)
 router.register("test", views.SlurpitTestAPIView)
 router.register("netbox-device", views.SlurpitDeviceView)
 router.register("ipam", views.SlurpitIPAMView)
+router.register("interface", views.SlurpitInterfaceView)
 app_name = 'slurpit-api'
 urlpatterns = router.urls
