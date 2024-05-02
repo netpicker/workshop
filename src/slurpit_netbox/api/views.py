@@ -268,11 +268,9 @@ class SlurpitInterfaceView(SlurpitViewSet):
                 initial_interface_values = {**initial_obj}
 
                 device = None
-                try:
-                    if initial_interface_values['device'] is not None:
-                        device = Device.objects.get(pk=initial_interface_values['device'])
-                except: 
-                    pass
+
+                if initial_interface_values['device'] is not None:
+                    device = Device.objects.get(name=initial_interface_values['device'])
 
                 initial_interface_values['device'] = device
 
@@ -319,12 +317,9 @@ class SlurpitInterfaceView(SlurpitViewSet):
                 for item in total_data:
                     device = None
 
-                    try:
-                        if item['device'] is not None:
-                            device = Device.objects.get(name=item['device'])
-                    except: 
-                        pass
-
+                    if item['device'] is not None:
+                        device = Device.objects.get(name=item['device'])
+                        
                     item['device'] = device
 
                     slurpit_interface_item = SlurpitInterface.objects.filter(name=item['name'], device=item['device'])
