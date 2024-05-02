@@ -29,13 +29,13 @@
 <ul class="nav nav-tabs px-3">    
   <li class="nav-item" role="presentation">
     <a class="nav-tab nav-link {% if request.GET.tab == 'ipam' or request.GET.tab is None %}active{% endif %}" href="?tab=ipam">
-      IPAM
+      IPAM {% badge ipam_count %}
     </a>
   </li>
 
   <li class="nav-item" role="presentation">
     <a class="nav-tab nav-link {% if request.GET.tab == 'interface' %}active{% endif %}" href="?tab=interface">
-      Interfaces
+      Interfaces {% badge interface_count %}
     </a>
   </li>
 

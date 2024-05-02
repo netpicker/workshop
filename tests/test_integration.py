@@ -7,9 +7,9 @@ from psycopg2.extras import DictCursor, NamedTupleCursor
 from datetime import datetime
 import json
 
-from dotenv import load_dotenv
-# Load the .env file
-load_dotenv()
+# from dotenv import load_dotenv
+# # Load the .env file
+# load_dotenv()
 
 def connection():
     return psycopg2.connect(

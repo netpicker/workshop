@@ -32,6 +32,12 @@ class ReconcileView(generic.ObjectListView):
 
         return super().get(request, *args, **kwargs)
     
+    def get_extra_context(self, request):
+        return {
+            'ipam_count': models.SlurpitInitIPAddress.objects.exclude(address = None).count(),
+            'interface_count': models.SlurpitInterface.objects.exclude(name = '').count()
+        }
+    
     def post(self, request, **kwargs):
         pk_list = request.POST.getlist('pk')
         action = request.POST.get('action')
