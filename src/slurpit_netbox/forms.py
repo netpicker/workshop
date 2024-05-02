@@ -1,19 +1,53 @@
 from core.choices import DataSourceStatusChoices
 from django import forms
-from dcim.choices import DeviceStatusChoices, DeviceAirflowChoices, DeviceStatusChoices
-from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack, Device
+from dcim.choices import DeviceStatusChoices, DeviceAirflowChoices, DeviceStatusChoices, InterfaceSpeedChoices
+from dcim.models import DeviceRole, DeviceType, Site, Location, Region, Rack, Device, Interface, Module
 from django.utils.translation import gettext_lazy as _
 from netbox.api.fields import ChoiceField
 from netbox.forms import NetBoxModelBulkEditForm, NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms import add_blank_choice
-from utilities.forms.fields import CommentField, DynamicModelChoiceField
-from utilities.forms.widgets import APISelect
+from utilities.forms.fields import CommentField, DynamicModelChoiceField, DynamicModelMultipleChoiceField
+from utilities.forms.widgets import APISelect, NumberWithOptions, HTMXSelect
 from tenancy.models import TenantGroup, Tenant
+from tenancy.forms import TenancyForm
 from utilities.forms import BootstrapMixin
-from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface
 from .management.choices import SlurpitApplianceTypeChoices
 from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from virtualization.models import VMInterface
+from ipam.models import FHRPGroup, VRF, IPAddress, VLANGroup, VLAN
+from ipam.choices import *
+from ipam.constants import *
+from dcim.forms.common import InterfaceCommonForm
+
+
+class DeviceComponentForm(NetBoxModelForm):
+    device = DynamicModelChoiceField(
+        label=_('Device'),
+        queryset=Device.objects.all(),
+        selector=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Disable reassignment of Device when editing an existing instance
+        if self.instance.pk:
+            self.fields['device'].disabled = False
+
+class ModularDeviceComponentForm(DeviceComponentForm):
+    module = DynamicModelChoiceField(
+        label=_('Module'),
+        queryset=Module.objects.all(),
+        required=False,
+        query_params={
+            'device_id': '$device',
+        }
+    )
+
+
 
 class OnboardingForm(NetBoxModelBulkEditForm):
     model = SlurpitImportedDevice
@@ -196,3 +230,76 @@ class SlurpitDeviceStatusForm(BootstrapMixin, forms.Form):
         choices=add_blank_choice(DeviceStatusChoices),
         required=False
     )
+
+class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
+    vrf = DynamicModelChoiceField(
+        queryset=VRF.objects.all(),
+        required=False,
+        label=_('VRF')
+    )
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming IPAM data')
+    )
+    comments = CommentField()
+
+    class Meta:
+        model = SlurpitInitIPAddress
+        fields = [
+            'vrf', 'status', 'role', 'enable_reconcile', 'tenant_group',
+            'tenant', 'tags',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        # Initialize helper selectors
+        initial = kwargs.get('initial', {}).copy()
+        kwargs['initial'] = initial
+
+        super().__init__(*args, **kwargs)
+
+class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm):
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming Device Interface data')
+    )
+    
+    vlan_group = DynamicModelChoiceField(
+        queryset=VLANGroup.objects.all(),
+        required=False,
+        label=_('VLAN group')
+    )
+
+    untagged_vlan = DynamicModelChoiceField(
+        queryset=VLAN.objects.all(),
+        required=False,
+        label=_('Untagged VLAN'),
+        query_params={
+            'group_id': '$vlan_group',
+            'available_on_device': '$device',
+        }
+    )
+
+    tagged_vlans = DynamicModelMultipleChoiceField(
+        queryset=VLAN.objects.all(),
+        required=False,
+        label=_('Tagged VLANs'),
+        query_params={
+            'group_id': '$vlan_group',
+            'available_on_device': '$device',
+        }
+    )
+
+    class Meta:
+        model = SlurpitInterface
+        fields = [
+            'device', 'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'tags', 'enable_reconcile', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans'
+        ]
+        widgets = {
+            'speed': NumberWithOptions(
+                options=InterfaceSpeedChoices
+            ),
+            'mode': HTMXSelect(),
+        }
+        labels = {
+            'mode': '802.1Q Mode',
+        }

@@ -137,12 +137,14 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                 except ValidationError as e:
                     messages.error(self.request, ", ".join(e.messages))
                     # clear_webhooks.send(sender=self)
-
+                    return JsonResponse({"status": "error", "error": str(e)})
                 except Exception as e:
                     messages.error(self.request, e.message)
                     form.add_error(None, e.message)
                     # clear_webhooks.send(sender=self)
-
+                    return JsonResponse({"status": "error", "error": str(e)})
+            return JsonResponse({"status": "error", "error": "validation error"})  
+        
         elif 'migrate' in request.GET:
             migrate = request.GET.get('migrate')
             if migrate == 'create':                

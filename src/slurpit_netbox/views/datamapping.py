@@ -1,10 +1,10 @@
 from django.views.generic import View
-from ..models import SlurpitImportedDevice, SlurpitMapping, SlurpitLog, SlurpitSetting
+from ..models import SlurpitImportedDevice, SlurpitMapping, SlurpitLog, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface
 from .. import forms, importer, models, tables
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
-from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm
+from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm, SlurpitInitIPAMForm, SlurpitDeviceInterfaceForm
 from ..management.choices import *
 from django.contrib import messages
 from dcim.models import Device
@@ -18,6 +18,10 @@ from django.contrib.contenttypes.models import ContentType
 from extras.models import CustomField
 from extras.models.tags import Tag
 from ipam.models import IPRange
+from urllib.parse import urlencode
+from utilities.forms import restrict_form_fields
+from utilities.exceptions import AbortRequest, PermissionsViolation
+from django.db import router, transaction
 
 BATCH_SIZE = 128
 
@@ -74,7 +78,7 @@ class DataMappingView(View):
     def get(self, request):
         sync = request.GET.get('sync', None)
         tab = request.GET.get('tab', None)
-
+        subtab = request.GET.get('subtab', None)
         if sync is not None:
             # request_body = []
 
@@ -131,6 +135,21 @@ class DataMappingView(View):
         device_form = SlurpitDeviceForm()
         device_status_form = SlurpitDeviceStatusForm()
 
+        if tab == "slurpit_to_netbox":
+            if subtab == None or subtab == 'ipam':
+                obj = SlurpitInitIPAddress.objects.filter(address=None).first()
+                if obj is not None:
+                    form = SlurpitInitIPAMForm(instance=obj)
+                else:
+                    form = SlurpitInitIPAMForm
+            else:
+                obj = SlurpitInterface.objects.filter(name='').first()
+
+                if obj is not None:
+                    form = SlurpitDeviceInterfaceForm(instance=obj)
+                else:
+                    form = SlurpitDeviceInterfaceForm
+
         return render(
             request,
             self.template_name, 
@@ -147,6 +166,7 @@ class DataMappingView(View):
         tab = request.GET.get('tab', None)
 
         if tab == "netbox_to_slurpit" or tab is None:
+            tab = "netbox_to_slurpit"
             test = request.POST.get('test')
             device_id = request.POST.get('device_id')
 
@@ -235,4 +255,48 @@ class DataMappingView(View):
                 
                 return JsonResponse({"device": device_names})
 
-        return redirect(request.path)
+        elif tab == "slurpit_to_netbox":
+            mapping_type = request.POST.get('mappingtype')
+            if mapping_type == 'ipam':
+                obj = SlurpitInitIPAddress.objects.filter(address=None).first()
+                if obj is None:
+                    obj = SlurpitInitIPAddress()
+
+                form = SlurpitInitIPAMForm(data=request.POST, instance=obj)
+                restrict_form_fields(form, request.user)
+
+                if form.is_valid():
+                    try:
+                        with transaction.atomic():
+                            obj = form.save()
+                            messages.success(request, "Updated the Slurpit IP Address Default values successfully.")
+                    except (AbortRequest, PermissionsViolation) as e:
+                        # logger.debug(e.message)
+                        form.add_error(None, e.message)
+                else:
+                    messages.error(request, "Slurpit IP Address Form Validation Failed.")
+                    pass
+            elif mapping_type == 'interface':
+                obj = SlurpitInterface.objects.filter(name='').first()
+                if obj is None:
+                    obj = SlurpitInterface()
+
+                form = SlurpitDeviceInterfaceForm(data=request.POST, instance=obj)
+                restrict_form_fields(form, request.user)
+
+                if form.is_valid():
+                    try:
+                        with transaction.atomic():
+                            obj = form.save()
+                            messages.success(request, "Updated the Slurpit Interface Default values successfully.")
+                    except (AbortRequest, PermissionsViolation) as e:
+                        # logger.debug(e.message)
+                        form.add_error(None, e.message)
+                else:
+                    messages.error(request, "Slurpit Interface Form Validation Failed.")
+                    pass
+        base_url = request.path
+        query_string = urlencode({'tab': tab})
+        url = f'{base_url}?{query_string}'
+
+        return redirect(url)

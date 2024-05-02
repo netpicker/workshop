@@ -8,9 +8,9 @@ from django_tables2.utils import Accessor
 from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 from dcim.models import  Device
-
-from .models import SlurpitImportedDevice, SlurpitLog
-
+from dcim.tables import BaseInterfaceTable
+from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress, SlurpitInterface
+from tenancy.tables import TenancyColumnsMixin, TenantColumn
 
 def check_link(**kwargs):
     return {}
@@ -24,6 +24,7 @@ def greenLink(link):
 class ImportColumn(BoundColumn):
     pass
 
+AVAILABLE_LABEL = mark_safe('<span class="badge bg-success">Available</span>') #nosec
 
 def importing(*args, **kwargs):
     raise Exception([args, kwargs])
@@ -192,3 +193,64 @@ class SlurpitPlanningTable(tables.Table):
 
     def __init__(self, data, **kwargs):
         super().__init__(data, **kwargs)
+
+IPADDRESS_LINK = """
+<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}">{{ record.address }}</a>
+"""
+
+NAME_LINK = """
+<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}">{{ record.name }}</a>
+"""
+
+class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    
+    last_updated = tables.Column(
+        verbose_name = _('Last updated')
+    )
+
+    status = columns.ChoiceFieldColumn(
+        verbose_name=_('Status'),
+        default=AVAILABLE_LABEL
+    )
+
+    address = tables.TemplateColumn(
+        template_code=IPADDRESS_LINK,
+        verbose_name=_('IP Address')
+    )
+    pk = ToggleColumn()
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitInitIPAddress
+        fields = ('pk', 'id', 'address', 'vrf', 'status','dns_name', 'tenant', 'description', 'last_updated')
+        default_columns = ('address', 'vrf', 'status', 'dns_name', 'tenant', 'description', 'last_updated')
+
+
+class SlurpitInterfaceTable(BaseInterfaceTable):
+    device = tables.Column(
+        verbose_name=_('Device'),
+        linkify={
+            'viewname': 'dcim:device_interfaces',
+            'args': [Accessor('device_id')],
+        }
+    )
+    speed_formatted = columns.TemplateColumn(
+        template_code='{% load helpers %}{{ value|humanize_speed }}',
+        accessor=Accessor('speed'),
+        verbose_name=_('Speed')
+    )
+
+    name = tables.TemplateColumn(
+        template_code=NAME_LINK,
+        verbose_name=_('Name')
+    )
+
+    actions = columns.ActionsColumn(actions=tuple())
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitInterface
+        fields = (
+            'pk', 'name', 'device', 'label', 'enabled', 'type', 'description',
+        )
+        default_columns = ('pk', 'name', 'device', 'label', 'enabled', 'type', 'description')
+

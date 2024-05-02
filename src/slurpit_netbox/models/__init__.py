@@ -11,9 +11,11 @@ from .planning import SlurpitPlanning, SlurpitSnapshot
 from .setting import SlurpitSetting
 from .logs import SlurpitLog
 from .mapping import SlurpitMapping
+from .ipam import SlurpitInitIPAddress
+from .interface import SlurpitInterface
 
 __all__ = [
-    'SlurpitImportedDevice', 'SlurpitStagedDevice',
+    'SlurpitImportedDevice', 'SlurpitStagedDevice', 'SlurpitInitIPAddress'
     'post_migration', 'SlurpitLog', 'SlurpitSetting'
 ]
 
@@ -136,8 +138,6 @@ def post_migration(sender, **kwargs):
     create_custom_fields()
     tags = ensure_slurpit_tags()
     add_default_mandatory_objects(tags)
-    print("AA")
-    pass
 
 class LowerCase(Transform):
     lookup_name = "lower"

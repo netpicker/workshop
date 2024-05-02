@@ -1,0 +1,164 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load i18n %}
+
+{% block title %}{{ object }}{% endblock %}
+
+{% block header %}
+  <div class="title-container px-3">
+
+    {# Title #}
+    
+    <div id="content-title">
+      {% include "slurpit_netbox/logo.html" %}
+      {# Center-align title in object-edit views #}
+      <h1 class="h2 w-100">{{ title }}</h1>
+    </div>
+
+  </div>
+{% endblock header %}
+
+{% block breadcrumbs %}
+
+{% endblock %}
+
+{# ObjectChange does not support the default add/edit/delete controls #}
+{% block controls %}{% endblock %}
+{% block subtitle %}{% endblock %}
+
+
+{% block tabs %}
+  <ul class="nav nav-tabs px-3">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link active">Changes</a>
+    </li>
+  </ul>
+{% endblock tabs %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-5">
+        <div class="card">
+            <h5 class="card-header">
+                {% trans "Change" %}
+            </h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">{% trans "Time" %}</th>
+                        <td>
+                            {{ updated_time |annotated_date }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "Action" %}</th>
+                        <td>
+                            {{ action }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "Object Type" %}</th>
+                        <td>
+                            {{ object_type }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "Object" %}</th>
+                        <td>
+                            {% if object and object.get_absolute_url %}
+                                {{ object|linkify }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="d-inline">{% trans "Difference" %}</h5>
+            </div>
+            <div class="card-body">
+                {% if diff_added == diff_removed %}
+                    <span class="text-muted" style="margin-left: 10px;">
+                        {% if object.action == 'create' %}
+                            {% trans "Object Created" %}
+                        {% elif object.action == 'delete' %}
+                            {% trans "Object Deleted" %}
+                        {% else %}
+                            {% trans "No Changes" %}
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <pre class="change-diff change-removed">{{ diff_removed|json }}</pre>
+                    <pre class="change-diff change-added">{{ diff_added|json }}</pre>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">
+                {% trans "Current state" %}
+            </h5>
+            <div class="card-body">
+            {% if current_state %}
+                <pre class="change-data">{% for k, v in current_state.items %}{% spaceless %}
+                    <span{% if k in diff_removed %} class="removed"{% endif %}>{{ k }}: {{ v|json }}</span>
+                {% endspaceless %}{% endfor %}
+                </pre>
+            {% elif non_atomic_change %}
+                {% trans "Warning: Comparing non-atomic change to previous change record" %} (<a href="{% url 'extras:objectchange' pk=prev_change.pk %}">{{ prev_change.pk }}</a>)
+            {% else %}
+                <span class="text-muted">{% trans "None" %}</span>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">
+                {% trans "Incomming change" %}
+            </h5>
+            <div class="card-body">
+                {% if incomming_change %}
+                    <pre class="change-data">{% for k, v in incomming_change.items %}{% spaceless %}
+                        <span{% if k in diff_added %} class="added"{% endif %}>{{ k }}: {{ v|json }}</span>
+                        {% endspaceless %}{% endfor %}
+                    </pre>
+                {% else %}
+                    <span class="text-muted">{% trans "None" %}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+<footer class="footer container-fluid">
+    {% block footer %}
+      <div class="row align-items-center justify-content-between mx-0">
+  
+        <div class="col-sm-12 col-md-auto fs-4 noprint">
+          <nav class="nav justify-content-center justify-content-lg-start">
+            {% block footer_links %}
+              <a type="button" class="nav-link h6" href="https://slurpit.io" target="_blank">
+                https://slurpit.io
+              </a>
+            {% endblock footer_links %}
+          </nav>
+        </div>
+  
+        <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
+          <span class="d-block d-md-inline">{% annotated_now %} {% now 'T' %}</span>
+          <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
+          <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
+        </div>
+  
+      </div>
+    {% endblock footer %}
+  </footer>

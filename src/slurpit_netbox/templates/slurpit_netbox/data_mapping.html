@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block header %}
-  <div class="title-container px-3 pb-3">
+  <div class="title-container px-3 py-2">
 
     {# Title #}
     
@@ -46,7 +46,7 @@
 {% block content-wrapper %}
   <div class="tab-content sub-tab-content">
     {% if request.GET.tab == 'slurpit_to_netbox'  %}
-      {% include "slurpit_netbox/mapping/commingsoon.html" %}
+      {% include "slurpit_netbox/mapping/slurpit_to_netbox.html" %}
     {% elif request.GET.tab == 'netbox_to_slurpit' or request.GET.tab is None %}
       {% include "slurpit_netbox/mapping/netbox_to_slurpit.html" %}
     {% endif %}
