@@ -219,6 +219,23 @@ def set_reconcile(is_enable):
             conn.commit()
         return cur.rowcount
     
+# def set_reconcile_for_interface(is_enable):
+#     with connection() as conn, conn.cursor() as cur:
+
+#         cur.execute(
+#             'UPDATE slurpit_netbox_slurpitinterface SET enable_reconcile = %s, role = %s WHERE name = ""',
+#             (is_enable, "")
+#         )
+#         conn.commit()
+#         # Not Existed Case
+#         if cur.rowcount == 0:
+#             cur.execute(
+#                 'INSERT INTO slurpit_netbox_slurpitinterface (status, enable_reconcile, custom_field_data, description, comments, role) VALUES (%s, %s, %s, %s, %s, %s)',
+#                 ("active", is_enable, json.dumps({}), "", "", "")
+#             )
+#             conn.commit()
+#         return cur.rowcount
+    
 def check_direct_sync_ipam(ipams):
     with connection() as conn, conn.cursor() as cur:
         for ipam in ipams:
@@ -354,3 +371,45 @@ def compare_mapping_fields():
 def test_data_mapping(setup):
     # Test Initial Mapping Fields
     compare_mapping_fields()
+
+
+# def test_interface(setup):
+#     #Interface Direct Sync Test
+#     #Set Enable to reconcile every incoming Interface data
+#     set_reconcile_for_interface(False)
+#     invalid_ipams = [
+#         {
+#             'address': '192.168.100.100/300',
+#             'status': 'active',
+#             'dns_name': 'test.com'
+#         }
+#     ]
+#     response = do_request('ipam/', method="POST", data=invalid_ipams)
+#     assert response.status_code == 400, f"Validation is Failed. Status wasnt 400 \n{response.json()}"
+
+#     valid_ipams = [
+#         {
+#             'address': '192.168.100.100/24',
+#             'status': 'active',
+#             'dns_name': 'test.com'
+#         }
+#     ]
+#     response = do_request('ipam/', method="POST", data=valid_ipams)
+#     assert response.status_code == 200, f"IPAM import is Failed. Status wasnt 200 \n{response.json()}"
+
+#     check_direct_sync_ipam(valid_ipams)
+
+#     #IPAM Reconcile Test
+#     set_reconcile(True)
+#     valid_ipams = [
+#         {
+#             'address': '192.168.200.200/24',
+#             'status': 'active',
+#             'dns_name': 'test.com',
+#             'description': 'Test'
+#         }
+#     ]
+#     response = do_request('ipam/', method="POST", data=valid_ipams)
+#     assert response.status_code == 200, f"IPAM import is Failed. Status wasnt 200 \n{response.json()}"
+
+#     check_reconcile_sync_ipam(valid_ipams)

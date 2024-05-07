@@ -27,7 +27,8 @@ class DeviceComponentForm(NetBoxModelForm):
     device = DynamicModelChoiceField(
         label=_('Device'),
         queryset=Device.objects.all(),
-        selector=True
+        selector=True,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -292,7 +293,7 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
     class Meta:
         model = SlurpitInterface
         fields = [
-            'device', 'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'tags', 'enable_reconcile', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans'
+           'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'tags', 'enable_reconcile', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans'
         ]
         widgets = {
             'speed': NumberWithOptions(

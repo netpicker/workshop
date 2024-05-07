@@ -21,7 +21,8 @@ class ComponentModel(NetBoxModel):
     device = models.ForeignKey(
         to='dcim.Device',
         on_delete=models.CASCADE,
-        related_name='%(class)ss'
+        related_name='%(class)ss',
+        null=True
     )
     name = models.CharField(
         verbose_name=_('name'),
@@ -47,19 +48,17 @@ class ComponentModel(NetBoxModel):
 
     class Meta:
         abstract = True
-        ordering = ('device', '_name')
+        ordering = ('_name')
         constraints = (
             models.UniqueConstraint(
-                fields=('device', 'name'),
-                name='%(app_label)s_%(class)s_unique_device_name'
+                fields=('name'),
+                name='%(app_label)s_%(class)s_unique_name'
             ),
         )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Cache the original Device ID for reference under clean()
-        self._original_device = self.__dict__.get('device_id')
 
     def __str__(self):
         if self.label:
@@ -68,21 +67,12 @@ class ComponentModel(NetBoxModel):
 
     def to_objectchange(self, action):
         objectchange = super().to_objectchange(action)
-        objectchange.related_object = self.device
         return objectchange
 
     def clean(self):
         super().clean()
 
-        # Check list of Modules that allow device field to be changed
-        if (type(self) not in [InventoryItem]) and (self.pk is not None) and (self._original_device != self.device_id):
-            raise ValidationError({
-                "device": _("Components cannot be moved to a different device.")
-            })
 
-    @property
-    def parent_object(self):
-        return self.device
     
 class ModularComponentModel(ComponentModel):
     module = models.ForeignKey(

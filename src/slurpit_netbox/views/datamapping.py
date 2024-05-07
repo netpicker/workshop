@@ -92,6 +92,9 @@ class DataMappingView(View):
                 for obj in objs:
                     target_field = obj.target_field.split('|')[1]
                     row[obj.source_field] = str(device[target_field]) if device[target_field] is not None else None
+
+                    if obj.source_field == 'ipv4' or obj.source_field == 'fqdn':
+                        row[obj.source_field] = row[obj.source_field].split('/')[0]
                 # request_body.append(row)
 
                 res = post_slurpit_device(row, device["name"])
@@ -164,6 +167,7 @@ class DataMappingView(View):
     
     def post(self, request):
         tab = request.GET.get('tab', None)
+        mapping_type = ''
 
         if tab == "netbox_to_slurpit" or tab is None:
             tab = "netbox_to_slurpit"
@@ -182,7 +186,10 @@ class DataMappingView(View):
                 for obj in objs:
                     target_field = obj.target_field.split('|')[1]
                     row[obj.source_field] = str(device[target_field]) if device[target_field] is not None else None
-
+                    
+                    if obj.source_field == 'ipv4' or obj.source_field == 'fqdn':
+                        row[obj.source_field] = row[obj.source_field].split('/')[0]
+                    
                 if test is not None:
                     res = post_slurpit_device(row, device["name"])
 
@@ -296,7 +303,10 @@ class DataMappingView(View):
                     messages.error(request, "Slurpit Interface Form Validation Failed.")
                     pass
         base_url = request.path
-        query_string = urlencode({'tab': tab})
-        url = f'{base_url}?{query_string}'
 
+        if mapping_type == "":
+            query_string = urlencode({'tab': tab})
+        else:
+            query_string = urlencode({'tab': tab, 'subtab': mapping_type})
+        url = f'{base_url}?{query_string}'
         return redirect(url)
