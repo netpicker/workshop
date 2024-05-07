@@ -265,14 +265,15 @@ class SlurpitInterfaceView(SlurpitViewSet):
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
+                del initial_obj['device']
                 initial_interface_values = {**initial_obj}
 
-                device = None
+                # device = None
 
-                if initial_interface_values['device'] is not None:
-                    device = Device.objects.get(name=initial_interface_values['device'])
+                # if initial_interface_values['device'] is not None:
+                #     device = Device.objects.get(name=initial_interface_values['device'])
 
-                initial_interface_values['device'] = device
+                # initial_interface_values['device'] = device
 
             total_errors = {}
             insert_data = []
@@ -282,6 +283,21 @@ class SlurpitInterfaceView(SlurpitViewSet):
             # Form validation 
             for record in request.data:
                 obj = Interface()
+
+                if not ('hostname' in record):
+                    continue
+                
+                device = None
+                try:
+                    device = Device.objects.get(name=record['hostname'])
+                except: 
+                    device = None
+
+                if device is None: 
+                    continue
+                record['device'] = device
+                del record['hostname']
+                
                 new_data = {**initial_interface_values, **record}
                 form = InterfaceForm(data=new_data, instance=obj)
                 total_data.append(new_data)
