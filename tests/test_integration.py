@@ -219,22 +219,22 @@ def set_reconcile(is_enable):
             conn.commit()
         return cur.rowcount
     
-# def set_reconcile_for_interface(is_enable):
-#     with connection() as conn, conn.cursor() as cur:
+def set_reconcile_for_interface(is_enable):
+    with connection() as conn, conn.cursor() as cur:
 
-#         cur.execute(
-#             'UPDATE slurpit_netbox_slurpitinterface SET enable_reconcile = %s, role = %s WHERE name = ""',
-#             (is_enable, "")
-#         )
-#         conn.commit()
-#         # Not Existed Case
-#         if cur.rowcount == 0:
-#             cur.execute(
-#                 'INSERT INTO slurpit_netbox_slurpitinterface (status, enable_reconcile, custom_field_data, description, comments, role) VALUES (%s, %s, %s, %s, %s, %s)',
-#                 ("active", is_enable, json.dumps({}), "", "", "")
-#             )
-#             conn.commit()
-#         return cur.rowcount
+        cur.execute(
+            'UPDATE slurpit_netbox_slurpitinterface SET enable_reconcile = %s WHERE name = %s',
+            (is_enable, "")
+        )
+        conn.commit()
+        # Not Existed Case
+        if cur.rowcount == 0:
+            cur.execute(
+                'INSERT INTO slurpit_netbox_slurpitinterface (type, enable_reconcile) VALUES (%s, %s)',
+                ("bridge", is_enable)
+            )
+            conn.commit()
+        return cur.rowcount
     
 def check_direct_sync_ipam(ipams):
     with connection() as conn, conn.cursor() as cur:
@@ -249,6 +249,20 @@ def check_reconcile_sync_ipam(ipams):
             cur.execute('SELECT * FROM slurpit_netbox_slurpitinitipaddress WHERE address=%s', (str(ipam['address']),)) 
             cnt = len(cur.fetchall())
             assert cnt > 0, f'{ipam["address"]} does not exist in Reconcile Table.'
+
+def check_direct_sync_interface(interfaces):
+    with connection() as conn, conn.cursor() as cur:
+        for interface in interfaces:
+            cur.execute('SELECT * FROM dcim_interface WHERE name=%s', (str(interface['name']),)) 
+            cnt = len(cur.fetchall())
+            assert cnt > 0, f'{interface["name"]} does not exist in NetBox.'
+
+def check_reconcile_sync_interface(interfaces):
+    with connection() as conn, conn.cursor() as cur:
+        for interface in interfaces:
+            cur.execute('SELECT * FROM slurpit_netbox_slurpitinterface WHERE name=%s', (str(interface['name']),)) 
+            cnt = len(cur.fetchall())
+            assert cnt > 0, f'{interface["name"]} does not exist in Reconcile Table.'
 
 def test_ipams(setup):
     #IPAM Direct Sync Test
@@ -372,44 +386,66 @@ def test_data_mapping(setup):
     # Test Initial Mapping Fields
     compare_mapping_fields()
 
+def add_device_to_netbox():
+    with connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM dcim_site WHERE name=%s", ("Slurp'it",))
+        temp = cur.fetchone()
+        site = temp['id']
 
-# def test_interface(setup):
-#     #Interface Direct Sync Test
-#     #Set Enable to reconcile every incoming Interface data
-#     set_reconcile_for_interface(False)
-#     invalid_ipams = [
-#         {
-#             'address': '192.168.100.100/300',
-#             'status': 'active',
-#             'dns_name': 'test.com'
-#         }
-#     ]
-#     response = do_request('ipam/', method="POST", data=invalid_ipams)
-#     assert response.status_code == 400, f"Validation is Failed. Status wasnt 400 \n{response.json()}"
+        cur.execute("SELECT * FROM dcim_devicerole WHERE name=%s", ("Slurp'it",))
+        temp = cur.fetchone()
+        devicerole = temp['id']
 
-#     valid_ipams = [
-#         {
-#             'address': '192.168.100.100/24',
-#             'status': 'active',
-#             'dns_name': 'test.com'
-#         }
-#     ]
-#     response = do_request('ipam/', method="POST", data=valid_ipams)
-#     assert response.status_code == 200, f"IPAM import is Failed. Status wasnt 200 \n{response.json()}"
+        cur.execute("SELECT * FROM dcim_devicetype WHERE model=%s",("Slurp'it",))
+        temp = cur.fetchone()
+        devicetype = temp['id']
 
-#     check_direct_sync_ipam(valid_ipams)
+        cur.execute(
+                'INSERT INTO dcim_device (device_type_id, site_id, role_id, status, name, custom_field_data, serial, face, comments, airflow, description, inventory_item_count, console_port_count, console_server_port_count, device_bay_count, power_port_count, power_outlet_count, interface_count, rear_port_count, front_port_count, module_bay_count) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                (devicetype, site, devicerole, "active", "Slurp'it", json.dumps({}), "test", "test", "test", "test", "test", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+            )
+        conn.commit()
+    pass
 
-#     #IPAM Reconcile Test
-#     set_reconcile(True)
-#     valid_ipams = [
-#         {
-#             'address': '192.168.200.200/24',
-#             'status': 'active',
-#             'dns_name': 'test.com',
-#             'description': 'Test'
-#         }
-#     ]
-#     response = do_request('ipam/', method="POST", data=valid_ipams)
-#     assert response.status_code == 200, f"IPAM import is Failed. Status wasnt 200 \n{response.json()}"
+def test_interface(setup):
+    #Interface Direct Sync Test
+    #Set Enable to reconcile every incoming Interface data
+    set_reconcile_for_interface(False)
+    invalid_interfaces = [
+        {
+            'description': 'slurpit',
+            'label': 'slurpit'
+        }
+    ]
+    response = do_request('interface/', method="POST", data=invalid_interfaces)
+    assert response.status_code == 400, f"Validation is Failed. Status wasnt 400 \n{response.json()}"
 
-#     check_reconcile_sync_ipam(valid_ipams)
+    add_device_to_netbox()
+
+    valid_interfaces = [
+        {
+            'name': 'slurpit',
+            'description': 'slurpit',
+            'label': 'slurpit',
+            'hostname': "Slurp'it"
+        }
+    ]
+    response = do_request('interface/', method="POST", data=valid_interfaces)
+    assert response.status_code == 200, f"Interfacce import is Failed. Status wasnt 200 \n{response.json()}"
+
+    check_direct_sync_interface(valid_interfaces)
+
+    #Interface Reconcile Test
+    set_reconcile_for_interface(True)
+    valid_interfaces = [
+        {
+            'name': 'slurpitTest',
+            'description': 'slurpit',
+            'label': 'slurpit',
+            'hostname': "Slurp'it"
+        }
+    ]
+    response = do_request('interface/', method="POST", data=valid_interfaces)
+    assert response.status_code == 200, f"Interface import is Failed. Status wasnt 200 \n{response.json()}"
+
+    check_reconcile_sync_interface(valid_interfaces)
