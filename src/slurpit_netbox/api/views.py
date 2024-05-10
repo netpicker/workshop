@@ -478,6 +478,10 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
+            else:
+                initial_ipaddress_values['vrf'] = None
+                initial_ipaddress_values['tenant'] = None
+                initial_ipaddress_values['status'] = 'active'
 
             total_errors = {}
             insert_ips = []
