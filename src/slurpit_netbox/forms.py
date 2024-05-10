@@ -248,7 +248,7 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         model = SlurpitInitIPAddress
         fields = [
             'vrf', 'status', 'role', 'enable_reconcile', 'tenant_group',
-            'tenant', 'tags',
+            'tenant', 'tags','description'
         ]
 
     def __init__(self, *args, **kwargs):
