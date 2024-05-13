@@ -16,6 +16,13 @@
       Interfaces
     </a>
   </li>
+
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.subtab == 'prefix' %}active{% endif %}" href="?tab=slurpit_to_netbox&subtab=prefix">
+      Prefixes
+    </a>
+  </li>
+
 </ul>
 
 <div class="tab-content">
@@ -23,6 +30,8 @@
     {% include "slurpit_netbox/mapping/ipam.html" %}
   {% elif request.GET.subtab == 'interface' %}
     {% include "slurpit_netbox/mapping/interface.html" %}
+  {% elif request.GET.subtab == 'prefix' %}
+    {% include "slurpit_netbox/mapping/prefix.html" %}
   {% endif %}
 </div>
 

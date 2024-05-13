@@ -11,7 +11,7 @@ from utilities.forms.widgets import APISelect, NumberWithOptions, HTMXSelect
 from tenancy.models import TenantGroup, Tenant
 from tenancy.forms import TenancyForm
 from utilities.forms import BootstrapMixin
-from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from .management.choices import SlurpitApplianceTypeChoices
 from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
@@ -21,7 +21,7 @@ from ipam.models import FHRPGroup, VRF, IPAddress, VLANGroup, VLAN
 from ipam.choices import *
 from ipam.constants import *
 from dcim.forms.common import InterfaceCommonForm
-
+from ipam.forms import PrefixForm
 
 class DeviceComponentForm(NetBoxModelForm):
     device = DynamicModelChoiceField(
@@ -304,3 +304,16 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
         labels = {
             'mode': '802.1Q Mode',
         }
+
+class SlurpitPrefixForm(PrefixForm):
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming Prefix data')
+    )
+
+    class Meta:
+        model = SlurpitPrefix
+        fields = [
+            'prefix', 'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
+            'description', 'comments', 'tags','enable_reconcile'
+        ]

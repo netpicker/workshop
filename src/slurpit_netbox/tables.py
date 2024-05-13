@@ -9,8 +9,9 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 from dcim.models import  Device
 from dcim.tables import BaseInterfaceTable
-from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress, SlurpitInterface
+from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from tenancy.tables import TenancyColumnsMixin, TenantColumn
+from ipam.models import IPAddress
 
 def check_link(**kwargs):
     return {}
@@ -69,7 +70,8 @@ class ConflictedColumn(Column):
                 return mark_safe(f'{greenLink(link(escape(value), value=escape(value), record=record, bound_column=bound_column))}<br />{escape(original_value)}') #nosec 
             
         return mark_safe(f'<span">{greenText(escape(value))}<br/>{escape(original_value)}</span>') #nosec 
-    
+
+
 class DeviceTypeColumn(Column):
     def render(self, value, bound_column, record):
         if record.mapped_devicetype_id is None:
@@ -202,6 +204,7 @@ NAME_LINK = """
 <a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}">{{ record.name }}</a>
 """
 
+
 class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
     
@@ -218,13 +221,25 @@ class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
         template_code=IPADDRESS_LINK,
         verbose_name=_('IP Address')
     )
+
+    commit_action = tables.Column(
+        verbose_name = _('Commit Action'),
+        empty_values=()
+    )
+
     pk = ToggleColumn()
 
     class Meta(NetBoxTable.Meta):
         model = SlurpitInitIPAddress
-        fields = ('pk', 'id', 'address', 'vrf', 'status','dns_name', 'tenant', 'description', 'last_updated')
-        default_columns = ('address', 'vrf', 'status', 'dns_name', 'tenant', 'description', 'last_updated')
+        fields = ('pk', 'id', 'address', 'vrf', 'status','dns_name', 'description', 'last_updated', 'commit_action')
+        default_columns = ('address', 'vrf', 'status', 'commit_action', 'dns_name', 'description', 'last_updated')
 
+    def render_commit_action(self, record):
+        obj = IPAddress.objects.filter(address=record.address, vrf=record.vrf)
+        if obj:
+            return mark_safe("Changing")
+        return mark_safe("Adding")
+    
 
 class SlurpitInterfaceTable(BaseInterfaceTable):
     device = tables.Column(
@@ -254,3 +269,80 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
         )
         default_columns = ('pk', 'name', 'device', 'label', 'enabled', 'type', 'description')
 
+PREFIX_LINK = """
+{% if record.pk %}
+  <a href="{{ record.get_absolute_url }}" id="prefix_{{ record.pk }}">{{ record.prefix }}</a>
+{% else %}
+  <a href="{% url 'ipam:prefix_add' %}?prefix={{ record }}{% if object.vrf %}&vrf={{ object.vrf.pk }}{% endif %}{% if object.site %}&site={{ object.site.pk }}{% endif %}{% if object.tenant %}&tenant_group={{ object.tenant.group.pk }}&tenant={{ object.tenant.pk }}{% endif %}">{{ record.prefix }}</a>
+{% endif %}
+"""
+
+PREFIX_COPY_BUTTON = """
+{% copy_content record.pk prefix="prefix_" %}
+"""
+
+PREFIX_LINK_WITH_DEPTH = """
+{% load helpers %}
+{% if record.depth %}
+    <div class="record-depth">
+        {% for i in record.depth|as_range %}
+            <span>•</span>
+        {% endfor %}
+    </div>
+{% endif %}
+""" + PREFIX_LINK
+
+VRF_LINK = """
+{% if value %}
+    <a href="{{ record.vrf.get_absolute_url }}">{{ record.vrf }}</a>
+{% elif object.vrf %}
+    <a href="{{ object.vrf.get_absolute_url }}">{{ object.vrf }}</a>
+{% else %}
+    Global
+{% endif %}
+"""
+
+
+class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
+    prefix = columns.TemplateColumn(
+        verbose_name=_('Prefix'),
+        template_code=PREFIX_LINK_WITH_DEPTH,
+        export_raw=True,
+        attrs={'td': {'class': 'text-nowrap'}}
+    )
+    status = columns.ChoiceFieldColumn(
+        verbose_name=_('Status'),
+        default=AVAILABLE_LABEL
+    )
+    vrf = tables.TemplateColumn(
+        template_code=VRF_LINK,
+        verbose_name=_('VRF')
+    )
+    site = tables.Column(
+        verbose_name=_('Site'),
+        linkify=True
+    )
+
+    vlan = tables.Column(
+        linkify=True,
+        verbose_name=_('VLAN')
+    )
+    role = tables.Column(
+        verbose_name=_('Role'),
+        linkify=True
+    )
+
+    actions = columns.ActionsColumn(actions=tuple())
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitPrefix
+        fields = (
+            'pk', 'id', 'prefix','status', 'vrf', 'utilization', 'tenant',
+            'site', 'vlan', 'role', 'description',
+        )
+        default_columns = (
+            'pk', 'prefix', 'status','vrf', 'utilization', 'tenant', 'site', 'vlan', 'role', 'description',
+        )
+        row_attrs = {
+            'class': lambda record: 'success' if not record.pk else '',
+        }

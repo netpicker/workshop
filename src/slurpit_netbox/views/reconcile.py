@@ -1,11 +1,11 @@
 from netbox.views import generic
 
-from ..models import SlurpitInitIPAddress, SlurpitLog, SlurpitInterface
+from ..models import SlurpitInitIPAddress, SlurpitLog, SlurpitInterface, SlurpitPrefix
 from .. import forms, importer, models, tables
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
-from ipam.models import FHRPGroup, VRF, IPAddress
+from ipam.models import FHRPGroup, VRF, IPAddress, Prefix
 from utilities.utils import shallow_compare_dict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -26,6 +26,9 @@ class ReconcileView(generic.ObjectListView):
         tab = request.GET.get('tab')
         if tab == None or tab == 'ipam':
             pass
+        elif tab == 'prefix':
+            self.queryset = models.SlurpitPrefix.objects.exclude(prefix = None)
+            self.table = tables.SlurpitPrefixTable
         else:
             self.queryset = models.SlurpitInterface.objects.exclude(name = '')
             self.table = tables.SlurpitInterfaceTable
@@ -35,7 +38,8 @@ class ReconcileView(generic.ObjectListView):
     def get_extra_context(self, request):
         return {
             'ipam_count': models.SlurpitInitIPAddress.objects.exclude(address = None).count(),
-            'interface_count': models.SlurpitInterface.objects.exclude(name = '').count()
+            'interface_count': models.SlurpitInterface.objects.exclude(name = '').count(),
+            'prefix_count': models.SlurpitPrefix.objects.exclude(prefix = None).count(),
         }
     
     def post(self, request, **kwargs):
@@ -49,12 +53,17 @@ class ReconcileView(generic.ObjectListView):
                     if tab == 'interface':
                         deline_items = models.SlurpitInterface.objects.filter(pk__in=pk_list).delete()
                         messages.info(request, "Declined the selected Interfaces successfully .")
+                    elif tab == 'prefix':
+                        deline_items = models.SlurpitPrefix.objects.filter(pk__in=pk_list).delete()
+                        messages.info(request, "Declined the selected Prefixes successfully .")
                     else:
                         deline_items = SlurpitInitIPAddress.objects.filter(pk__in=pk_list).delete()
                         messages.info(request, "Declined the selected IP Addresses successfully .")
                 except:
                     if tab == 'interface':
                         messages.warning(request, "Failed to decline Interfaces.")
+                    elif tab == 'prefix':
+                        messages.warning(request, "Failed to decline Prefixes.")
                     else:
                         messages.warning(request, "Failed to decline IP Addresses.")
             else:
@@ -131,6 +140,73 @@ class ReconcileView(generic.ObjectListView):
                             SlurpitInterface.objects.filter(pk__in=batch_ids).delete()
 
                         offset += BATCH_SIZE
+                elif tab == 'prefix':
+                    reconcile_items =SlurpitPrefix.objects.filter(pk__in=pk_list)
+
+                    for item in reconcile_items:
+                        netbox_prefix = Prefix.objects.filter(prefix=item.prefix, vrf=item.vrf)
+                        # If the prefix is existed in netbox
+                        if netbox_prefix:
+                            netbox_prefix = netbox_prefix.first()
+
+                            if item.status:
+                                netbox_prefix.status = item.status
+                            if item.description:
+                                netbox_prefix.description = item.description
+                            if item.tenant:
+                                netbox_prefix.tenant = item.tenant
+                            if item.role:
+                                netbox_prefix.role = item.role
+                            if item.vlan:
+                                netbox_prefix.vlan = item.vlan
+                            if item.site:
+                                netbox_prefix.site = item.site
+
+                            batch_update_qs.append(netbox_prefix)
+                            batch_update_ids.append(item.pk)
+                        else:
+                            batch_insert_qs.append(
+                                Prefix(
+                                    prefix = item.prefix,
+                                    status = item.status, 
+                                    vrf = item.vrf,
+                                    role = item. role, 
+                                    vlan = item.vlan,
+                                    description = item.description,
+                                    tenant = item.tenant,
+                                    site = item.site
+                            ))
+                            batch_insert_ids.append(item.pk)
+                        
+                    count = len(batch_insert_qs)
+                    offset = 0
+                    while offset < count:
+                        batch_qs = batch_insert_qs[offset:offset + BATCH_SIZE]
+                        batch_ids = batch_insert_ids[offset:offset + BATCH_SIZE]
+                        to_import = []        
+                        for prefix_item in batch_qs:
+                            to_import.append(prefix_item)
+
+                        with transaction.atomic():
+                            Prefix.objects.bulk_create(to_import)
+                            SlurpitPrefix.objects.filter(pk__in=batch_ids).delete()
+                        offset += BATCH_SIZE
+
+                    count = len(batch_update_qs)
+                    offset = 0
+                    while offset < count:
+                        batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                        batch_ids = batch_update_ids[offset:offset + BATCH_SIZE]
+                        to_import = []        
+                        for prefix_item in batch_qs:
+                            to_import.append(prefix_item)
+
+                        with transaction.atomic():
+                            Prefix.objects.bulk_update(to_import, fields={'status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'description'})
+                        
+                            SlurpitPrefix.objects.filter(pk__in=batch_ids).delete()
+
+                        offset += BATCH_SIZE
                 else:
                     reconcile_items =SlurpitInitIPAddress.objects.filter(pk__in=pk_list)
 
@@ -198,11 +274,16 @@ class ReconcileView(generic.ObjectListView):
             if action == 'accept':
                 if tab == 'interface':
                     log_message = "Failed to accept since no ip addresses were selected."
+                elif tab == 'prefix':
+                    log_message = "Failed to accept since no prefixes were selected."
                 else:
                     log_message = "Failed to accept since no interfaces were selected."
             else:
                 if tab == 'interface':
                     log_message = "Failed to decline since no ip addresses were selected."
+                elif tab == 'prefix':
+                    log_message = "Failed to decline since no prefixes were selected."
+                
                 else:
                     log_message = "Failed to decline since no interfaces were selected."
 
@@ -270,6 +351,55 @@ class ReconcileDetailView(generic.ObjectView):
 
             object_type = f'{Interface._meta.app_label} | {Interface._meta.verbose_name}'
         
+        elif reconcile_type == 'prefix':
+            self.queryset = models.SlurpitPrefix.objects.all()
+            instance = self.get_object(pk=pk, **kwargs)
+            diff_added = None
+            diff_removed = None
+            action = 'Updated'
+            
+            prefix_fields = ['prefix', 'status','vrf', 'vlan', 'tenant', 'site', 'role', 'description']
+
+            incomming_queryset = SlurpitPrefix.objects.filter(pk=pk)
+            incomming_change = incomming_queryset.values(*prefix_fields).first()
+            incomming_change['prefix'] = str(incomming_change['prefix'])
+
+            prefix = str(incomming_queryset.first().prefix)
+            updated_time = incomming_queryset.first().last_updated
+            title = prefix
+            vrf = None
+
+            if incomming_change['vrf'] is not None:
+                vrf = VRF.objects.get(pk=incomming_change['vrf'])
+            current_queryset = Prefix.objects.filter(prefix=prefix, vrf=vrf)
+
+            if current_queryset:
+                current_obj = current_queryset.values(*prefix_fields).first()
+                current_state = {**current_obj}
+                current_state['prefix'] = str(current_state['prefix'])
+                
+                instance = current_queryset.first()
+            else:
+                current_state = None
+                instance = None
+                action = 'Created'
+            
+            if current_state and incomming_change:
+                diff_added = shallow_compare_dict(
+                    current_state or dict(),
+                    incomming_change or dict(),
+                    exclude=['last_updated'],
+                )
+                diff_removed = {
+                    x: current_state.get(x) for x in diff_added
+                } if current_state else {}
+            else:
+                diff_added = None
+                diff_removed = None
+
+
+            object_type = f'{Prefix._meta.app_label} | {Prefix._meta.verbose_name}'
+
         else:
             instance = self.get_object(pk=pk, **kwargs)
             diff_added = None
@@ -288,6 +418,7 @@ class ReconcileDetailView(generic.ObjectView):
             
             title = ipaddress
             vrf = initial_obj['vrf']
+            
             incomming_obj['address'] = ipaddress
             incomming_change = {**initial_obj, **incomming_obj}
 
@@ -317,6 +448,7 @@ class ReconcileDetailView(generic.ObjectView):
                 diff_removed = None
 
             object_type = f'{IPAddress._meta.app_label} | {IPAddress._meta.verbose_name}'
+
 
         return render(
             request,
