@@ -14,21 +14,21 @@ from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
 
 from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
-from ..validator import device_validator, ipam_validator, interface_validator
+from ..validator import device_validator, ipam_validator, interface_validator, prefix_validator
 from ..importer import process_import, import_devices, import_plannings, start_device_import, BATCH_SIZE
 from ..management.choices import *
 from ..views.datamapping import get_device_dict
 from ..references import base_name 
 from ..references.generic import status_offline, SlurpitViewSet
 from ..references.imports import * 
-from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface
+from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
 from django.core.serializers import serialize
 from ..views.setting import sync_snapshot
-from ipam.models import FHRPGroup, VRF, IPAddress
-from dcim.models import Interface
+from ipam.models import FHRPGroup, VRF, IPAddress, VLAN, Role, Prefix
+from dcim.models import Interface, Site
 from dcim.forms import InterfaceForm
-from ipam.forms import IPAddressForm
+from ipam.forms import IPAddressForm, PrefixForm
 from tenancy.models import Tenant
 from django.db.models import Q
 
@@ -631,3 +631,209 @@ class SlurpitIPAMView(SlurpitViewSet):
         except Exception as e:
             return JsonResponse({'status': 'error', 'errors': str(e)}, status=400)
         
+
+
+class SlurpitPrefixView(SlurpitViewSet):
+    queryset = SlurpitPrefix.objects.all()
+
+    def create(self, request):
+        # Validate request prefix data
+        errors = prefix_validator(request.data)
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+
+        try:
+            # Get initial values for prefix
+            enable_reconcile = False
+            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'description').first()
+            initial_prefix_values = {}
+
+            if initial_obj:
+                enable_reconcile = initial_obj['enable_reconcile']
+                del initial_obj['enable_reconcile']
+                initial_prefix_values = {**initial_obj}
+
+                vrf = None
+                site = None
+                tenant = None
+                vlan = None
+                role = None
+
+                if initial_prefix_values['vrf'] is not None:
+                    vrf = VRF.objects.get(name=initial_prefix_values['vrf'])
+                if initial_prefix_values['site'] is not None:
+                    site = Site.objects.get(name=initial_prefix_values['site'])
+                if initial_prefix_values['tenant'] is not None:
+                    tenant = Tenant.objects.get(name=initial_prefix_values['tenant'])
+                # if initial_prefix_values['vlan'] is not None:
+                #     tenant = Tenant.objects.get(name=initial_prefix_values['vlan'])
+                if initial_prefix_values['role'] is not None:
+                    role = Role.objects.get(name=initial_prefix_values['role'])
+
+                initial_prefix_values['vrf'] = vrf
+                initial_prefix_values['site'] = site
+                initial_prefix_values['tenant'] = tenant
+                initial_prefix_values['vlan'] = vlan
+                initial_prefix_values['role'] = role
+
+            total_errors = {}
+            insert_data = []
+            update_data = []
+            total_data = []
+
+            # Form validation 
+            for record in request.data:
+                obj = Prefix()
+                
+                new_data = {**initial_prefix_values, **record}
+                form = PrefixForm(data=new_data, instance=obj)
+                total_data.append(new_data)
+                
+                # Fail case
+                if form.is_valid() is False:
+                    form_errors = form.errors
+                    error_list_dict = {}
+
+                    for field, errors in form_errors.items():
+                        error_list_dict[field] = list(errors)
+
+                    # Duplicate Prefix
+                    keys = error_list_dict.keys()
+                    
+                    if len(keys) ==1 and 'prefix' in keys and len(error_list_dict['prefix']) == 1 and error_list_dict['prefix'][0].startswith("Duplicate"):
+                        update_data.append(new_data)
+                        continue
+                    if 'prefix' in keys and len(error_list_dict['prefix']) == 1 and error_list_dict['prefix'][0].startswith("Duplicate"):
+                        del error_list_dict['prefix']
+                    
+                    error_key = f'{new_data["prefix"]}({"Global" if new_data["vrf"] is None else new_data["vrf"]})'
+                    total_errors[error_key] = error_list_dict
+
+                    return JsonResponse({'status': 'error', 'errors': total_errors}, status=400)
+                else:
+                    insert_data.append(new_data)
+        
+            if enable_reconcile:
+                batch_update_qs = []
+                batch_insert_qs = []
+
+                for item in total_data:
+
+                    slurpit_prefix_item = SlurpitPrefix.objects.filter(prefix=item['prefix'], vrf=item['vrf'])
+                    
+                    if slurpit_prefix_item:
+                        slurpit_prefix_item = slurpit_prefix_item.first()
+
+                        if 'description' in item:
+                            slurpit_prefix_item.description = item['description']
+                        if 'vrf' in item:
+                            slurpit_prefix_item.vrf = item['vrf']
+                        if 'status' in item:
+                            slurpit_prefix_item.status = item['status']
+                        if 'role' in item:
+                            slurpit_prefix_item.role = item['role']
+                        if 'tenant' in item:
+                            slurpit_prefix_item.tenant = item['tenant']
+                        if 'site' in item:
+                            slurpit_prefix_item.site = item['site']
+                        if 'vlan' in item:
+                            slurpit_prefix_item.vlan = item['vlan']
+
+
+                        batch_update_qs.append(slurpit_prefix_item)
+                    else:
+                        
+                        batch_insert_qs.append(SlurpitPrefix(
+                            prefix = item['name'],
+                            description = item['description'],
+                            status = item['status'],
+                            role = item['role'],
+                            tenant = item['tenant'],
+                            vlan = item['vlan'],
+                            site = item['site'],
+                            vrf = item['vrf']
+                        ))
+                
+                count = len(batch_insert_qs)
+                offset = 0
+
+                while offset < count:
+                    batch_qs = batch_insert_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for prefix_item in batch_qs:
+                        to_import.append(prefix_item)
+
+                    SlurpitPrefix.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+
+
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for prefix_item in batch_qs:
+                        to_import.append(prefix_item)
+
+                    SlurpitPrefix.objects.bulk_update(to_import, 
+                        fields={'description', 'vrf', 'tenant', 'status', 'vlan', 'site', 'role'},
+                    )
+                    offset += BATCH_SIZE
+
+            else:
+
+                # Batch Insert
+                count = len(insert_data)
+                offset = 0
+                while offset < count:
+                    batch_qs = insert_data[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for prefix_item in batch_qs:
+                        to_import.append(Prefix(**prefix_item))
+                    Prefix.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+                
+                
+                # Batch Update
+                batch_update_qs = []
+                for update_item in update_data:
+                    item = Prefix.objects.get(prefix=update_item['prefix'], vrf=update_item['vrf'])
+
+                    # update
+                    if 'description' in update_item:
+                        item.description = update_item['description']
+                    if 'vrf' in update_item:
+                        item.vrf = update_item['vrf']
+                    if 'status' in update_item:
+                        item.status = update_item['status']
+                    if 'role' in update_item:
+                        item.role = update_item['role']
+                    if 'tenant' in update_item:
+                        item.tenant = update_item['tenant']
+                    if 'site' in update_item:
+                        item.site = update_item['site']
+                    if 'vlan' in update_item:
+                        item.vlan = update_item['vlan']
+
+
+                    batch_update_qs.append(item)
+
+                
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for prefix_item in batch_qs:
+                        to_import.append(prefix_item)
+
+                    Prefix.objects.bulk_update(to_import, 
+                        fields={'description', 'vrf', 'tenant', 'status', 'vlan', 'site', 'role'}
+                    )
+                    offset += BATCH_SIZE
+
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'errors', 'errors': str(e)}, status=400)
+ 

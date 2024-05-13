@@ -60,3 +60,17 @@ def interface_validator(data):
                 errors.append(f"Field {field} is missing or was None - {entry}")
 
     return errors
+
+def prefix_validator(data):
+    required_fields = ['prefix']
+    
+    if not isinstance(data, list):
+        return ["Should be a list"]
+    
+    errors = []
+    for entry in data:
+        for field in required_fields:
+            if field not in entry or entry[field] is None:
+                errors.append(f"Field {field} is missing or was None - {entry}")
+
+    return errors

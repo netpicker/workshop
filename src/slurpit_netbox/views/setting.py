@@ -118,6 +118,14 @@ class SettingsView(View):
                 },
                 {
                     "type": "POST",
+                    "url": "api/plugins/slurpit/interface/"
+                },
+                {
+                    "type": "POST",
+                    "url": "api/plugins/slurpit/prefix/"
+                },
+                {
+                    "type": "POST",
                     "url": "api/plugins/slurpit/planning/"
                 },
                 {

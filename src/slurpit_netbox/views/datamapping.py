@@ -1,10 +1,10 @@
 from django.views.generic import View
-from ..models import SlurpitImportedDevice, SlurpitMapping, SlurpitLog, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface
+from ..models import SlurpitImportedDevice, SlurpitMapping, SlurpitLog, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from .. import forms, importer, models, tables
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
-from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm, SlurpitInitIPAMForm, SlurpitDeviceInterfaceForm
+from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm, SlurpitInitIPAMForm, SlurpitDeviceInterfaceForm, SlurpitPrefixForm
 from ..management.choices import *
 from django.contrib import messages
 from dcim.models import Device
@@ -145,6 +145,12 @@ class DataMappingView(View):
                     form = SlurpitInitIPAMForm(instance=obj)
                 else:
                     form = SlurpitInitIPAMForm
+            elif subtab == 'prefix':
+                obj = SlurpitPrefix.objects.filter(prefix=None).first()
+                if obj is not None:
+                    form = SlurpitPrefixForm(instance=obj)
+                else:
+                    form = SlurpitPrefixForm
             else:
                 obj = SlurpitInterface.objects.filter(name='').first()
 
@@ -302,6 +308,27 @@ class DataMappingView(View):
                 else:
                     messages.error(request, "Slurpit Interface Form Validation Failed.")
                     pass
+            
+            elif mapping_type == 'prefix':
+                obj = SlurpitPrefix.objects.filter(prefix=None).first()
+                if obj is None:
+                    obj = SlurpitPrefix()
+
+                form = SlurpitPrefixForm(data=request.POST, instance=obj)
+                restrict_form_fields(form, request.user)
+
+                if form.is_valid():
+                    try:
+                        with transaction.atomic():
+                            obj = form.save()
+                            messages.success(request, "Updated the Slurpit Prefix Default values successfully.")
+                    except (AbortRequest, PermissionsViolation) as e:
+                        # logger.debug(e.message)
+                        form.add_error(None, e.message)
+                else:
+                    messages.error(request, "Slurpit Prefix Form Validation Failed.")
+                    pass
+
         base_url = request.path
 
         if mapping_type == "":

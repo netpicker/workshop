@@ -13,6 +13,7 @@ from .logs import SlurpitLog
 from .mapping import SlurpitMapping
 from .ipam import SlurpitInitIPAddress
 from .interface import SlurpitInterface
+from .prefix import SlurpitPrefix
 
 __all__ = [
     'SlurpitImportedDevice', 'SlurpitStagedDevice', 'SlurpitInitIPAddress'

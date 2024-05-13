@@ -38,6 +38,13 @@
       Interfaces {% badge interface_count %}
     </a>
   </li>
+  
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.tab == 'prefix' %}active{% endif %}" href="?tab=prefix">
+      Prefixes {% badge prefix_count %}
+    </a>
+  </li>
+
 
 </ul>
 {% endblock tabs %}
