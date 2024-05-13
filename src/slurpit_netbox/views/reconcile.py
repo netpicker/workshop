@@ -361,26 +361,29 @@ class ReconcileDetailView(generic.ObjectView):
             prefix_fields = ['prefix', 'status','vrf', 'vlan', 'tenant', 'site', 'role', 'description']
 
             incomming_queryset = SlurpitPrefix.objects.filter(pk=pk)
-            incomming_obj = incomming_queryset.values(*prefix_fields).first()
+            incomming_change = incomming_queryset.values(*prefix_fields).first()
+            incomming_change['prefix'] = str(incomming_change['prefix'])
 
             prefix = str(incomming_queryset.first().prefix)
             updated_time = incomming_queryset.first().last_updated
             title = prefix
+            vrf = None
 
-            incomming_change = {*incomming_obj}
-
-            current_queryset = Prefix.objects.filter(prefix=prefix, vrf=incomming_change['vrf'])
+            if incomming_change['vrf'] is not None:
+                vrf = VRF.objects.get(pk=incomming_change['vrf'])
+            current_queryset = Prefix.objects.filter(prefix=prefix, vrf=vrf)
 
             if current_queryset:
                 current_obj = current_queryset.values(*prefix_fields).first()
                 current_state = {**current_obj}
+                current_state['prefix'] = str(current_state['prefix'])
+                
                 instance = current_queryset.first()
             else:
                 current_state = None
                 instance = None
                 action = 'Created'
             
-
             if current_state and incomming_change:
                 diff_added = shallow_compare_dict(
                     current_state or dict(),
@@ -393,6 +396,7 @@ class ReconcileDetailView(generic.ObjectView):
             else:
                 diff_added = None
                 diff_removed = None
+
 
             object_type = f'{Prefix._meta.app_label} | {Prefix._meta.verbose_name}'
 
@@ -414,6 +418,7 @@ class ReconcileDetailView(generic.ObjectView):
             
             title = ipaddress
             vrf = initial_obj['vrf']
+            
             incomming_obj['address'] = ipaddress
             incomming_change = {**initial_obj, **incomming_obj}
 
@@ -443,6 +448,7 @@ class ReconcileDetailView(generic.ObjectView):
                 diff_removed = None
 
             object_type = f'{IPAddress._meta.app_label} | {IPAddress._meta.verbose_name}'
+
 
         return render(
             request,

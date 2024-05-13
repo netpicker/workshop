@@ -667,7 +667,7 @@ class SlurpitPrefixView(SlurpitViewSet):
         try:
             # Get initial values for prefix
             enable_reconcile = False
-            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'description').first()
+            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
             initial_prefix_values = {}
 
             if initial_obj:
@@ -681,16 +681,17 @@ class SlurpitPrefixView(SlurpitViewSet):
                 vlan = None
                 role = None
 
+
                 if initial_prefix_values['vrf'] is not None:
-                    vrf = VRF.objects.get(name=initial_prefix_values['vrf'])
+                    vrf = VRF.objects.get(pk=initial_prefix_values['vrf'])
                 if initial_prefix_values['site'] is not None:
-                    site = Site.objects.get(name=initial_prefix_values['site'])
+                    site = Site.objects.get(pk=initial_prefix_values['site'])
                 if initial_prefix_values['tenant'] is not None:
-                    tenant = Tenant.objects.get(name=initial_prefix_values['tenant'])
+                    tenant = Tenant.objects.get(pk=initial_prefix_values['tenant'])
                 # if initial_prefix_values['vlan'] is not None:
                 #     tenant = Tenant.objects.get(name=initial_prefix_values['vlan'])
                 if initial_prefix_values['role'] is not None:
-                    role = Role.objects.get(name=initial_prefix_values['role'])
+                    role = Role.objects.get(pk=initial_prefix_values['role'])
 
                 initial_prefix_values['vrf'] = vrf
                 initial_prefix_values['site'] = site
@@ -766,7 +767,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                     else:
                         
                         batch_insert_qs.append(SlurpitPrefix(
-                            prefix = item['name'],
+                            prefix = item['prefix'],
                             description = item['description'],
                             status = item['status'],
                             role = item['role'],
