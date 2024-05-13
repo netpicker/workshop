@@ -462,7 +462,7 @@ class SlurpitIPAMView(SlurpitViewSet):
         try:
             # Get initial values for IPAM
             enable_reconcile = False
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile').first()
+            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
             initial_ipaddress_values = {}
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
@@ -540,6 +540,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                     
                     if slurpit_ipaddress_item:
                         slurpit_ipaddress_item = slurpit_ipaddress_item.first()
+                        
                         slurpit_ipaddress_item.status = item['status']
                         slurpit_ipaddress_item.role = item['role']
                         slurpit_ipaddress_item.tennat = tenant
@@ -551,7 +552,28 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                         batch_update_qs.append(slurpit_ipaddress_item)
                     else:
-                        
+                        obj = IPAddress.objects.filter(address=item['address'], vrf=vrf)
+
+                        if obj:
+                            new_ipaddress = {
+                                'status': item['status'], 
+                                'role' : item['role'],
+                                'description' : item['description'],
+                                'tenant' : tenant,
+                                'dns_name' : item['dns_name']
+                            }
+                            obj = obj.first()
+                            old_ipaddress = {
+                                'status': obj.status, 
+                                'role' : obj.role,
+                                'description' : obj.description,
+                                'tenant' : obj.tenant,
+                                'dns_name' : obj.dns_name
+                            }
+
+                            if new_ipaddress == old_ipaddress:
+                                continue
+
                         batch_insert_qs.append(SlurpitInitIPAddress(
                             address = item['address'], 
                             vrf = vrf,
