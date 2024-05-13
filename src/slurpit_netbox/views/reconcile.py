@@ -153,6 +153,9 @@ class ReconcileView(generic.ObjectListView):
                                 netbox_prefix.status = item.status
                             if item.description:
                                 netbox_prefix.description = item.description
+                            else:
+                                netbox_prefix.description = ""
+                                
                             if item.tenant:
                                 netbox_prefix.tenant = item.tenant
                             if item.role:
@@ -226,6 +229,8 @@ class ReconcileView(generic.ObjectListView):
 
                             if item.description:
                                 netbox_ipaddress.description = item.description
+                            else:
+                                netbox_ipaddress.description = ""
 
                             batch_update_qs.append(netbox_ipaddress)
                             batch_update_ids.append(item.pk)
