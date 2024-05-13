@@ -688,8 +688,8 @@ class SlurpitPrefixView(SlurpitViewSet):
                     site = Site.objects.get(pk=initial_prefix_values['site'])
                 if initial_prefix_values['tenant'] is not None:
                     tenant = Tenant.objects.get(pk=initial_prefix_values['tenant'])
-                # if initial_prefix_values['vlan'] is not None:
-                #     tenant = Tenant.objects.get(name=initial_prefix_values['vlan'])
+                if initial_prefix_values['vlan'] is not None:
+                    tenant = Tenant.objects.get(pk=initial_prefix_values['vlan'])
                 if initial_prefix_values['role'] is not None:
                     role = Role.objects.get(pk=initial_prefix_values['role'])
 

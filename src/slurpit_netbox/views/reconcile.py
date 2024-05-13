@@ -221,6 +221,9 @@ class ReconcileView(generic.ObjectListView):
 
                             if item.dns_name:
                                 netbox_ipaddress.dns_name = item.dns_name
+                            else:
+                                netbox_ipaddress.dns_name = ""
+
                             if item.description:
                                 netbox_ipaddress.description = item.description
 
