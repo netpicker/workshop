@@ -46,18 +46,29 @@ class ReconcileView(generic.ObjectListView):
         pk_list = request.POST.getlist('pk')
         action = request.POST.get('action')
         tab = request.POST.get('tab')
+        _all = request.POST.get('_all')
 
-        if len(pk_list):
+        if _all or len(pk_list):
             if action == 'decline':
                 try:
                     if tab == 'interface':
-                        deline_items = models.SlurpitInterface.objects.filter(pk__in=pk_list).delete()
+                        if _all:
+                            deline_items = models.SlurpitInterface.objects.all().delete()
+                        else:
+                            deline_items = models.SlurpitInterface.objects.filter(pk__in=pk_list).delete()
+
                         messages.info(request, "Declined the selected Interfaces successfully .")
                     elif tab == 'prefix':
-                        deline_items = models.SlurpitPrefix.objects.filter(pk__in=pk_list).delete()
+                        if _all:
+                            deline_items = models.SlurpitPrefix.objects.filter(pk__in=pk_list).delete()
+                        else:
+                            deline_items = models.SlurpitPrefix.objects.filter(pk__in=pk_list).delete()
                         messages.info(request, "Declined the selected Prefixes successfully .")
                     else:
-                        deline_items = SlurpitInitIPAddress.objects.filter(pk__in=pk_list).delete()
+                        if _all:
+                            deline_items = SlurpitInitIPAddress.objects.all().delete()
+                        else:
+                            deline_items = SlurpitInitIPAddress.objects.filter(pk__in=pk_list).delete()
                         messages.info(request, "Declined the selected IP Addresses successfully .")
                 except:
                     if tab == 'interface':
@@ -73,7 +84,10 @@ class ReconcileView(generic.ObjectListView):
                 batch_update_ids = []
 
                 if tab == 'interface':
-                    reconcile_items =SlurpitInterface.objects.filter(pk__in=pk_list)
+                    if _all:
+                        reconcile_items = SlurpitInterface.objects.all()
+                    else:
+                        reconcile_items = SlurpitInterface.objects.filter(pk__in=pk_list)
 
                     for item in reconcile_items:
                         netbox_interface = Interface.objects.filter(name=item.name, device=item.device)
@@ -141,8 +155,10 @@ class ReconcileView(generic.ObjectListView):
 
                         offset += BATCH_SIZE
                 elif tab == 'prefix':
-                    reconcile_items =SlurpitPrefix.objects.filter(pk__in=pk_list)
-
+                    if _all:
+                        reconcile_items =SlurpitPrefix.objects.all()
+                    else:
+                        reconcile_items =SlurpitPrefix.objects.filter(pk__in=pk_list)
                     for item in reconcile_items:
                         netbox_prefix = Prefix.objects.filter(prefix=item.prefix, vrf=item.vrf)
                         # If the prefix is existed in netbox
@@ -211,7 +227,10 @@ class ReconcileView(generic.ObjectListView):
 
                         offset += BATCH_SIZE
                 else:
-                    reconcile_items =SlurpitInitIPAddress.objects.filter(pk__in=pk_list)
+                    if _all:
+                        reconcile_items =SlurpitInitIPAddress.objects.all()
+                    else:
+                        reconcile_items =SlurpitInitIPAddress.objects.filter(pk__in=pk_list)
 
                     for item in reconcile_items:
                         netbox_ipaddress = IPAddress.objects.filter(address=item.address, vrf=item.vrf)
@@ -221,6 +240,7 @@ class ReconcileView(generic.ObjectListView):
                             netbox_ipaddress.status = item.status
                             netbox_ipaddress.role = item.role
                             netbox_ipaddress.tennat = item.tenant
+
 
                             if item.dns_name:
                                 netbox_ipaddress.dns_name = item.dns_name
@@ -243,8 +263,9 @@ class ReconcileView(generic.ObjectListView):
                                     role = item.role,
                                     description = item.description,
                                     tenant = item.tenant,
-                                    dns_name = item.dns_name
+                                    dns_name = item.dns_name,
                             ))
+
                             batch_insert_ids.append(item.pk)
                         
                     count = len(batch_insert_qs)
@@ -277,7 +298,7 @@ class ReconcileView(generic.ObjectListView):
 
                         offset += BATCH_SIZE
         else:
-            messages.warning(request, "No IP Addresses were selected.")
+            messages.warning(request, "No Reconcile Items were selected.")
 
             if action == 'accept':
                 if tab == 'interface':
@@ -317,24 +338,23 @@ class ReconcileDetailView(generic.ObjectView):
             action = 'Updated'
             
 
-            interface_initial_fields = ['device', 'module', 'type', 'tags', 'duplex', 'speed']
-            interface_fields = ['name', 'label','description']
-            initial_obj = SlurpitInterface.objects.filter(name='').values(*interface_initial_fields).first()
+            interface_fields = ['name', 'label','description', 'device', 'module', 'type', 'duplex', 'speed']
+
             incomming_queryset = SlurpitInterface.objects.filter(pk=pk)
             incomming_obj = incomming_queryset.values(*interface_fields).first()
 
             name = str(incomming_queryset.first().name)
             updated_time = incomming_queryset.first().last_updated
             title = name
-            device = initial_obj['device']
+            device = incomming_obj['device']
             incomming_obj['device'] = device
 
-            incomming_change = {**initial_obj, **incomming_obj}
+            incomming_change = {**incomming_obj}
 
             current_queryset = Interface.objects.filter(name=name, device=device)
 
             if current_queryset:
-                current_obj = current_queryset.values(*interface_initial_fields, *interface_fields).first()
+                current_obj = current_queryset.values(*interface_fields).first()
                 current_obj['name'] = name
                 current_state = {**current_obj}
                 instance = current_queryset.first()
@@ -413,26 +433,27 @@ class ReconcileDetailView(generic.ObjectView):
             diff_added = None
             diff_removed = None
             action = 'Updated'
-            
 
-            ipam_initial_fields = ['status', 'vrf', 'tenant', 'tags', 'role']
-            ipam_fields = ['address', 'status', 'dns_name', 'description']
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values(*ipam_initial_fields).first()
+            ipam_fields = ['address', 'status', 'dns_name', 'description', 'vrf', 'tenant', 'role']
+
             incomming_queryset = SlurpitInitIPAddress.objects.filter(pk=pk)
             incomming_obj = incomming_queryset.values(*ipam_fields).first()
 
             ipaddress = str(incomming_queryset.first().address)
             updated_time = incomming_queryset.first().last_updated
-            
+
+
             title = ipaddress
-            vrf = initial_obj['vrf']
+            vrf = incomming_obj['vrf']
             
             incomming_obj['address'] = ipaddress
-            incomming_change = {**initial_obj, **incomming_obj}
+            incomming_change = {**incomming_obj}
+
+            
 
             current_queryset = IPAddress.objects.filter(address=ipaddress, vrf=vrf)
             if current_queryset:
-                current_obj = current_queryset.values(*ipam_initial_fields, *ipam_fields).first()
+                current_obj = current_queryset.values(*ipam_fields).first()
                 current_obj['address'] = ipaddress
                 current_state = {**current_obj}
                 instance = current_queryset.first()

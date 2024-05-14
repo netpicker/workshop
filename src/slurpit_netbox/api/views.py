@@ -469,6 +469,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                 del initial_obj['enable_reconcile']
                 initial_ipaddress_values = {**initial_obj}
 
+                obj = SlurpitInitIPAddress.objects.filter(address=None).get()
+
+                
                 vrf = None
                 tenant = None
                 if initial_ipaddress_values['vrf'] is not None:
@@ -478,6 +481,7 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
+
             else:
                 initial_ipaddress_values['vrf'] = None
                 initial_ipaddress_values['tenant'] = None
@@ -526,15 +530,6 @@ class SlurpitIPAMView(SlurpitViewSet):
                 batch_insert_qs = []
 
                 for item in total_ips:
-                    vrf = None
-                    tenant = None
-                    if item['vrf'] is not None:
-                        vrf = VRF.objects.get(pk=item['vrf'])
-                    if item['tenant'] is not None:
-                        tenant = Tenant.objects.get(pk=item['tenant'])
-                    
-                    item['vrf'] = vrf
-                    item['tenant'] = tenant
 
                     slurpit_ipaddress_item = SlurpitInitIPAddress.objects.filter(address=item['address'], vrf=item['vrf'])
                     
@@ -544,7 +539,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                         slurpit_ipaddress_item.status = item['status']
                         slurpit_ipaddress_item.role = item['role']
                         slurpit_ipaddress_item.tennat = tenant
-
+                        
                         if 'dns_name' in item:
                             slurpit_ipaddress_item.dns_name = item['dns_name']
                         if 'description' in item:
@@ -573,16 +568,18 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                             if new_ipaddress == old_ipaddress:
                                 continue
-
-                        batch_insert_qs.append(SlurpitInitIPAddress(
+                        
+                        obj = SlurpitInitIPAddress(
                             address = item['address'], 
                             vrf = vrf,
                             status = item['status'], 
                             role = item['role'],
                             description = item['description'],
                             tenant = tenant,
-                            dns_name = item['dns_name']
-                        ))
+                            dns_name = item['dns_name'],
+                        )
+
+                        batch_insert_qs.append(obj)
                 
                 count = len(batch_insert_qs)
                 offset = 0
@@ -593,8 +590,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                     for ipaddress_item in batch_qs:
                         to_import.append(ipaddress_item)
 
-                    SlurpitInitIPAddress.objects.bulk_create(to_import)
+                    created_items = SlurpitInitIPAddress.objects.bulk_create(to_import)
                     offset += BATCH_SIZE
+
 
 
                 count = len(batch_update_qs)
@@ -606,8 +604,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                         to_import.append(ipaddress_item)
 
                     SlurpitInitIPAddress.objects.bulk_update(to_import, fields={'status', 'role', 'tenant', 'dns_name', 'description'})
-                    offset += BATCH_SIZE
 
+
+                    offset += BATCH_SIZE
+                
             else:
                 # Batch Insert
                 count = len(insert_ips)
