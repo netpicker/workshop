@@ -259,7 +259,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
         try:
             # Get initial values for Interface
             enable_reconcile = False
-            initial_obj = SlurpitInterface.objects.filter(name='').values('device', 'module', 'type', 'speed', 'duplex', 'enable_reconcile').first()
+            initial_obj = SlurpitInterface.objects.filter(name='').values('device', 'module', 'type', 'speed', 'duplex', 'enable_reconcile', 'tags').first()
             initial_interface_values = {}
 
             if initial_obj:
@@ -462,12 +462,15 @@ class SlurpitIPAMView(SlurpitViewSet):
         try:
             # Get initial values for IPAM
             enable_reconcile = False
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
+            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description', 'tags').first()
             initial_ipaddress_values = {}
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
                 initial_ipaddress_values = {**initial_obj}
+
+                obj = SlurpitInitIPAddress.objects.filter(address=None).get()
+                tags = obj.tags.all()
 
                 vrf = None
                 tenant = None
@@ -478,6 +481,7 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
+                initial_ipaddress_values['tags'] = tags
             else:
                 initial_ipaddress_values['vrf'] = None
                 initial_ipaddress_values['tenant'] = None
@@ -535,6 +539,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                         slurpit_ipaddress_item.status = item['status']
                         slurpit_ipaddress_item.role = item['role']
                         slurpit_ipaddress_item.tennat = tenant
+                        slurpit_ipaddress_item.tags = item['tags']
 
                         if 'dns_name' in item:
                             slurpit_ipaddress_item.dns_name = item['dns_name']
@@ -564,16 +569,19 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                             if new_ipaddress == old_ipaddress:
                                 continue
-
-                        batch_insert_qs.append(SlurpitInitIPAddress(
+                        
+                        obj = SlurpitInitIPAddress(
                             address = item['address'], 
                             vrf = vrf,
                             status = item['status'], 
                             role = item['role'],
                             description = item['description'],
                             tenant = tenant,
-                            dns_name = item['dns_name']
-                        ))
+                            dns_name = item['dns_name'],
+                            tags = [1]
+                        )
+
+                        batch_insert_qs.append(obj)
                 
                 count = len(batch_insert_qs)
                 offset = 0
@@ -658,7 +666,7 @@ class SlurpitPrefixView(SlurpitViewSet):
         try:
             # Get initial values for prefix
             enable_reconcile = False
-            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
+            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description', 'tags').first()
             initial_prefix_values = {}
 
             if initial_obj:

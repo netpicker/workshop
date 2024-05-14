@@ -27,10 +27,13 @@ def ensure_slurpit_tags(*items):
 
         dcim_applicable_to = 'device', 'devicerole', 'devicetype', 'manufacturer', 'site'
         ipam_applicable = 'iprange'
+        slurpit_netbox_applicable_to = 'slurpitinitipaddress', 'slurpitinterface', 'slurpitprefix'
 
         dcim_Q = Q(app_label='dcim', model__in=dcim_applicable_to)
         ipam_Q = Q(app_label='ipam', model=ipam_applicable)
-        tagged_types = ContentType.objects.filter(ipam_Q | dcim_Q)
+        slurpit_Q = Q(app_label='slurpit_netbox', model__in=slurpit_netbox_applicable_to)
+
+        tagged_types = ContentType.objects.filter(ipam_Q | dcim_Q | slurpit_Q)
         tag.object_types.set(tagged_types.all())
         tags = {tag}
         ensure_slurpit_tags.cache = tags
