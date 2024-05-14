@@ -157,7 +157,7 @@ class DataMappingView(View):
                 if obj is not None:
                     form = SlurpitDeviceInterfaceForm(instance=obj)
                 else:
-                    form = SlurpitDeviceInterfaceForm
+                    form = SlurpitDeviceInterfaceForm(data={'type': 'other'})
 
         return render(
             request,

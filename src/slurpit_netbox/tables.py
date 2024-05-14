@@ -7,11 +7,11 @@ from django_tables2.columns.base import LinkTransform
 from django_tables2.utils import Accessor
 from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
-from dcim.models import  Device
+from dcim.models import  Device, Interface
 from dcim.tables import BaseInterfaceTable
 from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from tenancy.tables import TenancyColumnsMixin, TenantColumn
-from ipam.models import IPAddress
+from ipam.models import IPAddress, Prefix
 
 def check_link(**kwargs):
     return {}
@@ -260,14 +260,27 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
         verbose_name=_('Name')
     )
 
+    commit_action = tables.Column(
+        verbose_name = _('Commit Action'),
+        empty_values=()
+    )
+
     actions = columns.ActionsColumn(actions=tuple())
 
     class Meta(NetBoxTable.Meta):
         model = SlurpitInterface
         fields = (
-            'pk', 'name', 'device', 'label', 'enabled', 'type', 'description',
+            'pk', 'name', 'device', 'label', 'enabled', 'type', 'description','commit_action'
         )
-        default_columns = ('pk', 'name', 'device', 'label', 'enabled', 'type', 'description')
+        default_columns = ('pk', 'name', 'device', 'commit_action', 'label', 'enabled', 'type', 'description')
+
+    def render_commit_action(self, record):
+        obj = Interface.objects.filter(name=record.name, device=record.device)
+        if obj:
+            return mark_safe("Changing")
+        return mark_safe("Adding")
+    
+
 
 PREFIX_LINK = """
 {% if record.pk %}
@@ -323,6 +336,11 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
         linkify=True
     )
 
+    commit_action = tables.Column(
+        verbose_name = _('Commit Action'),
+        empty_values=()
+    )
+
     vlan = tables.Column(
         linkify=True,
         verbose_name=_('VLAN')
@@ -338,11 +356,17 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
         model = SlurpitPrefix
         fields = (
             'pk', 'id', 'prefix','status', 'vrf', 'utilization', 'tenant',
-            'site', 'vlan', 'role', 'description',
+            'site', 'vlan', 'role', 'description','commit_action'
         )
         default_columns = (
-            'pk', 'prefix', 'status','vrf', 'utilization', 'tenant', 'site', 'vlan', 'role', 'description',
+            'pk', 'prefix', 'status','vrf', 'utilization', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description',
         )
         row_attrs = {
             'class': lambda record: 'success' if not record.pk else '',
         }
+
+    def render_commit_action(self, record):
+        obj = Prefix.objects.filter(prefix=record.prefix, vrf=record.vrf)
+        if obj:
+            return mark_safe("Changing")
+        return mark_safe("Adding")

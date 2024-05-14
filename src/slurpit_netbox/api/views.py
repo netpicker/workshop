@@ -259,14 +259,22 @@ class SlurpitInterfaceView(SlurpitViewSet):
         try:
             # Get initial values for Interface
             enable_reconcile = False
-            initial_obj = SlurpitInterface.objects.filter(name='').values('device', 'module', 'type', 'speed', 'duplex', 'enable_reconcile').first()
+            initial_obj = SlurpitInterface.objects.filter(name='').values('module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile').first()
             initial_interface_values = {}
 
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
-                del initial_obj['device']
                 initial_interface_values = {**initial_obj}
+            else:
+                initial_interface_values = {
+                    'type': "other",
+                    'label': '',
+                    'description': '',
+                    'speed': 0,
+                    'duplex': None,
+                    'module': None
+                }
 
                 # device = None
 
@@ -359,6 +367,32 @@ class SlurpitInterfaceView(SlurpitViewSet):
                         batch_update_qs.append(slurpit_interface_item)
                     else:
                         
+                        obj = Interface.objects.filter(name=item['name'], device=item['device'])
+
+                        if obj:
+                            new_interface= {
+                                'label': item['label'], 
+                                'device' : item['device'],
+                                'module' : item['module'],
+                                'type' : item['type'],
+                                'duplex' : item['duplex'],
+                                'speed' : item['speed'],
+                                'description' : item['description']
+                            }
+                            obj = obj.first()
+                            old_interface = {
+                                'label': obj.label, 
+                                'device' : obj.device,
+                                'module' : obj.module,
+                                'type' : obj.type,
+                                'duplex' : obj.duplex,
+                                'speed' : obj.speed,
+                                'description' : obj.description
+                            }
+
+                        if new_interface == old_interface:
+                            continue
+
                         batch_insert_qs.append(SlurpitInterface(
                             name = item['name'], 
                             device = device,
@@ -699,6 +733,17 @@ class SlurpitPrefixView(SlurpitViewSet):
                 initial_prefix_values['vlan'] = vlan
                 initial_prefix_values['role'] = role
 
+            else:
+                initial_prefix_values = {
+                    'status': 'active',
+                    'vrf': None,
+                    'site': None,
+                    'tenant': None,
+                    'vlan': None,
+                    'role': None,
+                    'description': ''
+                }
+
             total_errors = {}
             insert_data = []
             update_data = []
@@ -747,6 +792,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                     if slurpit_prefix_item:
                         slurpit_prefix_item = slurpit_prefix_item.first()
 
+                        
                         if 'description' in item:
                             slurpit_prefix_item.description = item['description']
                         if 'vrf' in item:
@@ -765,7 +811,32 @@ class SlurpitPrefixView(SlurpitViewSet):
 
                         batch_update_qs.append(slurpit_prefix_item)
                     else:
-                        
+                        obj = Prefix.objects.filter(prefix=item['prefix'], vrf=item['vrf'])
+
+                        if obj:
+                            new_prefix= {
+                                'status': item['status'], 
+                                'vrf' : item['vrf'],
+                                'vlan' : item['vlan'],
+                                'tenant' : tenant,
+                                'site' : item['site'],
+                                'role' : item['role'],
+                                'description' : item['description']
+                            }
+                            obj = obj.first()
+                            old_prefix = {
+                                'status': obj.status, 
+                                'vrf' : obj.vrf,
+                                'vlan' : obj.vlan,
+                                'tenant' : obj.tenant,
+                                'site' : obj.site,
+                                'role' : obj.role,
+                                'description' : obj.description
+                            }
+
+                        if new_prefix == old_prefix:
+                            continue
+
                         batch_insert_qs.append(SlurpitPrefix(
                             prefix = item['prefix'],
                             description = item['description'],
