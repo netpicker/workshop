@@ -526,15 +526,6 @@ class SlurpitIPAMView(SlurpitViewSet):
                 batch_insert_qs = []
 
                 for item in total_ips:
-                    vrf = None
-                    tenant = None
-                    if item['vrf'] is not None:
-                        vrf = VRF.objects.get(pk=item['vrf'])
-                    if item['tenant'] is not None:
-                        tenant = Tenant.objects.get(pk=item['tenant'])
-                    
-                    item['vrf'] = vrf
-                    item['tenant'] = tenant
 
                     slurpit_ipaddress_item = SlurpitInitIPAddress.objects.filter(address=item['address'], vrf=item['vrf'])
                     

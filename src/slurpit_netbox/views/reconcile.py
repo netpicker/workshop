@@ -317,24 +317,23 @@ class ReconcileDetailView(generic.ObjectView):
             action = 'Updated'
             
 
-            interface_initial_fields = ['device', 'module', 'type', 'tags', 'duplex', 'speed']
-            interface_fields = ['name', 'label','description']
-            initial_obj = SlurpitInterface.objects.filter(name='').values(*interface_initial_fields).first()
+            interface_fields = ['name', 'label','description', 'device', 'module', 'type', 'tags', 'duplex', 'speed']
+
             incomming_queryset = SlurpitInterface.objects.filter(pk=pk)
             incomming_obj = incomming_queryset.values(*interface_fields).first()
 
             name = str(incomming_queryset.first().name)
             updated_time = incomming_queryset.first().last_updated
             title = name
-            device = initial_obj['device']
+            device = incomming_obj['device']
             incomming_obj['device'] = device
 
-            incomming_change = {**initial_obj, **incomming_obj}
+            incomming_change = {**incomming_obj}
 
             current_queryset = Interface.objects.filter(name=name, device=device)
 
             if current_queryset:
-                current_obj = current_queryset.values(*interface_initial_fields, *interface_fields).first()
+                current_obj = current_queryset.values(*interface_fields).first()
                 current_obj['name'] = name
                 current_state = {**current_obj}
                 instance = current_queryset.first()
@@ -413,11 +412,9 @@ class ReconcileDetailView(generic.ObjectView):
             diff_added = None
             diff_removed = None
             action = 'Updated'
-            
 
-            ipam_initial_fields = ['status', 'vrf', 'tenant', 'tags', 'role']
-            ipam_fields = ['address', 'status', 'dns_name', 'description']
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values(*ipam_initial_fields).first()
+            ipam_fields = ['address', 'status', 'dns_name', 'description', 'vrf', 'tenant', 'tags', 'role']
+
             incomming_queryset = SlurpitInitIPAddress.objects.filter(pk=pk)
             incomming_obj = incomming_queryset.values(*ipam_fields).first()
 
@@ -425,14 +422,14 @@ class ReconcileDetailView(generic.ObjectView):
             updated_time = incomming_queryset.first().last_updated
             
             title = ipaddress
-            vrf = initial_obj['vrf']
+            vrf = incomming_obj['vrf']
             
             incomming_obj['address'] = ipaddress
-            incomming_change = {**initial_obj, **incomming_obj}
+            incomming_change = {**incomming_obj}
 
             current_queryset = IPAddress.objects.filter(address=ipaddress, vrf=vrf)
             if current_queryset:
-                current_obj = current_queryset.values(*ipam_initial_fields, *ipam_fields).first()
+                current_obj = current_queryset.values(*ipam_fields).first()
                 current_obj['address'] = ipaddress
                 current_state = {**current_obj}
                 instance = current_queryset.first()
