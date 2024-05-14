@@ -390,8 +390,8 @@ class SlurpitInterfaceView(SlurpitViewSet):
                                 'description' : obj.description
                             }
 
-                        if new_interface == old_interface:
-                            continue
+                            if new_interface == old_interface:
+                                continue
 
                         batch_insert_qs.append(SlurpitInterface(
                             name = item['name'], 
@@ -834,8 +834,8 @@ class SlurpitPrefixView(SlurpitViewSet):
                                 'description' : obj.description
                             }
 
-                        if new_prefix == old_prefix:
-                            continue
+                            if new_prefix == old_prefix:
+                                continue
 
                         batch_insert_qs.append(SlurpitPrefix(
                             prefix = item['prefix'],
