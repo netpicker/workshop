@@ -240,7 +240,7 @@ class ReconcileView(generic.ObjectListView):
                             netbox_ipaddress.status = item.status
                             netbox_ipaddress.role = item.role
                             netbox_ipaddress.tennat = item.tenant
-                            netbox_ipaddress.tags = item.tags
+
 
                             if item.dns_name:
                                 netbox_ipaddress.dns_name = item.dns_name
@@ -264,7 +264,6 @@ class ReconcileView(generic.ObjectListView):
                                     description = item.description,
                                     tenant = item.tenant,
                                     dns_name = item.dns_name,
-                                    tags = [1]
                             ))
 
                             batch_insert_ids.append(item.pk)
@@ -339,7 +338,7 @@ class ReconcileDetailView(generic.ObjectView):
             action = 'Updated'
             
 
-            interface_fields = ['name', 'label','description', 'device', 'module', 'type', 'tags', 'duplex', 'speed']
+            interface_fields = ['name', 'label','description', 'device', 'module', 'type', 'duplex', 'speed']
 
             incomming_queryset = SlurpitInterface.objects.filter(pk=pk)
             incomming_obj = incomming_queryset.values(*interface_fields).first()
@@ -435,19 +434,22 @@ class ReconcileDetailView(generic.ObjectView):
             diff_removed = None
             action = 'Updated'
 
-            ipam_fields = ['address', 'status', 'dns_name', 'description', 'vrf', 'tenant', 'tags', 'role']
+            ipam_fields = ['address', 'status', 'dns_name', 'description', 'vrf', 'tenant', 'role']
 
             incomming_queryset = SlurpitInitIPAddress.objects.filter(pk=pk)
             incomming_obj = incomming_queryset.values(*ipam_fields).first()
 
             ipaddress = str(incomming_queryset.first().address)
             updated_time = incomming_queryset.first().last_updated
-            
+
+
             title = ipaddress
             vrf = incomming_obj['vrf']
             
             incomming_obj['address'] = ipaddress
             incomming_change = {**incomming_obj}
+
+            
 
             current_queryset = IPAddress.objects.filter(address=ipaddress, vrf=vrf)
             if current_queryset:

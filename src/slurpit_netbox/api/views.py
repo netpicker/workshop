@@ -259,7 +259,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
         try:
             # Get initial values for Interface
             enable_reconcile = False
-            initial_obj = SlurpitInterface.objects.filter(name='').values('device', 'module', 'type', 'speed', 'duplex', 'enable_reconcile', 'tags').first()
+            initial_obj = SlurpitInterface.objects.filter(name='').values('device', 'module', 'type', 'speed', 'duplex', 'enable_reconcile').first()
             initial_interface_values = {}
 
             if initial_obj:
@@ -462,7 +462,7 @@ class SlurpitIPAMView(SlurpitViewSet):
         try:
             # Get initial values for IPAM
             enable_reconcile = False
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description', 'tags').first()
+            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
             initial_ipaddress_values = {}
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
@@ -470,8 +470,8 @@ class SlurpitIPAMView(SlurpitViewSet):
                 initial_ipaddress_values = {**initial_obj}
 
                 obj = SlurpitInitIPAddress.objects.filter(address=None).get()
-                tags = obj.tags.all()
 
+                
                 vrf = None
                 tenant = None
                 if initial_ipaddress_values['vrf'] is not None:
@@ -481,7 +481,7 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
-                initial_ipaddress_values['tags'] = tags
+
             else:
                 initial_ipaddress_values['vrf'] = None
                 initial_ipaddress_values['tenant'] = None
@@ -539,8 +539,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                         slurpit_ipaddress_item.status = item['status']
                         slurpit_ipaddress_item.role = item['role']
                         slurpit_ipaddress_item.tennat = tenant
-                        slurpit_ipaddress_item.tags = item['tags']
-
+                        
                         if 'dns_name' in item:
                             slurpit_ipaddress_item.dns_name = item['dns_name']
                         if 'description' in item:
@@ -578,7 +577,6 @@ class SlurpitIPAMView(SlurpitViewSet):
                             description = item['description'],
                             tenant = tenant,
                             dns_name = item['dns_name'],
-                            tags = [1]
                         )
 
                         batch_insert_qs.append(obj)
@@ -592,8 +590,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                     for ipaddress_item in batch_qs:
                         to_import.append(ipaddress_item)
 
-                    SlurpitInitIPAddress.objects.bulk_create(to_import)
+                    created_items = SlurpitInitIPAddress.objects.bulk_create(to_import)
                     offset += BATCH_SIZE
+
 
 
                 count = len(batch_update_qs)
@@ -605,8 +604,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                         to_import.append(ipaddress_item)
 
                     SlurpitInitIPAddress.objects.bulk_update(to_import, fields={'status', 'role', 'tenant', 'dns_name', 'description'})
-                    offset += BATCH_SIZE
 
+
+                    offset += BATCH_SIZE
+                
             else:
                 # Batch Insert
                 count = len(insert_ips)
@@ -666,7 +667,7 @@ class SlurpitPrefixView(SlurpitViewSet):
         try:
             # Get initial values for prefix
             enable_reconcile = False
-            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description', 'tags').first()
+            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
             initial_prefix_values = {}
 
             if initial_obj:
