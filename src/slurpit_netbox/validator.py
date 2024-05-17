@@ -48,7 +48,7 @@ def ipam_validator(data):
     return errors
 
 def interface_validator(data):
-    required_fields = ['name']
+    required_fields = ['name', 'hostname']
     
     if not isinstance(data, list):
         return ["Should be a list"]

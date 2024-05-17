@@ -115,6 +115,7 @@ class ReconcileView(generic.ObjectListView):
                         else:
                             batch_insert_qs.append(
                                 Interface(
+                                    name = item.name,
                                     label = item.label, 
                                     device = item.device,
                                     speed = item. speed, 
