@@ -237,8 +237,8 @@ class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
     def render_commit_action(self, record):
         obj = IPAddress.objects.filter(address=record.address, vrf=record.vrf)
         if obj:
-            return mark_safe('<span>Changing</span>')
-        return mark_safe('<span>Adding</span>')
+            return 'Changing'
+        return 'Adding'
     
 
 class SlurpitInterfaceTable(BaseInterfaceTable):
@@ -277,8 +277,8 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
     def render_commit_action(self, record):
         obj = Interface.objects.filter(name=record.name, device=record.device)
         if obj:
-            return mark_safe('<span>Changing</span>')
-        return mark_safe('<span>Adding</span>')
+            return 'Changing'
+        return 'Adding'
     
 
 
@@ -368,5 +368,5 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
     def render_commit_action(self, record):
         obj = Prefix.objects.filter(prefix=record.prefix, vrf=record.vrf)
         if obj:
-            return mark_safe('<span>Changing</span>')
-        return mark_safe('<span>Adding</span>')
+            return 'Changing'
+        return 'Adding'
