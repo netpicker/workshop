@@ -53,20 +53,20 @@ class ReconcileView(generic.ObjectListView):
                 try:
                     if tab == 'interface':
                         if _all:
-                            deline_items = models.SlurpitInterface.objects.all().delete()
+                            deline_items = models.SlurpitInterface.objects.exclude(name='').delete()
                         else:
                             deline_items = models.SlurpitInterface.objects.filter(pk__in=pk_list).delete()
 
                         messages.info(request, "Declined the selected Interfaces successfully .")
                     elif tab == 'prefix':
                         if _all:
-                            deline_items = models.SlurpitPrefix.objects.filter(pk__in=pk_list).delete()
+                            deline_items = models.SlurpitPrefix.objects.exclude(prefix=None).delete()
                         else:
                             deline_items = models.SlurpitPrefix.objects.filter(pk__in=pk_list).delete()
                         messages.info(request, "Declined the selected Prefixes successfully .")
                     else:
                         if _all:
-                            deline_items = SlurpitInitIPAddress.objects.all().delete()
+                            deline_items = SlurpitInitIPAddress.objects.exclude(address=None).delete()
                         else:
                             deline_items = SlurpitInitIPAddress.objects.filter(pk__in=pk_list).delete()
                         messages.info(request, "Declined the selected IP Addresses successfully .")
@@ -85,7 +85,7 @@ class ReconcileView(generic.ObjectListView):
 
                 if tab == 'interface':
                     if _all:
-                        reconcile_items = SlurpitInterface.objects.all()
+                        reconcile_items = SlurpitInterface.objects.exclude(name='')
                     else:
                         reconcile_items = SlurpitInterface.objects.filter(pk__in=pk_list)
 
@@ -157,7 +157,7 @@ class ReconcileView(generic.ObjectListView):
                         offset += BATCH_SIZE
                 elif tab == 'prefix':
                     if _all:
-                        reconcile_items =SlurpitPrefix.objects.all()
+                        reconcile_items =SlurpitPrefix.objects.exclude(prefix=None)
                     else:
                         reconcile_items =SlurpitPrefix.objects.filter(pk__in=pk_list)
                     for item in reconcile_items:
@@ -229,7 +229,7 @@ class ReconcileView(generic.ObjectListView):
                         offset += BATCH_SIZE
                 else:
                     if _all:
-                        reconcile_items =SlurpitInitIPAddress.objects.all()
+                        reconcile_items =SlurpitInitIPAddress.objects.exclude(address=None)
                     else:
                         reconcile_items =SlurpitInitIPAddress.objects.filter(pk__in=pk_list)
 
