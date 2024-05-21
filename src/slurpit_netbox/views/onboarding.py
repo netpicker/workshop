@@ -179,7 +179,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     if interface:
                         interface = interface.first()
                     else:
-                        interface = Interface.objects.create(name='Management', device=device, type='other')
+                        interface = Interface.objects.create(name='management1', device=device, type='other')
 
                     address = f'{obj.fqdn}/32'
                     ipaddress = IPAddress.objects.filter(address=address)
@@ -230,7 +230,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     if interface:
                         interface = interface.first()
                     else:
-                        interface = Interface.objects.create(name='Management', device=device, type='other')
+                        interface = Interface.objects.create(name='management1', device=device, type='other')
 
                     address = f'{obj.fqdn}/32'
                     ipaddress = IPAddress.objects.filter(address=address)

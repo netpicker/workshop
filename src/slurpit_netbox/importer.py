@@ -180,6 +180,8 @@ def import_from_queryset(qs: QuerySet, **extra):
 def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra) -> Device:
     kw = get_default_objects()
     cf = extra.pop(custom_field_data_name, {})
+    interface_name = extra.pop('interface_name', 'management1')
+
     cf.update({
         'slurpit_hostname': staged.hostname,
         'slurpit_fqdn': staged.fqdn,
@@ -203,7 +205,7 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     ensure_slurpit_tags(device)
 
     # Interface for new device.
-    interface = Interface.objects.create(name='Management', device=device, type='other')
+    interface = Interface.objects.create(name=interface_name, device=device, type='other')
     
     address = f'{staged.fqdn}/32'
     ipaddress = IPAddress.objects.filter(address=address)
