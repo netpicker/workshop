@@ -14,6 +14,8 @@ from .management.choices import *
 from .references import base_name, plugin_type, custom_field_data_name
 from .references.generic import get_default_objects, status_inventory, status_offline, get_create_dcim_objects, set_device_custom_fields
 from .references.imports import *
+from dcim.models import Interface
+from ipam.models import IPAddress
 
 BATCH_SIZE = 256
 columns = ('slurpit_id', 'disabled', 'hostname', 'fqdn', 'ipv4', 'device_os', 'device_type', 'brand', 'createddate', 'changeddate')
@@ -199,6 +201,21 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     kw.setdefault('status', status_inventory())
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
+
+    # Interface for new device.
+    interface = Interface.objects.create(name='Management', device=device, type='other')
+    
+    address = f'{staged.fqdn}/32'
+    ipaddress = IPAddress.objects.filter(address=address)
+    if ipaddress:
+        ipaddress = ipaddress.first()
+    else:
+        ipaddress = IPAddress.objects.create(address=address, status='active')
+    ipaddress.assigned_object = interface
+    ipaddress.save()
+    device.primary_ip4 = ipaddress
+    device.save()
+    
     return device
 
 def get_from_staged(
