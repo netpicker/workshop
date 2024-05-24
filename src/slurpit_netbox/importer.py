@@ -204,19 +204,20 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
 
-    # Interface for new device.
-    interface = Interface.objects.create(name=interface_name, device=device, type='other')
+    #Interface for new device.
+    if staged.ipv4:
+        interface = Interface.objects.create(name=interface_name, device=device, type='other')
     
-    address = f'{staged.fqdn}/32'
-    ipaddress = IPAddress.objects.filter(address=address)
-    if ipaddress:
-        ipaddress = ipaddress.first()
-    else:
-        ipaddress = IPAddress.objects.create(address=address, status='active')
-    ipaddress.assigned_object = interface
-    ipaddress.save()
-    device.primary_ip4 = ipaddress
-    device.save()
+        address = f'{staged.ipv4}/32'
+        ipaddress = IPAddress.objects.filter(address=address)
+        if ipaddress:
+            ipaddress = ipaddress.first()
+        else:
+            ipaddress = IPAddress.objects.create(address=address, status='active')
+        ipaddress.assigned_object = interface
+        ipaddress.save()
+        device.primary_ip4 = ipaddress
+        device.save()
     
     return device
 

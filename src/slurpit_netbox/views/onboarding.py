@@ -175,23 +175,24 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     obj.save()
 
                     # Interface
-                    interface = Interface.objects.filter(device=device)
-                    if interface:
-                        interface = interface.first()
-                    else:
-                        interface = Interface.objects.create(name='management1', device=device, type='other')
+                    if obj.ipv4:
+                        interface = Interface.objects.filter(device=device)
+                        if interface:
+                            interface = interface.first()
+                        else:
+                            interface = Interface.objects.create(name='management1', device=device, type='other')
 
-                    address = f'{obj.fqdn}/32'
-                    ipaddress = IPAddress.objects.filter(address=address)
-                    if ipaddress:
-                        ipaddress = ipaddress.first()
-                    else:
-                        ipaddress = IPAddress.objects.create(address=address, status='active')
-                    
-                    ipaddress.assigned_object = interface
-                    ipaddress.save()
-                    device.primary_ip4 = ipaddress
-                    device.save()
+                        address = f'{obj.ipv4}/32'
+                        ipaddress = IPAddress.objects.filter(address=address)
+                        if ipaddress:
+                            ipaddress = ipaddress.first()
+                        else:
+                            ipaddress = IPAddress.objects.create(address=address, status='active')
+                        
+                        ipaddress.assigned_object = interface
+                        ipaddress.save()
+                        device.primary_ip4 = ipaddress
+                        device.save()
 
                     log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
                     SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
@@ -226,23 +227,24 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     obj.save()
 
                     # Interface
-                    interface = Interface.objects.filter(device=device)
-                    if interface:
-                        interface = interface.first()
-                    else:
-                        interface = Interface.objects.create(name='management1', device=device, type='other')
+                    if obj.ipv4:
+                        interface = Interface.objects.filter(device=device)
+                        if interface:
+                            interface = interface.first()
+                        else:
+                            interface = Interface.objects.create(name='management1', device=device, type='other')
 
-                    address = f'{obj.fqdn}/32'
-                    ipaddress = IPAddress.objects.filter(address=address)
-                    if ipaddress:
-                        ipaddress = ipaddress.first()
-                    else:
-                        ipaddress = IPAddress.objects.create(address=address, status='active')
-                    
-                    ipaddress.assigned_object = interface
-                    ipaddress.save()
-                    device.primary_ip4 = ipaddress
-                    device.save()
+                        address = f'{obj.ipv4}/32'
+                        ipaddress = IPAddress.objects.filter(address=address)
+                        if ipaddress:
+                            ipaddress = ipaddress.first()
+                        else:
+                            ipaddress = IPAddress.objects.create(address=address, status='active')
+                        
+                        ipaddress.assigned_object = interface
+                        ipaddress.save()
+                        device.primary_ip4 = ipaddress
+                        device.save()
 
                     log_message = f"Conflicted device resolved - {obj.hostname} successfully updated."
                     SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
