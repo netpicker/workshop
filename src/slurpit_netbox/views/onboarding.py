@@ -21,6 +21,8 @@ from ..decorators import slurpit_plugin_registered
 from ..references import base_name, custom_field_data_name
 from ..references.generic import create_form, get_form_device_data, SlurpitViewMixim, get_default_objects, set_device_custom_fields, status_inventory
 from ..references.imports import * 
+from dcim.models import DeviceType, Interface
+from ipam.models import IPAddress
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
@@ -119,8 +121,8 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
 
         self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
         device_types = list(self.queryset.values_list('device_type').distinct())
-
         form = create_form(self.form, request.POST, models.SlurpitImportedDevice, {'pk': pk_list, 'device_types': device_types})
+
         restrict_form_fields(form, request.user)
 
         if '_apply' in request.POST:
@@ -172,6 +174,25 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     device.save()
                     obj.save()
 
+                    # Interface
+                    interface = Interface.objects.filter(device=device)
+                    if interface:
+                        interface = interface.first()
+                    else:
+                        interface = Interface.objects.create(name='management1', device=device, type='other')
+
+                    address = f'{obj.fqdn}/32'
+                    ipaddress = IPAddress.objects.filter(address=address)
+                    if ipaddress:
+                        ipaddress = ipaddress.first()
+                    else:
+                        ipaddress = IPAddress.objects.create(address=address, status='active')
+                    
+                    ipaddress.assigned_object = interface
+                    ipaddress.save()
+                    device.primary_ip4 = ipaddress
+                    device.save()
+
                     log_message = f"Migration of onboarded device - {obj.hostname} successfully updated."
                     SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
                 
@@ -204,6 +225,25 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     device.save()
                     obj.save()
 
+                    # Interface
+                    interface = Interface.objects.filter(device=device)
+                    if interface:
+                        interface = interface.first()
+                    else:
+                        interface = Interface.objects.create(name='management1', device=device, type='other')
+
+                    address = f'{obj.fqdn}/32'
+                    ipaddress = IPAddress.objects.filter(address=address)
+                    if ipaddress:
+                        ipaddress = ipaddress.first()
+                    else:
+                        ipaddress = IPAddress.objects.create(address=address, status='active')
+                    
+                    ipaddress.assigned_object = interface
+                    ipaddress.save()
+                    device.primary_ip4 = ipaddress
+                    device.save()
+
                     log_message = f"Conflicted device resolved - {obj.hostname} successfully updated."
                     SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=log_message)
                 
@@ -211,11 +251,12 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                 messages.success(self.request, msg)
 
                 return redirect(self.get_return_url(request))
-                
+        
         initial_data = {'pk': pk_list, 'device_types': device_types}
         for k, v in get_default_objects().items():
             initial_data.setdefault(k, str(v.id))
         initial_data.setdefault('status', status_inventory())
+
 
         if len(device_types) > 1:
             initial_data['device_type'] = 'keep_original'

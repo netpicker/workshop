@@ -21,6 +21,7 @@ def get_form_device_data(form):
             'tenant': form.cleaned_data['tenant'],
             'description': form.cleaned_data['description'],
             'airflow': form.cleaned_data['airflow'],
+            'interface_name': form.cleaned_data['interface_name']
         }
 
 def set_device_custom_fields(device, fields):
@@ -39,6 +40,9 @@ def status_inventory():
 
 def status_offline():
     return DeviceStatusChoices.STATUS_OFFLINE
+
+def status_decommissioning():
+    return DeviceStatusChoices.STATUS_DECOMMISSIONING
 
 def get_create_dcim_objects(staged: SlurpitStagedDevice):
     manu, new = Manufacturer.objects.get_or_create(name=staged.brand, defaults={'slug':slugify(staged.brand)})

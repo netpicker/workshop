@@ -19,7 +19,7 @@ from ..importer import process_import, import_devices, import_plannings, start_d
 from ..management.choices import *
 from ..views.datamapping import get_device_dict
 from ..references import base_name 
-from ..references.generic import status_offline, SlurpitViewSet
+from ..references.generic import status_offline, SlurpitViewSet, status_decommissioning
 from ..references.imports import * 
 from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
@@ -162,7 +162,7 @@ class DeviceViewSet(
     @action(detail=False, methods=['delete'], url_path='delete-all')
     def delete_all(self, request, *args, **kwargs):
         with transaction.atomic():
-            Device.objects.select_related('slurpitimporteddevice').update(status=status_offline())
+            Device.objects.select_related('slurpitimporteddevice').update(status=status_decommissioning())
             SlurpitStagedDevice.objects.all().delete()
             SlurpitImportedDevice.objects.filter(mapped_device__isnull=True).delete()
 
@@ -173,7 +173,7 @@ class DeviceViewSet(
         hostname_to_delete = kwargs.get('hostname')
         with transaction.atomic():
             to_delete = SlurpitImportedDevice.objects.filter(hostname=hostname_to_delete)
-            Device.objects.filter(slurpitimporteddevice__in=to_delete).update(status=status_offline())
+            Device.objects.filter(slurpitimporteddevice__in=to_delete).update(status=status_decommissioning())
             to_delete.filter(mapped_device__isnull=True).delete()
             SlurpitStagedDevice.objects.filter(hostname=hostname_to_delete).delete()
 

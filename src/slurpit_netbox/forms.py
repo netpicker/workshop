@@ -52,6 +52,13 @@ class ModularDeviceComponentForm(DeviceComponentForm):
 
 class OnboardingForm(NetBoxModelBulkEditForm):
     model = SlurpitImportedDevice
+    interface_name = forms.CharField(
+        label=_('Management Interface'),
+        initial='Management1',
+        max_length=200,
+        required=True
+    )
+    
     device_type = forms.ChoiceField(
         choices=[],
         label=_('Device type'),
