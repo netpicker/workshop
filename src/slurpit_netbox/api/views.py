@@ -752,7 +752,7 @@ class SlurpitPrefixView(SlurpitViewSet):
             # Form validation 
             for record in request.data:
                 obj = Prefix()
-                if record['vrf'] and len(record['vrf']) > 0:
+                if 'vrf' in record and len(record['vrf']) > 0:
                     vrf = VRF.objects.filter(name=record['vrf'])
                     if vrf:
                         record['vrf'] = vrf.first()
@@ -760,7 +760,8 @@ class SlurpitPrefixView(SlurpitViewSet):
                         vrf = VRF.objects.create(name=record['vrf'])
                         record['vrf'] = vrf
                 else:
-                    del record['vrf']
+                    if 'vrf' in record:
+                        del record['vrf']
 
                 new_data = {**initial_prefix_values, **record}
                 form = PrefixForm(data=new_data, instance=obj)
