@@ -197,11 +197,11 @@ class SlurpitPlanningTable(tables.Table):
         super().__init__(data, **kwargs)
 
 IPADDRESS_LINK = """
-<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}">{{ record.address }}</a>
+<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}" target="_blank">{{ record.address }}</a>
 """
 
 NAME_LINK = """
-<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}">{{ record.name }}</a>
+<a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}" target="_blank">{{ record.name }}</a>
 """
 
 
@@ -284,9 +284,9 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
 
 PREFIX_LINK = """
 {% if record.pk %}
-  <a href="{{ record.get_absolute_url }}" id="prefix_{{ record.pk }}">{{ record.prefix }}</a>
+  <a href="{{ record.get_absolute_url }}" id="prefix_{{ record.pk }}" target="_blank">{{ record.prefix }}</a>
 {% else %}
-  <a href="{% url 'ipam:prefix_add' %}?prefix={{ record }}{% if object.vrf %}&vrf={{ object.vrf.pk }}{% endif %}{% if object.site %}&site={{ object.site.pk }}{% endif %}{% if object.tenant %}&tenant_group={{ object.tenant.group.pk }}&tenant={{ object.tenant.pk }}{% endif %}">{{ record.prefix }}</a>
+  <a href="{% url 'ipam:prefix_add' %}?prefix={{ record }}{% if object.vrf %}&vrf={{ object.vrf.pk }}{% endif %}{% if object.site %}&site={{ object.site.pk }}{% endif %}{% if object.tenant %}&tenant_group={{ object.tenant.group.pk }}&tenant={{ object.tenant.pk }}{% endif %}" target="_blank">{{ record.prefix }}</a>
 {% endif %}
 """
 

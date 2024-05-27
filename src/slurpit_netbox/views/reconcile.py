@@ -14,6 +14,7 @@ from ..management.choices import *
 from ..importer import BATCH_SIZE
 from django.db import transaction
 from dcim.models import Interface
+from urllib.parse import urlencode
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ReconcileView(generic.ObjectListView):
@@ -318,8 +319,15 @@ class ReconcileView(generic.ObjectListView):
                     log_message = "Failed to decline since no interfaces were selected."
 
             SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.RECONCILE, message=log_message)
-            
-        return redirect(reverse("plugins:slurpit_netbox:reconcile_list"))
+        
+        if tab is None:
+            tab = 'ipam'
+        query_params = {'tab': tab}
+        base_url = reverse("plugins:slurpit_netbox:reconcile_list")
+        # Encode your query parameters and append them to the base URL
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        return redirect(url_with_querystring)
     
 class ReconcileDetailView(generic.ObjectView):
     queryset = models.SlurpitInitIPAddress.objects.all()
