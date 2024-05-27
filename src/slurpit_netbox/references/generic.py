@@ -29,11 +29,18 @@ def set_device_custom_fields(device, fields):
         device.custom_field_data[k] = v
 
 def get_default_objects():
-    return {
-        'device_type': DeviceType.objects.get(**get_config('DeviceType')),
-        'role': DeviceRole.objects.get(**get_config('DeviceRole')),
-        'site': Site.objects.get(**get_config('Site')),
-    }
+    device_type = DeviceType.objects.filter(**get_config('DeviceType'))
+    role = DeviceRole.objects.filter(**get_config('DeviceRole'))
+    site = Site.objects.filter(**get_config('Site'))
+    defaults = {}
+    if device_type:
+        defaults['device_type'] = device_type.first()
+    if role:
+        defaults['role'] = role.first()
+    if site:
+        defaults['site'] = site.first()
+
+    return defaults
 
 def status_inventory():
     return DeviceStatusChoices.STATUS_INVENTORY
