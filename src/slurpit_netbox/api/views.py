@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 from rest_framework.routers import APIRootView
 from rest_framework_bulk import BulkCreateModelMixin, BulkDestroyModelMixin
@@ -12,6 +13,9 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
+from django.utils import timezone
+from django.db.models import Q
+from django.core.serializers import serialize
 
 from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
 from ..validator import device_validator, ipam_validator, interface_validator, prefix_validator
@@ -23,14 +27,12 @@ from ..references.generic import status_offline, SlurpitViewSet, status_decommis
 from ..references.imports import * 
 from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
-from django.core.serializers import serialize
 from ..views.setting import sync_snapshot
 from ipam.models import FHRPGroup, VRF, IPAddress, VLAN, Role, Prefix
 from dcim.models import Interface, Site
 from dcim.forms import InterfaceForm
 from ipam.forms import IPAddressForm, PrefixForm
 from tenancy.models import Tenant
-from django.db.models import Q
 
 __all__ = (
     'SlurpitPlanningViewSet',
@@ -203,7 +205,8 @@ class DeviceViewSet(
 
     @action(detail=False, methods=['post'],  url_path='sync_start')
     def sync_start(self, request):
-        start_device_import()
+        threshold = timezone.now() - timedelta(days=1)
+        SlurpitStagedDevice.objects.filter(createddate__lt=threshold).delete()
         return JsonResponse({'status': 'success'})
 
     @action(detail=False, methods=['post'],  url_path='sync_end')
