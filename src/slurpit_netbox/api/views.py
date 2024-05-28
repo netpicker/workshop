@@ -200,6 +200,9 @@ class DeviceViewSet(
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        ids = [obj['id'] for obj in request.data]
+        hostnames = [obj['hostname'] for obj in request.data]
+        SlurpitStagedDevice.objects.filter(Q(hostname__in=hostnames) | Q(slurpit_id__in=ids)).delete()
         import_devices(request.data)        
         return JsonResponse({'status': 'success'})
 
