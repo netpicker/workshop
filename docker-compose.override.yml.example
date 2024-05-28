@@ -1,5 +1,3 @@
-version: '3.4' # This is NOT the version of NetBox! No need to adjust :)
-
 x-plugin: &plugin-common
     #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
     build: .
