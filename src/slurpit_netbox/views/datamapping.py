@@ -138,26 +138,27 @@ class DataMappingView(View):
         device_form = SlurpitDeviceForm()
         device_status_form = SlurpitDeviceStatusForm()
 
+
         if tab == "slurpit_to_netbox":
             if subtab == None or subtab == 'ipam':
                 obj = SlurpitInitIPAddress.objects.filter(address=None).first()
                 if obj is not None:
                     form = SlurpitInitIPAMForm(instance=obj)
                 else:
-                    form = SlurpitInitIPAMForm
+                    form = SlurpitInitIPAMForm(data={'enable_reconcile':True})
             elif subtab == 'prefix':
                 obj = SlurpitPrefix.objects.filter(prefix=None).first()
                 if obj is not None:
                     form = SlurpitPrefixForm(instance=obj)
                 else:
-                    form = SlurpitPrefixForm
+                    form = SlurpitPrefixForm(data={'enable_reconcile':True})
             else:
                 obj = SlurpitInterface.objects.filter(name='').first()
 
                 if obj is not None:
                     form = SlurpitDeviceInterfaceForm(instance=obj)
                 else:
-                    form = SlurpitDeviceInterfaceForm(data={'type': 'other'})
+                    form = SlurpitDeviceInterfaceForm(data={'type': 'other', 'enable_reconcile':True})
 
         return render(
             request,

@@ -258,7 +258,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
 
         try:
             # Get initial values for Interface
-            enable_reconcile = False
+            enable_reconcile = True
             initial_obj = SlurpitInterface.objects.filter(name='').values('module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile').first()
             initial_interface_values = {}
 
@@ -495,7 +495,7 @@ class SlurpitIPAMView(SlurpitViewSet):
 
         try:
             # Get initial values for IPAM
-            enable_reconcile = False
+            enable_reconcile = True
             initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
             initial_ipaddress_values = {}
             if initial_obj:
@@ -700,7 +700,7 @@ class SlurpitPrefixView(SlurpitViewSet):
 
         try:
             # Get initial values for prefix
-            enable_reconcile = False
+            enable_reconcile = True
             initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
             initial_prefix_values = {}
 
