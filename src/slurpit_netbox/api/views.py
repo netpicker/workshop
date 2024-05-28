@@ -499,6 +499,9 @@ class SlurpitIPAMView(SlurpitViewSet):
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
 
+        vrf = None
+        tenant = None
+
         try:
             # Get initial values for IPAM
             enable_reconcile = True
@@ -705,6 +708,12 @@ class SlurpitPrefixView(SlurpitViewSet):
         if errors:
             return JsonResponse({'status': 'error', 'errors': errors}, status=400)
 
+        vrf = None
+        site = None
+        tenant = None
+        vlan = None
+        role = None
+            
         try:
             # Get initial values for prefix
             enable_reconcile = True
@@ -715,13 +724,6 @@ class SlurpitPrefixView(SlurpitViewSet):
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
                 initial_prefix_values = {**initial_obj}
-
-                vrf = None
-                site = None
-                tenant = None
-                vlan = None
-                role = None
-
 
                 if initial_prefix_values['vrf'] is not None:
                     vrf = VRF.objects.get(pk=initial_prefix_values['vrf'])
