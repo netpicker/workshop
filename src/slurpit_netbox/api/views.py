@@ -504,6 +504,8 @@ class SlurpitIPAMView(SlurpitViewSet):
             enable_reconcile = True
             initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
             initial_ipaddress_values = {}
+            vrf = None
+            tenant = None
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
@@ -511,9 +513,6 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                 obj = SlurpitInitIPAddress.objects.filter(address=None).get()
 
-                
-                vrf = None
-                tenant = None
                 if initial_ipaddress_values['vrf'] is not None:
                     vrf = VRF.objects.get(pk=initial_ipaddress_values['vrf'])
                 if initial_ipaddress_values['tenant'] is not None:
@@ -525,6 +524,8 @@ class SlurpitIPAMView(SlurpitViewSet):
             else:
                 initial_ipaddress_values['vrf'] = None
                 initial_ipaddress_values['tenant'] = None
+                initial_ipaddress_values['role'] = ''
+                initial_ipaddress_values['description'] = ''
                 initial_ipaddress_values['status'] = 'active'
 
             total_errors = {}
