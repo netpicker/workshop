@@ -749,7 +749,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                     'site': None,
                     'tenant': None,
                     'vlan': None,
-                    'role': None,
+                    'role': '',
                     'description': ''
                 }
 
