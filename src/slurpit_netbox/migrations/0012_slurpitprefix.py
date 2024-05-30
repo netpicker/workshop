@@ -11,10 +11,6 @@ import utilities.json
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tenancy', '0014_contactassignment_ordering'),
-        ('extras', '0107_cachedvalue_extras_cachedvalue_object'),
-        ('ipam', '0069_gfk_indexes'),
-        ('dcim', '0185_gfk_indexes'),
         ('slurpit_netbox', '0011_alter_slurpitinterface_device'),
     ]
 
