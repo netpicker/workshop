@@ -8,9 +8,9 @@
   Coming Soon
 {% endblock %}
 
-{% block header %}
+{% block page-header %}
 
-{% endblock header %}
+{% endblock page-header %}
 
 {% block tabs %}
 <h1 class="w-100 text-center" style="padding-top: 10%;">Coming Soon</h1>
@@ -18,9 +18,9 @@
 <a href="https://slurpit.io/getting-started/#subscribe" target="_blank" class="btn btn-primary">Subscribe</a></p>
 {% endblock tabs %}
 
-{% block content-wrapper %}
+{% block content %}
 
-{% endblock content-wrapper %}
+{% endblock content %}
 
 
 <footer class="footer container-fluid">
@@ -38,7 +38,7 @@
       </div>
 
       <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
-        <span class="d-block d-md-inline">{% annotated_now %} {% now 'T' %}</span>
+        <span class="d-block d-md-inline">{% now 'Y-m-d H:i:s T' %}</span>
         <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
         <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
       </div>

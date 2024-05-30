@@ -18,7 +18,7 @@ from users.models import Token
 from account.models import UserToken
 from dcim.models import Device
 from dcim.views import DeviceComponentsView
-from utilities.htmx import is_htmx
+from utilities.htmx import htmx_partial
 from utilities.views import register_model_view, ViewTab
 from utilities.paginator import EnhancedPaginator, get_paginate_count
 
@@ -457,7 +457,7 @@ class SlurpitPlanningning(View):
             },
         ).configure(table)
 
-        if is_htmx(request):
+        if htmx_partial(request):
             return render(
                 request,
                 "htmx/table.html",

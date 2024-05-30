@@ -8,7 +8,7 @@
   Data Mapping
 {% endblock %}
 
-{% block header %}
+{% block page-header %}
   <div class="title-container px-3 py-2">
 
     {# Title #}
@@ -21,10 +21,10 @@
     </div>
 
     {# Controls #}
-    {% block controls %}{% endblock controls %}
+    {% block controls-buttons %}{% endblock controls-buttons %}
 
   </div>
-{% endblock header %}
+{% endblock page-header %}
 
 {% block tabs %}
   <ul class="nav nav-tabs px-3">    
@@ -43,7 +43,7 @@
   </ul>
 {% endblock tabs %}
 
-{% block content-wrapper %}
+{% block content %}
   <div class="tab-content sub-tab-content">
     {% if request.GET.tab == 'slurpit_to_netbox'  %}
       {% include "slurpit_netbox/mapping/slurpit_to_netbox.html" %}
@@ -52,7 +52,7 @@
     {% endif %}
   </div> 
 
-{% endblock content-wrapper %}
+{% endblock content %}
 
 
 
@@ -73,7 +73,7 @@
       </div>
 
       <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
-        <span class="d-block d-md-inline">{% annotated_now %} {% now 'T' %}</span>
+        <span class="d-block d-md-inline">{% now 'Y-m-d H:i:s T' %}</span>
         <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
         <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
       </div>

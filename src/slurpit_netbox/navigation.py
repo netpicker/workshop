@@ -1,5 +1,4 @@
-from extras.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
-from utilities.choices import ButtonColorChoices
+from netbox.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
 
 
 imported_device_buttons = [
@@ -7,7 +6,6 @@ imported_device_buttons = [
         link='plugins:slurpit_netbox:import',
         title='Import',
         icon_class='mdi mdi-sync',
-        color=ButtonColorChoices.ORANGE,
     )
 ]
 

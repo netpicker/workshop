@@ -6,7 +6,7 @@ from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from ipam.models import FHRPGroup, VRF, IPAddress, Prefix
-from utilities.utils import shallow_compare_dict
+from utilities.data import shallow_compare_dict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib import messages

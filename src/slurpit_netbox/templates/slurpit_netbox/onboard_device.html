@@ -8,7 +8,7 @@
   Onboard Devices
 {% endblock %}
 
-{% block header %}
+{% block page-header %}
   <div class="title-container px-3 pb-3">
 
     {# Title #}
@@ -21,7 +21,7 @@
     </div>
 
     {# Controls #}
-    {% block controls %}{% endblock controls %}
+    {% block controls-buttons %}{% endblock controls-buttons %}
 
   </div>
   <style>
@@ -29,7 +29,7 @@
       color: #0d6efd !important
     }
   </style>
-{% endblock header %}
+{% endblock page-header %}
 
 {% block tabs %}
   <ul class="nav nav-tabs px-3">
@@ -58,7 +58,7 @@
   </ul>
 {% endblock tabs %}
 
-{% block content-wrapper %}
+{% block content %}
   <div class="tab-content">
     {% if request.GET.tab == 'new' or request.GET.tab is None %}
       {% include "slurpit_netbox/onboard/new_device_list.html" %}
@@ -71,7 +71,7 @@
     {% endif %}
   </div> 
 
-{% endblock content-wrapper %}
+{% endblock content %}
 
 
 
@@ -91,7 +91,7 @@
       </div>
 
       <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
-        <span class="d-block d-md-inline">{% annotated_now %} {% now 'T' %}</span>
+        <span class="d-block d-md-inline">{% now 'Y-m-d H:i:s T' %}</span>
         <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
         <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
       </div>

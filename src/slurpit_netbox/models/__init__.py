@@ -52,7 +52,7 @@ def create_custom_fields():
                     "label":'Hostname',
                     "group_name":"Slurp'it"
                 })
-    cf.content_types.set({device})
+    cf.object_types.set({device})
 
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_fqdn',  
@@ -63,7 +63,7 @@ def create_custom_fields():
                     "label":'Fqdn',
                     "group_name":"Slurp'it"
                 })
-    cf.content_types.set({device})
+    cf.object_types.set({device})
         
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_platform',
@@ -74,7 +74,7 @@ def create_custom_fields():
                     "label":'Platform',
                     "group_name":"Slurp'it",
                 })
-    cf.content_types.set({device})
+    cf.object_types.set({device})
 
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_manufacturer', 
@@ -85,7 +85,7 @@ def create_custom_fields():
                     "label":'Manufacturer',
                     "group_name":"Slurp'it",
                 })
-    cf.content_types.set({device})
+    cf.object_types.set({device})
     
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_devicetype',
@@ -96,7 +96,7 @@ def create_custom_fields():
                     "label":'Device Type',
                     "group_name":"Slurp'it",
                 })
-    cf.content_types.set({device})
+    cf.object_types.set({device})
     
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_ipv4',
@@ -107,7 +107,7 @@ def create_custom_fields():
                     "label":'Ipv4',
                     "group_name":"Slurp'it",
                 })
-    cf.content_types.set({device})
+    cf.object_types.set({device})
 
 def create_default_data_mapping():
     SlurpitMapping.objects.all().delete()

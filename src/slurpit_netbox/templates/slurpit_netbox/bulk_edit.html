@@ -16,9 +16,8 @@
   </style> 
 {% endblock %}
 
-{% block content-wrapper %}
-  <div class="tab-content">
-    {% block content %}
+ {% block content %}
+    <div class="tab-content">
 
       {# Edit form #}
       <div class="tab-pane show active" id="edit-form" role="tabpanel" aria-labelledby="edit-form-tab">
@@ -123,7 +122,5 @@
           </div>
         </div>
       </div>
-
-    {% endblock content %}
-  </div>
-{% endblock content-wrapper %}
+    </div>
+  {% endblock content %}

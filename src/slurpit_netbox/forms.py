@@ -10,7 +10,6 @@ from utilities.forms.fields import CommentField, DynamicModelChoiceField, Dynami
 from utilities.forms.widgets import APISelect, NumberWithOptions, HTMXSelect
 from tenancy.models import TenantGroup, Tenant
 from tenancy.forms import TenancyForm
-from utilities.forms import BootstrapMixin
 from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
 from .management.choices import SlurpitApplianceTypeChoices
 from extras.models import CustomField
@@ -168,7 +167,7 @@ class OnboardingForm(NetBoxModelBulkEditForm):
             choices.append((dt.id, dt.model))          
         self.fields['device_type'].choices = choices
 
-class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
+class SlurpitPlanningTableForm(forms.Form):
     planning_id = DynamicModelChoiceField(
         queryset=SlurpitPlanning.objects.all(),
         to_field_name='planning_id',
@@ -176,7 +175,7 @@ class SlurpitPlanningTableForm(BootstrapMixin, forms.Form):
         label=_("Slurpit Plans"),
     )
 
-class SlurpitApplianceTypeForm(BootstrapMixin, forms.Form):
+class SlurpitApplianceTypeForm(forms.Form):
     model =  SlurpitSetting
     appliance_type = forms.ChoiceField(
         label=_('Data synchronization'),
@@ -184,7 +183,7 @@ class SlurpitApplianceTypeForm(BootstrapMixin, forms.Form):
         required=False
     )
 
-class SlurpitMappingForm(BootstrapMixin, forms.Form):
+class SlurpitMappingForm(forms.Form):
     source_field = forms.CharField(
         required=True,
         label=_("Source Field"),
@@ -213,7 +212,7 @@ class SlurpitMappingForm(BootstrapMixin, forms.Form):
         
         # Add custom fields
         device = ContentType.objects.get(app_label='dcim', model='device')
-        device_custom_fields = CustomField.objects.filter(content_types=device)
+        device_custom_fields = CustomField.objects.filter(object_types=device)
 
         for custom_field in device_custom_fields:
             choices.append((f'device|cf_{custom_field.name}', f'device | {custom_field.name}'))
@@ -225,14 +224,14 @@ class SlurpitMappingForm(BootstrapMixin, forms.Form):
             del self.fields[f'source_field']
 
 
-class SlurpitDeviceForm(BootstrapMixin, forms.Form):
+class SlurpitDeviceForm(forms.Form):
     device = DynamicModelChoiceField(
         queryset=Device.objects.all(),
         required=True,
         label=_("Device"),
     )
 
-class SlurpitDeviceStatusForm(BootstrapMixin, forms.Form):
+class SlurpitDeviceStatusForm(forms.Form):
     device_status = forms.ChoiceField(
         label=_('Status'),
         choices=add_blank_choice(DeviceStatusChoices),

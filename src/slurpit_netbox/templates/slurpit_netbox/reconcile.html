@@ -25,7 +25,7 @@ Context:
   return_url: Return URL to use for bulk actions (optional)
 {% endcomment %}
 
-{% block header %}
+{% block page-header %}
   <div class="title-container px-3">
 
     {# Title #}
@@ -37,10 +37,10 @@ Context:
     </div>
 
     {# Controls #}
-    {% block controls %}{% endblock controls %}
+    {% block controls-buttons %}{% endblock controls-buttons %}
 
   </div>
-{% endblock header %}
+{% endblock page-header %}
 
 {% block tabs %}
 <ul class="nav nav-tabs px-3">    
@@ -66,7 +66,7 @@ Context:
 </ul>
 {% endblock tabs %}
 
-{% block content-wrapper %}
+{% block content %}
   <div class="tab-content">
     <div class="show active">
 
@@ -193,7 +193,7 @@ Context:
     });
 
   </script>
-{% endblock content-wrapper %}
+{% endblock content %}
 
 
 
@@ -213,7 +213,7 @@ Context:
       </div>
 
       <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
-        <span class="d-block d-md-inline">{% annotated_now %} {% now 'T' %}</span>
+        <span class="d-block d-md-inline">{% now 'Y-m-d H:i:s T' %}</span>
         <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
         <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
       </div>
