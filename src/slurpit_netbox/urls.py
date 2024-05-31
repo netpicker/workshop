@@ -23,4 +23,9 @@ urlpatterns = (
     ## logging ##
     path('slurpitlog/',         views.LoggingListView.as_view(), name='slurpitlog_list'),
     
+
+    path('slurpitinitaddress/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinitipaddress_list'),
+    path('slurpitprefix/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitprefix_list'),
+    path('slurpitinterface/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinterface_list'),
+
 )
