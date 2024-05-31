@@ -123,7 +123,7 @@ class SlurpitPrefix(GetAvailablePrefixesMixin, PrimaryModel):
     class Meta:
         ordering = (F('vrf').asc(nulls_first=True), 'prefix', 'pk')  # (vrf, prefix) may be non-unique
         verbose_name = _('Slurpit Prefix')
-        verbose_name_plural = _('Slrupit Prefixes')
+        verbose_name_plural = _('Slurpit Prefixes')
     
     def get_absolute_url(self):
         return reverse('plugins:slurpit_netbox:reconcile_detail', args=[self.pk, 'prefix'])
