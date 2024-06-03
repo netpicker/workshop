@@ -1,8 +1,8 @@
 from dcim.models import DeviceRole, DeviceType, Manufacturer, Site, Location, Region, SiteGroup, Rack
-from django.contrib.contenttypes.models import ContentType
 from extras.choices import CustomFieldTypeChoices
 from extras.models import CustomField, CustomFieldChoiceSet, ConfigTemplate
 from extras.models.tags import Tag
+from core.models import ObjectType
 from django.db.models import Q, Transform, CharField, TextField
 
 from .. import get_config
@@ -33,7 +33,7 @@ def ensure_slurpit_tags(*items):
         ipam_Q = Q(app_label='ipam', model=ipam_applicable)
         slurpit_Q = Q(app_label='slurpit_netbox', model__in=slurpit_netbox_applicable_to)
 
-        tagged_types = ContentType.objects.filter(ipam_Q | dcim_Q | slurpit_Q)
+        tagged_types = ObjectType.objects.filter(ipam_Q | dcim_Q | slurpit_Q)
         tag.object_types.set(tagged_types.all())
         tags = {tag}
         ensure_slurpit_tags.cache = tags
@@ -42,7 +42,7 @@ def ensure_slurpit_tags(*items):
     return tags
 
 def create_custom_fields():   
-    device = ContentType.objects.get(app_label='dcim', model='device')
+    device = ObjectType.objects.get(app_label='dcim', model='device')
     cf, _ = CustomField.objects.get_or_create(
                 name='slurpit_hostname',   
                 defaults={            
