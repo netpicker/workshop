@@ -16,6 +16,18 @@ from django.db import transaction
 from dcim.models import Interface
 from urllib.parse import urlencode
 
+class SlurpitInitIPAddressListView(generic.ObjectListView):
+    queryset = SlurpitInitIPAddress.objects.all()
+    table = tables.SlurpitIPAMTable
+
+class SlurpitPrefixListView(generic.ObjectListView):
+    queryset = SlurpitPrefix.objects.all()
+    table = tables.SlurpitPrefixTable
+
+class SlurpitInterfaceListView(generic.ObjectListView):
+    queryset = SlurpitInterface.objects.all()
+    table = tables.SlurpitInterfaceTable
+    
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ReconcileView(generic.ObjectListView):
     queryset = models.SlurpitInitIPAddress.objects.exclude(address = None)
