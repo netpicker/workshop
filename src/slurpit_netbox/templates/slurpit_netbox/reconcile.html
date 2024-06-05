@@ -6,10 +6,6 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}
-  Onboard Devices
-{% endblock %}
-
 {% comment %}
 Blocks:
   extra_controls: Additional action buttons
@@ -25,46 +21,59 @@ Context:
   return_url: Return URL to use for bulk actions (optional)
 {% endcomment %}
 
-{% block page-header %}
-  <div class="title-container px-3">
+{% block header %}
+  <div class="page-header m-0">
+    {{ block.super }}
 
-    {# Title #}
-    
-    <div id="content-title">
-      {% include "slurpit_netbox/logo.html" %}
-      {# Center-align title in object-edit views #}
-      <h1 class="h2 w-100">Reconcile</h1>
+    {% block page-header %}
+      <div class="container-fluid mt-2 d-print-none">
+        <div class="d-flex justify-content-between">
+
+          {# Title #}
+          <div>
+            {% include "slurpit_netbox/logo.html" %}
+            <h2 class="page-title my-1">
+              {% block title %}
+                Reconcile
+              {% endblock title %}
+            </h2>
+            {% block subtitle %}{% endblock %}
+          </div>
+
+        </div>
+      </div>
+    {% endblock %}
+
+    {# Tabs #}
+    <div class="page-tabs mt-3">
+      <div class="container-fluid">
+        {% block tabs %}
+          <ul class="nav nav-tabs">    
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'ipam' or request.GET.tab is None %}active{% endif %}" href="?tab=ipam">
+                IPAM {% badge ipam_count %}
+              </a>
+            </li>
+          
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'interface' %}active{% endif %}" href="?tab=interface">
+                Interfaces {% badge interface_count %}
+              </a>
+            </li>
+            
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'prefix' %}active{% endif %}" href="?tab=prefix">
+                Prefixes {% badge prefix_count %}
+              </a>
+            </li>
+          </ul>
+        {% endblock %}
+      </div>
     </div>
 
-    {# Controls #}
-    {% block controls-buttons %}{% endblock controls-buttons %}
-
   </div>
-{% endblock page-header %}
+{% endblock header %}
 
-{% block tabs %}
-<ul class="nav nav-tabs px-3">    
-  <li class="nav-item" role="presentation">
-    <a class="nav-tab nav-link {% if request.GET.tab == 'ipam' or request.GET.tab is None %}active{% endif %}" href="?tab=ipam">
-      IPAM {% badge ipam_count %}
-    </a>
-  </li>
-
-  <li class="nav-item" role="presentation">
-    <a class="nav-tab nav-link {% if request.GET.tab == 'interface' %}active{% endif %}" href="?tab=interface">
-      Interfaces {% badge interface_count %}
-    </a>
-  </li>
-  
-  <li class="nav-item" role="presentation">
-    <a class="nav-tab nav-link {% if request.GET.tab == 'prefix' %}active{% endif %}" href="?tab=prefix">
-      Prefixes {% badge prefix_count %}
-    </a>
-  </li>
-
-
-</ul>
-{% endblock tabs %}
 
 {% block content %}
   <div class="tab-content">
@@ -94,13 +103,13 @@ Context:
 
             <div class="noprint bulk-buttons">
                 <div class="bulk-button-group">
-                    <div class="" role="group">
-                        <a class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#acceptModal">
+                    <div class="mb-2" role="group">
+                        <a class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#acceptModal">
                             <i class="mdi mdi-check" aria-hidden="true"></i> 
                             <span id="syncCaption">{% trans "Accept" %}</span>
                         </a>
 
-                        <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#declineModal">
+                        <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#declineModal">
                           <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Decline" %}
                         </a>
                     </div>
@@ -144,8 +153,8 @@ Context:
   
         <!-- Modal Footer -->
         <div class="modal-footer">
-            <a class="btn btn-danger btn-sm" id="decline_btn">{% trans "Decline" %}</a>
-            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            <a class="btn btn-danger " id="decline_btn">{% trans "Decline" %}</a>
+            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
         </div>
   
         
@@ -165,8 +174,8 @@ Context:
   
         <!-- Modal Footer -->
         <div class="modal-footer">
-            <a class="btn btn-success btn-sm" id="accept_btn">{% trans "Accept" %}</a>
-            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            <a class="btn btn-success " id="accept_btn">{% trans "Accept" %}</a>
+            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
         </div>
   
         
@@ -200,25 +209,7 @@ Context:
 
 <footer class="footer container-fluid">
   {% block footer %}
-    <div class="row align-items-center justify-content-between mx-0">
-
-      <div class="col-sm-12 col-md-auto fs-4 noprint">
-        <nav class="nav justify-content-center justify-content-lg-start">
-          {% block footer_links %}
-            <a type="button" class="nav-link h6" href="https://slurpit.io" target="_blank">
-              https://slurpit.io
-            </a>
-          {% endblock footer_links %}
-        </nav>
-      </div>
-
-      <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
-        <span class="d-block d-md-inline">{% now 'Y-m-d H:i:s T' %}</span>
-        <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
-        <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
-      </div>
-
-    </div>
+    {% include "slurpit_netbox/footer.html" %}
   {% endblock footer %}
 </footer>
 

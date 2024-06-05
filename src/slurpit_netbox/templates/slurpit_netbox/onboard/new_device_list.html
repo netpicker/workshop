@@ -16,13 +16,13 @@
                   {% if appliance_type == 'both' or appliance_type == 'pull'  %}
                     {% if connection_status == 'connected' %}
                       <!-- <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:import' %}"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a> -->
-                      <button name="sync"  id="syncBtn" class="btn btn-orange btn-sm me-2">
+                      <button name="sync"  id="syncBtn" class="btn btn-orange me-2">
                         <i class="mdi mdi-sync" aria-hidden="true"></i> 
                         <span id="syncCaption">{% trans "Sync" %}</span>
                       </button>
                     {% endif %}
                   {% endif %}
-                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue btn-sm">
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue">
                     <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Onboard" %}
                   </button>
               </div>

@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.db.models import Q
 from django.core.serializers import serialize
 
-from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer
+from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer, SlurpitPrefixSerializer, SlurpitInterfaceSerializer, SlurpitInitIPAddressSerializer
 from ..validator import device_validator, ipam_validator, interface_validator, prefix_validator
 from ..importer import process_import, import_devices, import_plannings, start_device_import, BATCH_SIZE
 from ..management.choices import *
@@ -256,6 +256,9 @@ class SlurpitDeviceView(SlurpitViewSet):
 class SlurpitInterfaceView(SlurpitViewSet):
     queryset = SlurpitInterface.objects.all()
 
+    def get_serializer_class(self):
+        return SlurpitInterfaceSerializer
+    
     def create(self, request):
         # Validate request Interface data
         errors = interface_validator(request.data)
@@ -492,7 +495,10 @@ class SlurpitInterfaceView(SlurpitViewSet):
         
 class SlurpitIPAMView(SlurpitViewSet):
     queryset = IPAddress.objects.all()
-
+    
+    def get_serializer_class(self):
+        return SlurpitInitIPAddressSerializer
+    
     def create(self, request):
         # Validate request IPAM data
         errors = ipam_validator(request.data)
@@ -702,6 +708,9 @@ class SlurpitIPAMView(SlurpitViewSet):
 class SlurpitPrefixView(SlurpitViewSet):
     queryset = SlurpitPrefix.objects.all()
 
+    def get_serializer_class(self):
+        return SlurpitPrefixSerializer
+    
     def create(self, request):
         # Validate request prefix data
         errors = prefix_validator(request.data)

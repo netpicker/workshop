@@ -177,9 +177,9 @@ class LoggingTable(NetBoxTable):
     
     def render_level(self, value, record):
         badge_class = {
-            'Info': 'badge bg-info',
-            'Success': 'badge bg-success',
-            'Failure': 'badge bg-danger',
+            'Info': 'badge text-bg-blue',
+            'Success': 'badge text-bg-green',
+            'Failure': 'badge text-bg-red',
             # Add more mappings for other levels as needed
         }.get(escape(value), 'badge bg-secondary')  # Default to secondary if level is not recognized
         

@@ -2,19 +2,21 @@
 {% load helpers %}
 {% load i18n %}
 
-{% block title %}{{ object }}{% endblock %}
-
 {% block page-header %}
-  <div class="title-container px-3">
+    <div class="container-fluid mt-2 d-print-none">
+    <div class="d-flex justify-content-between">
 
-    {# Title #}
-    
-    <div id="content-title">
-      {% include "slurpit_netbox/logo.html" %}
-      {# Center-align title in object-edit views #}
-      <h1 class="h2 w-100">{{ title }}</h1>
+      {# Title #}
+      <div>
+        {% include "slurpit_netbox/logo.html" %}
+        <h2 class="page-title my-1">
+          {% block title %}
+            {{ title }}
+          {% endblock %}
+        </h2>
+      </div>
+
     </div>
-
   </div>
 {% endblock page-header %}
 
@@ -28,7 +30,7 @@
 
 
 {% block tabs %}
-  <ul class="nav nav-tabs px-3">
+  <ul class="nav nav-tabs">
     <li class="nav-item" role="presentation">
       <a class="nav-link active">Changes</a>
     </li>
@@ -47,7 +49,7 @@
                     <tr>
                         <th scope="row">{% trans "Time" %}</th>
                         <td>
-                            {{ updated_time |annotated_date }}
+                            {{ updated_time }}
                         </td>
                     </tr>
                     <tr>
@@ -77,7 +79,7 @@
     <div class="col col-md-7">
         <div class="card">
             <div class="card-header">
-                <h5 class="d-inline">{% trans "Difference" %}</h5>
+                <h5>{% trans "Difference" %}</h5>
             </div>
             <div class="card-body">
                 {% if diff_added == diff_removed %}
@@ -136,29 +138,26 @@
         </div>
     </div>
 </div>
+
+<style>
+    pre.change-diff.change-added {
+        background-color: #2fb34433 !important;
+    }
+    pre.change-diff.change-removed {
+        background-color: #d639392e !important;
+    }
+    pre.change-data>span.removed {
+        background-color: #d639392e !important;
+    }
+    pre.change-data>span.added {
+        background-color: #2fb34433 !important;
+    }
+</style>
 {% endblock %}
 
 
 <footer class="footer container-fluid">
     {% block footer %}
-      <div class="row align-items-center justify-content-between mx-0">
-  
-        <div class="col-sm-12 col-md-auto fs-4 noprint">
-          <nav class="nav justify-content-center justify-content-lg-start">
-            {% block footer_links %}
-              <a type="button" class="nav-link h6" href="https://slurpit.io" target="_blank">
-                https://slurpit.io
-              </a>
-            {% endblock footer_links %}
-          </nav>
-        </div>
-  
-        <div class="col-sm-12 col-md-auto text-center text-lg-end text-muted"  >
-          <span class="d-block d-md-inline">{% now 'Y-m-d H:i:s T' %}</span>
-          <span class="ms-md-3 d-block d-md-inline">{{ settings.HOSTNAME }} (v{{ settings.VERSION }})</span>
-          <span class="ms-md-3 d-block d-md-inline">Slurpit(v{{ settings.PLUGINS_CONFIG.slurpit_netbox.version }})</span>
-        </div>
-  
-      </div>
+      {% include "slurpit_netbox/footer.html" %}
     {% endblock footer %}
-  </footer>
+</footer>

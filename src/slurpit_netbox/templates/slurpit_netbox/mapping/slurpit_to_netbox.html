@@ -4,7 +4,7 @@
 {% load static %}
 {% load form_helpers %}
 
-<ul class="nav nav-tabs px-3 sub-nav">    
+<ul class="nav nav-tabs sub-nav">    
   <li class="nav-item" role="presentation">
     <a class="nav-tab nav-link {% if request.GET.subtab == 'ipam' or request.GET.subtab is None %}active{% endif %}" href="?tab=slurpit_to_netbox&subtab=ipam">
       IPAM
