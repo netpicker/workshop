@@ -340,10 +340,12 @@ def get_refresh_url(request, pk):
 class SlurpitViewTab(ViewTab):
     def render(self, instance):
         device = get_object_or_404(Device, pk=instance.pk)
-        if device:
+        if device and device.custom_field_data and 'slurpit_hostname' in device.custom_field_data:
             slurpit_hostname = device.custom_field_data['slurpit_hostname']
             if slurpit_hostname is None:
                 return None
+        else:
+            return None
         """Return the attributes needed to render a tab in HTML."""
         badge_value = self._get_badge_value(instance)
         if self.badge and self.hide_if_empty and not badge_value:
