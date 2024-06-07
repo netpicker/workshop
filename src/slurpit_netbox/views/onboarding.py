@@ -141,8 +141,8 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     # clear_webhooks.send(sender=self)
                     return JsonResponse({"status": "error", "error": str(e)})
                 except Exception as e:
-                    messages.error(self.request, e.message)
-                    form.add_error(None, e.message)
+                    messages.error(self.request, str(e))
+                    form.add_error(None, str(e))
                     # clear_webhooks.send(sender=self)
                     return JsonResponse({"status": "error", "error": str(e)})
             return JsonResponse({"status": "error", "error": "validation error"})  

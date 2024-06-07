@@ -53,8 +53,8 @@ def start_device_import():
 def import_devices(devices):
     to_insert = []
     for device in devices:
-        if device.get('disabled') == '1':
-            continue
+        # if device.get('disabled') == '1':
+        #     continue
         if device.get('device_type') is None:
             SlurpitLog.failure(category=LogCategoryChoices.ONBOARD, message=f"Missing device type, cannot import device {device.get('hostname')}")
             continue
@@ -100,11 +100,11 @@ def handle_parted():
     for device in parted_qs:
         if device.mapped_device is None:
             device.delete()
-        elif device.mapped_device.status == status_offline():
-            continue
-        else:
-            device.mapped_device.status=status_offline()
-            device.mapped_device.save()
+        # elif device.mapped_device.status == status_offline():
+        #     continue
+        # else:
+        #     device.mapped_device.status=status_offline()
+        #     device.mapped_device.save()
         count += 1
     SlurpitLog.info(category=LogCategoryChoices.ONBOARD, message=f"Sync parted {count} devices")
     
@@ -150,8 +150,13 @@ def handle_changed():
             result.save()
             get_create_dcim_objects(device)
             if result.mapped_device:
-                if result.mapped_device.status==status_offline():
-                    result.mapped_device.status=status_inventory()
+                if device.disabled == False:
+                    if result.mapped_device.status==status_offline():
+                        result.mapped_device.status=status_inventory()
+                else:
+                    if result.mapped_device.status != status_offline():
+                        result.mapped_device.status=status_offline()
+
                     
                 set_device_custom_fields(result.mapped_device, {
                     'slurpit_hostname': device.hostname,
@@ -200,7 +205,12 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     })
     if 'device_type' not in extra and staged.mapped_devicetype is not None:
         kw['device_type'] = staged.mapped_devicetype
-    kw.setdefault('status', status_inventory())
+        
+    if staged.disabled == False:
+        kw.setdefault('status', status_inventory())
+    else:
+        kw.setdefault('status', status_offline())
+
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
 
