@@ -80,7 +80,7 @@ class SettingsView(View):
         
         connection_status = "" if setting is None else setting.connection_status 
 
-        tokens = UserToken.objects.filter(user=request.user).count()
+        tokens = UserToken.objects.all().count()
 
         if tokens > 0:
             push_api_key = 'existed'
