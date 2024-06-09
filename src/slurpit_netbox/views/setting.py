@@ -412,7 +412,7 @@ class SlurpitPlanningning(View):
             if cached_time:
                 result_status = "Cached"
 
-            if not data:
+            if data is None:
                 data = []
                 try: 
                     result_key = f"{result_type}_result"

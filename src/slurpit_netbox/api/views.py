@@ -296,13 +296,16 @@ class SlurpitInterfaceView(SlurpitViewSet):
             insert_data = []
             update_data = []
             total_data = []
-
+            duplicates = []
             # Form validation 
-            for record in request.data:
-                obj = Interface()
+            for record in request.data[::-1]:
+                unique_interface = f'{record["name"]}/{record["hostname"]}'
 
-                if not ('hostname' in record):
+                if unique_interface in duplicates:
                     continue
+                duplicates.append(unique_interface)
+
+                obj = Interface()
                 
                 device = None
                 try:
@@ -342,6 +345,8 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     return JsonResponse({'status': 'error', 'errors': total_errors}, status=400)
                 else:
                     insert_data.append(new_data)
+
+            return JsonResponse({'status': 'error'})
         
             if enable_reconcile:
                 batch_update_qs = []
@@ -542,8 +547,15 @@ class SlurpitIPAMView(SlurpitViewSet):
             update_ips = []
             total_ips = []
 
+            duplicates = []
             # Form validation 
-            for record in request.data:
+            for record in request.data[::-1]:
+                unique_ipaddress = f'{record["address"]}'
+
+                if unique_ipaddress in duplicates:
+                    continue
+                duplicates.append(unique_ipaddress)
+
                 obj = IPAddress()
                 new_data = {**initial_ipaddress_values, **record}
                 form = IPAddressForm(data=new_data, instance=obj)
@@ -767,8 +779,15 @@ class SlurpitPrefixView(SlurpitViewSet):
             update_data = []
             total_data = []
 
+            duplicates = []
             # Form validation 
-            for record in request.data:
+            for record in request.data[::-1]:
+                unique_prefix = f'{record["prefix"]}'
+
+                if unique_prefix in duplicates:
+                    continue
+                duplicates.append(unique_prefix)
+
                 obj = Prefix()
                 if 'vrf' in record and len(record['vrf']) > 0:
                     vrf = VRF.objects.filter(name=record['vrf'])
