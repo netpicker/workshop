@@ -345,9 +345,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     return JsonResponse({'status': 'error', 'errors': total_errors}, status=400)
                 else:
                     insert_data.append(new_data)
-
-            return JsonResponse({'status': 'error'})
-        
+       
             if enable_reconcile:
                 batch_update_qs = []
                 batch_insert_qs = []
