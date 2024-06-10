@@ -147,11 +147,12 @@ class DataMappingView(View):
                 else:
                     form = SlurpitInitIPAMForm(data={'enable_reconcile':True})
             elif subtab == 'prefix':
+                SlurpitPrefix.objects.all().delete()
                 obj = SlurpitPrefix.objects.filter(prefix=None).first()
                 if obj is not None:
                     form = SlurpitPrefixForm(instance=obj)
                 else:
-                    form = SlurpitPrefixForm(data={'enable_reconcile':True})
+                    form = SlurpitPrefixForm(data={'enable_reconcile':True, 'status': 'active'})
             else:
                 obj = SlurpitInterface.objects.filter(name='').first()
 
