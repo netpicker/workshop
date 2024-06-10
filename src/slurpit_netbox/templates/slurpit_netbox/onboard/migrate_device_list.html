@@ -24,6 +24,9 @@
               </li>
             </ul>
             {% endblock %}
+            <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2" >
+              <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Remove" %}
+            </button>
           </div>
       {% csrf_token %}
       {# "Select all" form #}

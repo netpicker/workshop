@@ -119,10 +119,12 @@ class SlurpitSnapshotViewSet(
         if not hostname:
             return Response(f"No hostname was given", status=status.HTTP_400_BAD_REQUEST)
 
-        count = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id).delete()[0]
+        try:
+            count = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id).delete()[0]
 
-        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name} and hostname {hostname}")
-
+            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name} and hostname {hostname}")
+        except:
+            pass
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=['delete'], url_path='clear/(?P<planning_id>[^/.]+)')

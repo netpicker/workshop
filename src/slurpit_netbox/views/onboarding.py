@@ -120,6 +120,19 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
             pk_list = request.POST.getlist('pk')
 
         self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
+
+        # Remove
+        if 'remove' in request.GET:
+            if len(pk_list) == 0:
+                messages.warning(request, "No {} were selected.".format(model._meta.verbose_name_plural))
+                log_message = "Failed to remove since no devices were selected."
+                SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
+            else:
+                self.queryset.delete()
+                msg = f'Removed {len(pk_list)} {model._meta.verbose_name_plural}'
+                messages.success(self.request, msg)
+            return redirect(self.get_return_url(request))
+
         device_types = list(self.queryset.values_list('device_type').distinct())
         form = create_form(self.form, request.POST, models.SlurpitImportedDevice, {'pk': pk_list, 'device_types': device_types})
 
