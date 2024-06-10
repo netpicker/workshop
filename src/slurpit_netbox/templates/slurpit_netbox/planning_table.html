@@ -45,7 +45,7 @@
     <span>
       <b>
         {{result_status}} results 
-        {% if appliance_type == 'both' or appliance_type == 'on-premise'  %}
+        {% if appliance_type == 'both' or appliance_type == 'pull'  %}
           {% if result_status == 'Cached' %}
             - <a id="refresh">Refresh data</a>
           {% endif %}

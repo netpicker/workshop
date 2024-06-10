@@ -33,6 +33,7 @@ from dcim.models import Interface, Site
 from dcim.forms import InterfaceForm
 from ipam.forms import IPAddressForm, PrefixForm
 from tenancy.models import Tenant
+from django.core.cache import cache
 
 __all__ = (
     'SlurpitPlanningViewSet',
@@ -119,6 +120,15 @@ class SlurpitSnapshotViewSet(
         if not hostname:
             return Response(f"No hostname was given", status=status.HTTP_400_BAD_REQUEST)
 
+        cache_key1 = (
+                f"slurpit_plan_{planning_id}_{hostname}_template"
+            )
+        cache_key2 = (
+                f"slurpit_plan_{planning_id}_{hostname}_planning"
+            )
+        cache.delete(cache_key1)
+        cache.delete(cache_key2)
+        
         try:
             count = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id).delete()[0]
 
@@ -139,15 +149,27 @@ class SlurpitSnapshotViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     def create(self, request):
-        # Get Plannning
-
-        planning_snapshots = request.data['planning_snapshots']
-        device_name = list(planning_snapshots.keys())[0]
-        planning_id = planning_snapshots[device_name]['planning_id']
 
         try:
-            plan = SlurpitPlanning.objects.get(planning_id=planning_id)
-            sync_snapshot("", device_name, plan, True, planning_snapshots)
+            items = []
+            for record in request.data:
+                if record['content']['template_result']:
+                    items.append(SlurpitSnapshot(
+                        hostname=record['hostname'], 
+                        planning_id=record['planning_id'],
+                        content=record['content']['template_result'], 
+                        result_type="template_result"))
+                
+                if record['content']['planning_result']:
+                    items.append(SlurpitSnapshot(
+                        hostname=record['hostname'], 
+                        planning_id=record['planning_id'],
+                        content=record['content']['planning_result'], 
+                        result_type="planning_result"))
+            
+            SlurpitSnapshot.objects.bulk_create(items, batch_size=BATCH_SIZE, ignore_conflicts=True)
+            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Created {len(items)} snapshots for Planning by API")
+
             
         except:
             return JsonResponse({'status': 'error'}, status=500)

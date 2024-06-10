@@ -388,20 +388,18 @@ class SlurpitPlanningning(View):
             if result_type is None:
                 result_type = "planning"
 
-            cache_key = (
-                f"slurpit_plan_{planning.planning_id}_{device.name}_{result_type}"
-            )
+            cache_key = f"slurpit_plan_{planning.planning_id}_{device.name}_{result_type}"
 
             url_no_refresh = get_refresh_url(request, pk)
 
             if sync == "sync":
-                if appliance_type != "cloud":
+                if appliance_type != "push":
                     sync_snapshot(cache_key, device.name, planning)
                 
                 return HttpResponseRedirect(url_no_refresh)
             
             if refresh == "refresh":
-                if appliance_type != "cloud":
+                if appliance_type != "push":
                     sync_snapshot(cache_key, device.name, planning)
                 else:
                     cache.delete(cache_key)
@@ -412,18 +410,17 @@ class SlurpitPlanningning(View):
             if cached_time:
                 result_status = "Cached"
 
-            if data is None:
+            if data is None or len(data) == 0:
                 data = []
                 try: 
                     result_key = f"{result_type}_result"
                     temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
-
                     # Empty case
                     if temp.count() == 0:
-                        if appliance_type != "cloud":
+                        if appliance_type != "push":
                             sync_snapshot(cache_key, device.name, planning)
                         temp = SlurpitSnapshot.objects.filter(hostname=device.name, planning_id=planning.planning_id, result_type=result_key)
-
+                    
                     for r in temp:
                         try:
                             r = json.loads(r.content)
