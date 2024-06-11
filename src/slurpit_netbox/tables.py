@@ -41,7 +41,8 @@ class ConditionalToggle(ToggleColumn):
             record.mapped_device.custom_field_data['slurpit_manufacturer'] != record.brand
         ):
             return super().render(value, bound_column, record)
-        return '✔'
+        return super().render(value, bound_column, record)
+        # return '✔'
 
 
 class ConditionalLink(Column):

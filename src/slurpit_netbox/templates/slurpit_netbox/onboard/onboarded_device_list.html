@@ -1,7 +1,23 @@
 {% load buttons %}
 {% load i18n %}
 <div class="show {% if request.GET.tab == 'onboarded' %}active{% endif %}" id="onboarded-device-list" role="tabpanel" aria-labelledby="onboarded-device-list-tab">
-
+  <form method="post" class="form form-horizontal">
+    {% csrf_token %}
+    {# Object table controls #}
+    {# Form buttons #}
+    <div class="noprint bulk-buttons">
+      <div class="bulk-button-group">
+          {% block bulk_buttons %}
+          <div class="" role="group">
+              <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&onboarded=true&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2" >
+                <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Remove" %}
+              </button>
+          </div>
+          {% endblock %}
+      </div>
+    </div>
+    <p id="syncStatusCaption">
+    </p>
      {# "Select all" form #}
      {% if table.paginator.num_pages > 1 %}
        <div id="select-all-box" class="d-none card noprint">
@@ -34,4 +50,5 @@
          </div>
        </div>
      </div>
+  </form>
  </div>

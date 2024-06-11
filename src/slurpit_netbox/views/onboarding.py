@@ -128,6 +128,17 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                 log_message = "Failed to remove since no devices were selected."
                 SlurpitLog.objects.create(level=LogLevelChoices.LOG_FAILURE, category=LogCategoryChoices.ONBOARD, message=log_message)
             else:
+                if 'onboarded' in request.GET:
+                    for onboarded_item in self.queryset:
+                        cf = onboarded_item.mapped_device.custom_field_data
+                        cf.pop('slurpit_hostname')
+                        cf.pop('slurpit_fqdn')
+                        cf.pop('slurpit_platform')
+                        cf.pop('slurpit_manufacturer')
+                        cf.pop('slurpit_devicetype')
+                        cf.pop('slurpit_ipv4')
+                        onboarded_item.mapped_device.custom_field_data = cf
+                        onboarded_item.mapped_device.save()
                 self.queryset.delete()
                 msg = f'Removed {len(pk_list)} {model._meta.verbose_name_plural}'
                 messages.success(self.request, msg)

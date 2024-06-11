@@ -210,7 +210,13 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         kw.setdefault('status', status_inventory())
     else:
         kw.setdefault('status', status_offline())
+    
+    device = Device.objects.filter(name=staged.hostname)
 
+    # if device:
+    #     device = device.first()
+    #     device.update()
+    # else:
     device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
 
