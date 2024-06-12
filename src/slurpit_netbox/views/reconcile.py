@@ -15,6 +15,7 @@ from ..importer import BATCH_SIZE
 from django.db import transaction
 from dcim.models import Interface
 from urllib.parse import urlencode
+from ..filtersets import SlurpitIPAddressFilterSet, SlurpitInterfaceFilterSet, SlurpitPrefixFilterSet
 
 class SlurpitInitIPAddressListView(generic.ObjectListView):
     queryset = SlurpitInitIPAddress.objects.all()
@@ -33,7 +34,8 @@ class ReconcileView(generic.ObjectListView):
     queryset = models.SlurpitInitIPAddress.objects.exclude(address = None)
     table = tables.SlurpitIPAMTable
     template_name = "slurpit_netbox/reconcile.html"
-
+    filterset = SlurpitIPAddressFilterSet
+    
     def get(self, request, *args, **kwargs):
         
         tab = request.GET.get('tab')
@@ -42,9 +44,11 @@ class ReconcileView(generic.ObjectListView):
         elif tab == 'prefix':
             self.queryset = models.SlurpitPrefix.objects.exclude(prefix = None)
             self.table = tables.SlurpitPrefixTable
+            self.filterset = SlurpitPrefixFilterSet
         else:
             self.queryset = models.SlurpitInterface.objects.exclude(name = '')
             self.table = tables.SlurpitInterfaceTable
+            self.filterset = SlurpitInterfaceFilterSet
 
         return super().get(request, *args, **kwargs)
     

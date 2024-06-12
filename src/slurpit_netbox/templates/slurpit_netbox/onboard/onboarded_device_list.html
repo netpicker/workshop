@@ -1,6 +1,8 @@
 {% load buttons %}
 {% load i18n %}
 <div class="show {% if request.GET.tab == 'onboarded' %}active{% endif %}" id="onboarded-device-list" role="tabpanel" aria-labelledby="onboarded-device-list-tab">
+  {# Object table controls #}
+  {% include 'inc/table_controls_htmx.html' with table_modal="ObjectTable_config" %}
   <form method="post" class="form form-horizontal">
     {% csrf_token %}
     {# Object table controls #}

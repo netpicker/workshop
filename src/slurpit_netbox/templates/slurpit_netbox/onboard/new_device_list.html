@@ -2,7 +2,8 @@
 {% load i18n %}
 
 <div class=" show {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" id="new-device-list" role="tabpanel" aria-labelledby="new-device-list-tab">
-   
+    {# Object table controls #}
+    {% include 'inc/table_controls_htmx.html' with table_modal="ObjectTable_config" %}
     <form method="post" class="form form-horizontal">
          <!-- sync button -->
         {# Object table controls #}

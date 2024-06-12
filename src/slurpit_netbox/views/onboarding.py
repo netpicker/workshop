@@ -21,6 +21,7 @@ from ..decorators import slurpit_plugin_registered
 from ..references import base_name, custom_field_data_name
 from ..references.generic import create_form, get_form_device_data, SlurpitViewMixim, get_default_objects, set_device_custom_fields, status_inventory
 from ..references.imports import * 
+from ..filtersets import SlurpitImportedDeviceFilterSet
 from dcim.models import DeviceType, Interface
 from ipam.models import IPAddress
 
@@ -54,7 +55,8 @@ class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
     action_buttons = []
     table = tables.SlurpitImportedDeviceTable
     template_name = f"{base_name}/onboard_device.html"
-
+    filterset = SlurpitImportedDeviceFilterSet
+    
     def get(self, request, *args, **kwargs):        
         self.queryset = self.to_onboard_queryset
 

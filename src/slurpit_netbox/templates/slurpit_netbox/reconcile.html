@@ -82,7 +82,9 @@ Context:
         <input type="hidden" results="5" name="q" id="quicksearch" class="form-control" placeholder="Quick search"
               hx-get="{{ request.full_path }}" hx-target="#object_list" hx-trigger="keyup changed delay:500ms, search" />
 
-      
+        {# Object table controls #}
+        {% include 'inc/table_controls_htmx.html' with table_modal="ObjectTable_config" %}
+        
         <form method="post" class="form form-horizontal" id="reconcile_form">
           {% csrf_token %}
           <div id="select-all-box" class="d-none card noprint">

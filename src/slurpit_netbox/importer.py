@@ -213,11 +213,11 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
     
     device = Device.objects.filter(name=staged.hostname)
 
-    # if device:
-    #     device = device.first()
-    #     device.update()
-    # else:
-    device = Device.objects.create(**kw)
+    if device:
+        device = device.first()
+        device.update(**kw)
+    else:
+        device = Device.objects.create(**kw)
     ensure_slurpit_tags(device)
 
     #Interface for new device.
