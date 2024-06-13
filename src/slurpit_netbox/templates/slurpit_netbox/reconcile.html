@@ -188,7 +188,7 @@ Context:
   </div>
 
   {% if request.GET.pk %}
-    <div class="modal fade show" style="display: block !important;" tabindex="-1" id="settingsEditModal" aria-modal="true" role="dialog">
+    <div class="modal fade show" style="display: block" tabindex="-1" id="reconcile-detail-modal" aria-modal="true" role="dialog">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
 
@@ -197,7 +197,8 @@ Context:
             <h4 class="modal-title">
               {{ title }} | {{ object_type }}|  {{ action }} 
             </h4>
-            <a type="button" class="btn-close" href="?{% if request.GET.tab %}tab={{request.GET.tab}}{% endif %}" aria-label="Close"></a>
+            <!-- <a type="button" class="btn-close" href="?{% if request.GET.tab %}tab={{request.GET.tab}}{% endif %}" aria-label="Close"></a> -->
+            <a type="button" class="btn-close" aria-label="Close" id="reconcile-close"></a>
           </div>
           <div class="modal-body">
             <div class="row mb-3" style="align-items: stretch;">
@@ -271,6 +272,47 @@ Context:
       </div>
     </div>
     <div class="modal-backdrop fade show"></div>
+
+    <script>
+      function removeTabParameterWithoutReloading() {
+        let url = new URL(window.location.href);
+        url.searchParams.delete('pk');
+
+        // Update the URL without reloading the page
+        window.history.replaceState(null, '', url.href);
+      }
+
+      
+      // Find the button element on the page
+      var closeButton = document.getElementById('reconcile-close');
+
+      // Define the function to be called when the button is clicked
+      function handleCloseButtonClick(event) {
+        
+        removeTabParameterWithoutReloading();
+
+        var backdrops = document.getElementsByClassName('modal-backdrop');
+        // Loop through each backdrop element and hide it by setting its display style to 'none'
+        for (var i = 0; i < backdrops.length; i++) {
+          backdrops[i].style.display = 'none';
+        }
+
+        // Get the element with the 'reconcile-detail-modal' ID
+          var modal = document.getElementById('reconcile-detail-modal');
+
+        // Set its display style to 'none' to hide it
+        if (modal) {
+          modal.style.display = 'none';
+        }
+        
+        // Optionally prevent the default action if needed (e.g., if the anchor navigates to a URL)
+        event.preventDefault();
+      }
+
+      // Add the event listener for the 'click' event
+      closeButton.addEventListener('click', handleCloseButtonClick);
+
+    </script>
   {% endif %}
   
   <style>
