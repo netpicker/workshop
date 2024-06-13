@@ -197,22 +197,39 @@ class SlurpitPlanningTable(tables.Table):
     def __init__(self, data, **kwargs):
         super().__init__(data, **kwargs)
 
+# IPADDRESS_LINK = """
+# {% if record.address %}
+#     <a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}" target="_blank">{{ record.address }}</a>
+# {% else %}
+#     <span>Default</span>
+# {% endif %}
+# """
+
+
+# NAME_LINK = """
+# {% if record.name != '' %}
+#     <a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}" target="_blank">{{ record.name }}</a>
+# {% else %}
+#     <span></span>
+# {% endif %}
+# """
+
 IPADDRESS_LINK = """
 {% if record.address %}
-    <a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}" target="_blank">{{ record.address }}</a>
+    <a href="?tab=ipam&pk={{record.pk}}" id="ipaddress_{{ record.pk }}" >{{ record.address }}</a>
 {% else %}
     <span>Default</span>
 {% endif %}
 """
 
+
 NAME_LINK = """
 {% if record.name != '' %}
-    <a href="{{ record.get_absolute_url }}" id="ipaddress_{{ record.pk }}" target="_blank">{{ record.name }}</a>
+    <a href="?tab=interface&pk={{record.pk}}" id="interface_{{ record.pk }}">{{ record.name }}</a>
 {% else %}
     <span></span>
 {% endif %}
 """
-
 
 class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
@@ -290,10 +307,22 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
         return 'Adding'
     
 
+# PREFIX_LINK = """
+# {% if record.pk %}
+#     {% if record.prefix %}
+#         <a href="{{ record.get_absolute_url }}" id="prefix_{{ record.pk }}" target="_blank">{{ record.prefix }}</a>
+#     {% else %}
+#         <span>Default</span>
+#     {% endif %}
+# {% else %}
+#   <a href="{% url 'ipam:prefix_add' %}?prefix={{ record }}{% if object.vrf %}&vrf={{ object.vrf.pk }}{% endif %}{% if object.site %}&site={{ object.site.pk }}{% endif %}{% if object.tenant %}&tenant_group={{ object.tenant.group.pk }}&tenant={{ object.tenant.pk }}{% endif %}" target="_blank">{{ record.prefix }}</a>
+# {% endif %}
+# """
+
 PREFIX_LINK = """
 {% if record.pk %}
     {% if record.prefix %}
-        <a href="{{ record.get_absolute_url }}" id="prefix_{{ record.pk }}" target="_blank">{{ record.prefix }}</a>
+        <a href="?tab=prefix&pk={{record.pk}}" id="prefix_{{ record.pk }}">{{ record.prefix }}</a>
     {% else %}
         <span>Default</span>
     {% endif %}

@@ -187,6 +187,92 @@ Context:
     
   </div>
 
+  {% if request.GET.pk %}
+    <div class="modal fade show" style="display: block !important;" tabindex="-1" id="settingsEditModal" aria-modal="true" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">
+              {{ title }} | {{ object_type }}|  {{ action }} 
+            </h4>
+            <a type="button" class="btn-close" href="?{% if request.GET.tab %}tab={{request.GET.tab}}{% endif %}" aria-label="Close"></a>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-3" style="align-items: stretch;">
+              <div class="col col-md-6">
+                  <div class="card" style="height: 100%;">
+                      <h5 class="card-header">
+                          {% trans "Current state" %}
+                      </h5>
+                      <div class="card-body">
+                      {% if current_state %}
+                          <pre class="change-data">{% for k, v in current_state.items %}{% spaceless %}
+                              <span{% if k in diff_removed %} class="removed"{% endif %}>{{ k }}: {{ v|json }}</span>
+                          {% endspaceless %}{% endfor %}
+                          </pre>
+                      {% elif non_atomic_change %}
+                          {% trans "Warning: Comparing non-atomic change to previous change record" %} (<a href="{% url 'extras:objectchange' pk=prev_change.pk %}">{{ prev_change.pk }}</a>)
+                      {% else %}
+                          <span class="text-muted">{% trans "None" %}</span>
+                      {% endif %}
+                      </div>
+                  </div>
+              </div>
+              <div class="col col-md-6">
+                  <div class="card" style="height: 100%;">
+                      <h5 class="card-header">
+                          {% trans "Incomming change" %}
+                      </h5>
+                      <div class="card-body">
+                          {% if incomming_change %}
+                              <pre class="change-data">{% for k, v in incomming_change.items %}{% spaceless %}
+                                  <span{% if k in diff_added %} class="added"{% endif %}>{{ k }}: {{ v|json }}</span>
+                                  {% endspaceless %}{% endfor %}
+                              </pre>
+                          {% else %}
+                              <span class="text-muted">{% trans "None" %}</span>
+                          {% endif %}
+                      </div>
+                  </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col col-md-12">
+                <div class="card">
+                    <h5 class="card-header">
+                      {% trans "Difference" %}
+                    </h5>
+                    <div class="card-body">
+                        {% if diff_added == diff_removed %}
+                            <span class="text-muted" style="margin-left: 10px;">
+                                {% if object.action == 'create' %}
+                                    {% trans "Object Created" %}
+                                {% elif object.action == 'delete' %}
+                                    {% trans "Object Deleted" %}
+                                {% else %}
+                                    {% trans "No Changes" %}
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            <pre class="change-diff change-removed">{{ diff_removed|json }}</pre>
+                            <pre class="change-diff change-added">{{ diff_added|json }}</pre>
+                        {% endif %}
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Body -->
+          
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  {% endif %}
+  
   <script>
     var reconcile_form = document.getElementById('reconcile_form')
     var accept_btn = document.getElementById('accept_btn')
@@ -214,6 +300,8 @@ Context:
     {% include "slurpit_netbox/footer.html" %}
   {% endblock footer %}
 </footer>
+
+
 
    
 

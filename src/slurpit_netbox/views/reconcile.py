@@ -52,12 +52,184 @@ class ReconcileView(generic.ObjectListView):
 
         return super().get(request, *args, **kwargs)
     
-    def get_extra_context(self, request):
-        return {
+    def get_extra_context(self, request, *args, **kwargs):
+        reconcile_type = request.GET.get('tab')
+        pk = request.GET.get('pk')
+        return_values = {}
+        """
+        GET handler for rendering child objects.
+        """
+        title = ""
+
+        if pk:
+            if reconcile_type == 'interface':
+                self.queryset = models.SlurpitInterface.objects.all()
+                instance = models.SlurpitInterface.object.get(pk=pk, **kwargs)
+                diff_added = None
+                diff_removed = None
+                action = 'Updated'
+                
+
+                interface_fields = ['name', 'label','description', 'device', 'module', 'type', 'duplex', 'speed']
+
+                incomming_queryset = SlurpitInterface.objects.filter(pk=pk)
+                incomming_obj = incomming_queryset.values(*interface_fields).first()
+
+                name = str(incomming_queryset.first().name)
+                updated_time = incomming_queryset.first().last_updated
+                title = name
+                device = incomming_obj['device']
+                incomming_obj['device'] = device
+
+                incomming_change = {**incomming_obj}
+
+                current_queryset = Interface.objects.filter(name=name, device=device)
+
+                if current_queryset:
+                    current_obj = current_queryset.values(*interface_fields).first()
+                    current_obj['name'] = name
+                    current_state = {**current_obj}
+                    instance = current_queryset.first()
+                else:
+                    current_state = None
+                    instance = None
+                    action = 'Created'
+                
+
+                if current_state and incomming_change:
+                    diff_added = shallow_compare_dict(
+                        current_state or dict(),
+                        incomming_change or dict(),
+                        exclude=['last_updated'],
+                    )
+                    diff_removed = {
+                        x: current_state.get(x) for x in diff_added
+                    } if current_state else {}
+                else:
+                    diff_added = None
+                    diff_removed = None
+
+                object_type = f'{Interface._meta.app_label} | {Interface._meta.verbose_name}'
+            
+            elif reconcile_type == 'prefix':
+                self.queryset = models.SlurpitPrefix.objects.all()
+                instance = models.SlurpitPrefix.objects.get(pk=pk, **kwargs)
+                diff_added = None
+                diff_removed = None
+                action = 'Updated'
+                
+                prefix_fields = ['prefix', 'status','vrf', 'vlan', 'tenant', 'site', 'role', 'description']
+
+                incomming_queryset = SlurpitPrefix.objects.filter(pk=pk)
+                incomming_change = incomming_queryset.values(*prefix_fields).first()
+                incomming_change['prefix'] = str(incomming_change['prefix'])
+
+                prefix = str(incomming_queryset.first().prefix)
+                updated_time = incomming_queryset.first().last_updated
+                title = prefix
+                vrf = None
+
+                if incomming_change['vrf'] is not None:
+                    vrf = VRF.objects.get(pk=incomming_change['vrf'])
+                current_queryset = Prefix.objects.filter(prefix=prefix, vrf=vrf)
+
+                if current_queryset:
+                    current_obj = current_queryset.values(*prefix_fields).first()
+                    current_state = {**current_obj}
+                    current_state['prefix'] = str(current_state['prefix'])
+                    
+                    instance = current_queryset.first()
+                else:
+                    current_state = None
+                    instance = None
+                    action = 'Created'
+                
+                if current_state and incomming_change:
+                    diff_added = shallow_compare_dict(
+                        current_state or dict(),
+                        incomming_change or dict(),
+                        exclude=['last_updated'],
+                    )
+                    diff_removed = {
+                        x: current_state.get(x) for x in diff_added
+                    } if current_state else {}
+                else:
+                    diff_added = None
+                    diff_removed = None
+
+
+                object_type = f'{Prefix._meta.app_label} | {Prefix._meta.verbose_name}'
+
+            else:
+                instance = models.SlurpitInitIPAddress.objects.get(pk=pk, **kwargs)
+                diff_added = None
+                diff_removed = None
+                action = 'Updated'
+
+                ipam_fields = ['address', 'status', 'dns_name', 'description', 'vrf', 'tenant', 'role']
+
+                incomming_queryset = SlurpitInitIPAddress.objects.filter(pk=pk)
+                incomming_obj = incomming_queryset.values(*ipam_fields).first()
+
+                ipaddress = str(incomming_queryset.first().address)
+                updated_time = incomming_queryset.first().last_updated
+
+
+                title = ipaddress
+                vrf = incomming_obj['vrf']
+                
+                incomming_obj['address'] = ipaddress
+                incomming_change = {**incomming_obj}
+
+                
+
+                current_queryset = IPAddress.objects.filter(address=ipaddress, vrf=vrf)
+                if current_queryset:
+                    current_obj = current_queryset.values(*ipam_fields).first()
+                    current_obj['address'] = ipaddress
+                    current_state = {**current_obj}
+                    instance = current_queryset.first()
+                else:
+                    current_state = None
+                    instance = None
+                    action = 'Created'
+                
+
+                if current_state and incomming_change:
+                    diff_added = shallow_compare_dict(
+                        current_state or dict(),
+                        incomming_change or dict(),
+                        exclude=['last_updated'],
+                    )
+                    diff_removed = {
+                        x: current_state.get(x) for x in diff_added
+                    } if current_state else {}
+                else:
+                    diff_added = None
+                    diff_removed = None
+
+                object_type = f'{IPAddress._meta.app_label} | {IPAddress._meta.verbose_name}'
+
+            return_values = {
+                'object': instance,
+                'title': title,
+                'diff_added': diff_added,
+                'diff_removed': diff_removed,
+                'incomming_change': incomming_change,
+                'current_state': current_state,
+                'updated_time': updated_time,
+                'action': action,
+                'object_type': object_type
+            }
+
+        return_values = {
+            **return_values,
             'ipam_count': models.SlurpitInitIPAddress.objects.exclude(address = None).count(),
             'interface_count': models.SlurpitInterface.objects.exclude(name = '').count(),
             'prefix_count': models.SlurpitPrefix.objects.exclude(prefix = None).count(),
         }
+
+        return return_values
     
     def post(self, request, **kwargs):
         pk_list = request.POST.getlist('pk')
