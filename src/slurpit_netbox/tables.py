@@ -95,14 +95,18 @@ class SlurpitImportedDeviceTable(NetBoxTable):
         verbose_name = _('Platform')
     )
 
+    ipv4 = tables.Column(
+        verbose_name = _('IPv4')
+    )
+
     last_updated = tables.Column(
         verbose_name = _('Last seen')
     )
 
     class Meta(NetBoxTable.Meta):
         model = SlurpitImportedDevice
-        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'device_os', 'device_type', 'last_updated')
-        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'last_updated')
+        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'ipv4', 'device_os', 'device_type', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'ipv4', 'last_updated')
 
 class ConflictDeviceTable(NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
