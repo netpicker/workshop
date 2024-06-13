@@ -144,7 +144,7 @@ class SlurpitIPAddressFilterSet(BaseFilterSet):
         return queryset.filter(
             Q(dns_name__icontains=value) | 
             Q(description__icontains=value) | 
-            Q(address__istartswith=value)
+            Q(address__icontains=value)
         )
     
 class SlurpitInterfaceFilterSet(BaseFilterSet):
