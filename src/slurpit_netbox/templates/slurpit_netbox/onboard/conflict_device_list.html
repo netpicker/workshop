@@ -12,15 +12,15 @@
               <i class="mdi mdi-check"></i>&nbsp;{% trans "Solve" %}
             </button>
             {% block bulk_buttons %}
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu">
               {% bulk_edit_button model query_params=request.GET %}
               <li>
-                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?conflicted=create&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn">
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?conflicted=create&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="dropdown-item">
                     <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Re-Create device" %}
                   </button>
               </li>
               <li>
-                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?conflicted=update&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn">
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?conflicted=update&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="dropdown-item">
                     <i class="mdi mdi-pencil" aria-hidden="true"></i> {% trans "Update existing device" %}
                   </button>
               </li>

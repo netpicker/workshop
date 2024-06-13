@@ -273,6 +273,21 @@ Context:
     <div class="modal-backdrop fade show"></div>
   {% endif %}
   
+  <style>
+    pre.change-diff.change-added {
+        background-color: #2fb34433 !important;
+    }
+    pre.change-diff.change-removed {
+        background-color: #d639392e !important;
+    }
+    pre.change-data>span.removed {
+        background-color: #d639392e !important;
+    }
+    pre.change-data>span.added {
+        background-color: #2fb34433 !important;
+    }
+  </style>
+  
   <script>
     var reconcile_form = document.getElementById('reconcile_form')
     var accept_btn = document.getElementById('accept_btn')
