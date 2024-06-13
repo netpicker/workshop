@@ -129,12 +129,8 @@ class SlurpitSnapshotViewSet(
         cache.delete(cache_key1)
         cache.delete(cache_key2)
         
-        try:
-            count = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id).delete()[0]
-
-            SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name} and hostname {hostname}")
-        except:
-            pass
+        count = SlurpitSnapshot.objects.filter(hostname=hostname, planning_id=planning_id).delete()[0]
+        SlurpitLog.info(category=LogCategoryChoices.PLANNING, message=f"Api deleted all {count} snapshots for planning {planning.name} and hostname {hostname}")
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=['delete'], url_path='clear/(?P<planning_id>[^/.]+)')
