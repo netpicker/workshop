@@ -72,8 +72,11 @@ class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
         return super().get(request, *args, **kwargs)
     
     def post(self, request):
-        pks = map(int, request.POST.getlist('pk'))
-        qs = self.queryset.filter(pk__in=pks, mapped_device_id__isnull=True)
+        if request.POST.get('_all'):
+            qs = self.queryset
+        else:
+            pks = map(int, request.POST.getlist('pk'))
+            qs = self.queryset.filter(pk__in=pks, mapped_device_id__isnull=True)
         import_from_queryset(qs)
         return redirect(request.path)
 
@@ -107,6 +110,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
     table = tables.SlurpitImportedDeviceTable
     model_form = forms.OnboardingForm
     form = forms.OnboardingForm
+    filterset = SlurpitImportedDeviceFilterSet
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -118,10 +122,10 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
 
         if request.POST.get('_all') and self.filterset is not None:
             pk_list = self.filterset(request.GET, self.queryset.values_list('pk', flat=True), request=request).qs
+            self.queryset = models.SlurpitImportedDevice.objects.all()
         else:
             pk_list = request.POST.getlist('pk')
-
-        self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
+            self.queryset = models.SlurpitImportedDevice.objects.filter(pk__in=pk_list)
 
         # Remove
         if 'remove' in request.GET:
@@ -285,6 +289,8 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
             initial_data.setdefault(k, str(v.id))
         initial_data.setdefault('status', status_inventory())
 
+        if request.POST.get('_all'):
+            initial_data['_all'] = 'on'
 
         if len(device_types) > 1:
             initial_data['device_type'] = 'keep_original'
@@ -317,7 +323,10 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
             device_type = DeviceType.objects.filter(id=form.cleaned_data['device_type']).first()
         updated_objects = []
         data = get_form_device_data(form)
-        for obj in self.queryset.filter(pk__in=form.cleaned_data['pk']):
+
+        objs = self.queryset.filter(pk__in=form.cleaned_data['pk'])
+        
+        for obj in objs:
             if obj.mapped_device_id is not None:
                 continue
 

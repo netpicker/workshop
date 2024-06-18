@@ -56,7 +56,25 @@ def get_create_dcim_objects(staged: SlurpitStagedDevice):
     if new:
         ensure_slurpit_tags(manu)
     platform, new = Platform.objects.get_or_create(name=staged.device_os, defaults={'slug':slugify(staged.device_os)})
-    dtype, new = DeviceType.objects.get_or_create(model=staged.device_type, manufacturer=manu, defaults={'slug':slugify(f'{staged.brand}-{staged.device_type}'), 'default_platform':platform})
+    
+    try:
+        dtype, new = DeviceType.objects.get_or_create(
+            model=staged.device_type, 
+            manufacturer=manu, 
+            defaults={
+                'slug':slugify(f'{staged.brand}-{staged.device_type}'), 
+                'default_platform':platform
+            }
+        )
+    except:
+        dtype, new = DeviceType.objects.get_or_create(
+            slug=slugify(f'{staged.brand}-{staged.device_type}'), 
+            manufacturer=manu, 
+            defaults={
+                'model':staged.device_type, 
+                'default_platform':platform
+            }
+        )
     if new:
         ensure_slurpit_tags(dtype)
     return dtype
