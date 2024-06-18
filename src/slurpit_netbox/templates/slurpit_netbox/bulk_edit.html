@@ -101,6 +101,19 @@
                     {% endfor %}
 
                   {% endif %}
+                  
+                </div>
+              </div>
+              
+              <div class="alert alert-warning bg-warning-subtle" role="alert">
+                <div class="d-flex">
+                  <div>
+                    <i class="mdi mdi-alert-octagon p-2"></i>
+                  </div>
+                  <div>
+                    <h4 class="alert-title">Warning</h4>
+                    Depending on the number of devices, onboarding can take a couple of minutes. Please keep this page open until onboarding is finished.
+                  </div>
                 </div>
               </div>
 
@@ -132,7 +145,7 @@
         var bulkForm = document.getElementById('bulkForm');
 
         // Show alert to not leave this page until all devices are onboarded
-        alert("Depending on the number of devices, onboarding can take a couple of minutes. Please keep this page open until onboarding is complete.");
+        alert("Depending on the number of devices, onboarding can take a couple of minutes. Please keep this page open until onboarding is finished.");
 
         // Disable the button
         applyButton.disabled = true;
