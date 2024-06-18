@@ -324,10 +324,8 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
         updated_objects = []
         data = get_form_device_data(form)
 
-        if form.cleaned_data['_all']:
-            objs = self.queryset
-        else:
-            objs = self.queryset.filter(pk__in=form.cleaned_data['pk'])
+        objs = self.queryset.filter(pk__in=form.cleaned_data['pk'])
+        
         for obj in objs:
             if obj.mapped_device_id is not None:
                 continue
