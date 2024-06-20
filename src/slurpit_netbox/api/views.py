@@ -857,7 +857,11 @@ class SlurpitPrefixView(SlurpitViewSet):
                     if slurpit_prefix_item:
                         slurpit_prefix_item = slurpit_prefix_item.first()
 
-                        
+                        if  'site' not in item or item['site'] is None:
+                            continue
+                        if  'location' not in item or item['location'] is None:
+                            continue
+                            
                         if 'description' in item:
                             slurpit_prefix_item.description = item['description']
                         if 'vrf' in item:
@@ -957,7 +961,12 @@ class SlurpitPrefixView(SlurpitViewSet):
                 batch_update_qs = []
                 for update_item in update_data:
                     item = Prefix.objects.get(prefix=update_item['prefix'], vrf=update_item['vrf'])
-
+                    
+                    if 'site' not in update_item or update_item['site'] is None:
+                        continue
+                    if 'location' not in update_item or update_item['location'] is None:
+                        continue
+                    
                     # update
                     if 'description' in update_item:
                         item.description = update_item['description']
