@@ -35,6 +35,7 @@ class ReconcileView(generic.ObjectListView):
     table = tables.SlurpitIPAMTable
     template_name = "slurpit_netbox/reconcile.html"
     filterset = SlurpitIPAddressFilterSet
+    action_buttons = []
     
     def get(self, request, *args, **kwargs):
         
