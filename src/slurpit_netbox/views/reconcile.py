@@ -65,7 +65,7 @@ class ReconcileView(generic.ObjectListView):
         if pk:
             if reconcile_type == 'interface':
                 self.queryset = models.SlurpitInterface.objects.all()
-                instance = models.SlurpitInterface.object.get(pk=pk, **kwargs)
+                # instance = models.SlurpitInterface.object.get(pk=pk, **kwargs)
                 diff_added = None
                 diff_removed = None
                 action = 'Updated'
@@ -114,7 +114,7 @@ class ReconcileView(generic.ObjectListView):
             
             elif reconcile_type == 'prefix':
                 self.queryset = models.SlurpitPrefix.objects.all()
-                instance = models.SlurpitPrefix.objects.get(pk=pk, **kwargs)
+                # instance = models.SlurpitPrefix.objects.get(pk=pk, **kwargs)
                 diff_added = None
                 diff_removed = None
                 action = 'Updated'
@@ -162,7 +162,7 @@ class ReconcileView(generic.ObjectListView):
                 object_type = f'{Prefix._meta.app_label} | {Prefix._meta.verbose_name}'
 
             else:
-                instance = models.SlurpitInitIPAddress.objects.get(pk=pk, **kwargs)
+                # instance = models.SlurpitInitIPAddress.objects.get(pk=pk, **kwargs)
                 diff_added = None
                 diff_removed = None
                 action = 'Updated'
