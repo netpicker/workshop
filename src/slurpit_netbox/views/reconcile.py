@@ -16,6 +16,8 @@ from django.db import transaction
 from dcim.models import Interface
 from urllib.parse import urlencode
 from ..filtersets import SlurpitIPAddressFilterSet, SlurpitInterfaceFilterSet, SlurpitPrefixFilterSet
+from utilities.views import register_model_view
+from ..forms import SlurpitPrefixForm, SlurpitDeviceInterfaceForm, SlurpitInitIPAMForm
 
 class SlurpitInitIPAddressListView(generic.ObjectListView):
     queryset = SlurpitInitIPAddress.objects.all()
@@ -647,8 +649,6 @@ class ReconcileDetailView(generic.ObjectView):
             incomming_obj['address'] = ipaddress
             incomming_change = {**incomming_obj}
 
-            
-
             current_queryset = IPAddress.objects.filter(address=ipaddress, vrf=vrf)
             if current_queryset:
                 current_obj = current_queryset.values(*ipam_fields).first()
@@ -693,3 +693,18 @@ class ReconcileDetailView(generic.ObjectView):
                 'object_type': object_type
             },
         )
+    
+class SlurpitPrefixEditView(generic.ObjectEditView):
+    queryset = SlurpitPrefix.objects.all()
+    form = SlurpitPrefixForm
+    # template_name = 'slurpit_netbox/prefix_edit.html'
+
+class SlurpitInterfaceEditView(generic.ObjectEditView):
+    queryset = SlurpitInterface.objects.all()
+    form = SlurpitDeviceInterfaceForm
+    # template_name = 'slurpit_netbox/prefix_edit.html'
+
+class SlurpitIPAddressEditView(generic.ObjectEditView):
+    queryset = SlurpitInitIPAddress.objects.all()
+    form = SlurpitInitIPAMForm
+    # template_name = 'slurpit_netbox/prefix_edit.html'

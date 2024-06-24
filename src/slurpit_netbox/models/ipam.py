@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from netbox.config import get_config
+from urllib.parse import urlencode
 
 class SlurpitInitIPAddress(PrimaryModel):
     """
@@ -97,3 +98,15 @@ class SlurpitInitIPAddress(PrimaryModel):
     
     def get_absolute_url(self):
         return reverse('plugins:slurpit_netbox:reconcile_detail', args=[self.pk, 'ipam'])
+    
+    def get_edit_url(self):
+        query_params = {'tab': "ipam"}
+        base_url = reverse("plugins:slurpit_netbox:reconcile_list")
+        # Encode your query parameters and append them to the base URL
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        base_url = reverse('plugins:slurpit_netbox:slurpitipaddress_edit', args=[self.pk])
+        query_params = {'return_url': url_with_querystring}
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        return url_with_querystring

@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from dcim.fields import MACAddressField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from dcim.constants import INTERFACE_MTU_MIN, INTERFACE_MTU_MAX
+from urllib.parse import urlencode
 
 class ComponentModel(NetBoxModel):
     """
@@ -202,7 +203,7 @@ class SlurpitInterface(ModularComponentModel, BaseInterface, CabledObjectModel, 
         super().__init__(*args, **kwargs)
 
     def __str__(self):
-        return f"{self._name}"
+        return f"{self.name}"
 
     def clean(self):
         super().clean()
@@ -213,3 +214,14 @@ class SlurpitInterface(ModularComponentModel, BaseInterface, CabledObjectModel, 
     def get_absolute_url(self):
         return reverse('plugins:slurpit_netbox:reconcile_detail', args=[self.pk, 'interface'])
 
+    def get_edit_url(self):
+        query_params = {'tab': "interface"}
+        base_url = reverse("plugins:slurpit_netbox:reconcile_list")
+        # Encode your query parameters and append them to the base URL
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        base_url = reverse('plugins:slurpit_netbox:slurpitinterface_edit', args=[self.pk])
+        query_params = {'return_url': url_with_querystring}
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        return url_with_querystring

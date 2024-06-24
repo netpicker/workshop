@@ -235,6 +235,16 @@ NAME_LINK = """
 {% endif %}
 """
 
+EDIT_LINK = """
+{% if record.name != '' %}
+    <a href="{{record.get_edit_url}}" id="interface_{{ record.pk }}" type="button" class="btn btn-yellow">
+        <i class="mdi mdi-pencil"></i>
+    </a>
+{% else %}
+    <span></span>
+{% endif %}
+"""
+
 class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
     actions = columns.ActionsColumn(actions=tuple())
     
@@ -258,11 +268,15 @@ class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
     )
 
     pk = ToggleColumn()
-
+    
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
+    )
     class Meta(NetBoxTable.Meta):
         model = SlurpitInitIPAddress
         fields = ('pk', 'id', 'address', 'vrf', 'status','dns_name', 'description', 'last_updated', 'commit_action')
-        default_columns = ('address', 'vrf', 'status', 'commit_action', 'dns_name', 'description', 'last_updated')
+        default_columns = ('address', 'vrf', 'status', 'commit_action', 'dns_name', 'description', 'last_updated', 'edit')
 
     def render_commit_action(self, record):
         obj = IPAddress.objects.filter(address=record.address, vrf=record.vrf)
@@ -295,6 +309,11 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
         empty_values=()
     )
 
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
+    )
+
     actions = columns.ActionsColumn(actions=tuple())
 
     class Meta(NetBoxTable.Meta):
@@ -302,7 +321,7 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
         fields = (
             'pk', 'name', 'device', 'label', 'enabled', 'type', 'description','commit_action'
         )
-        default_columns = ('pk', 'name', 'device', 'commit_action', 'label', 'enabled', 'type', 'description')
+        default_columns = ('pk', 'name', 'device', 'commit_action', 'label', 'enabled', 'type', 'description', 'edit')
 
     def render_commit_action(self, record):
         obj = Interface.objects.filter(name=record.name, device=record.device)
@@ -395,6 +414,11 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
         verbose_name=_('Role'),
         linkify=True
     )
+    
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
+    )
 
     actions = columns.ActionsColumn(actions=tuple())
 
@@ -405,7 +429,7 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
             'site', 'vlan', 'role', 'description','commit_action'
         )
         default_columns = (
-            'pk', 'prefix', 'status','vrf', 'utilization', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description',
+            'pk', 'prefix', 'status','vrf', 'utilization', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description', 'edit',
         )
         row_attrs = {
             'class': lambda record: 'success' if not record.pk else '',
