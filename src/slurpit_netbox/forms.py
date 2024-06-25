@@ -21,6 +21,7 @@ from ipam.choices import *
 from ipam.constants import *
 from dcim.forms.common import InterfaceCommonForm
 from ipam.forms import PrefixForm
+from utilities.forms import form_from_model
 
 class DeviceComponentForm(NetBoxModelForm):
     device = DynamicModelChoiceField(
@@ -322,4 +323,114 @@ class SlurpitPrefixForm(PrefixForm):
         fields = [
             'prefix', 'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
             'description', 'comments', 'tags','enable_reconcile'
+        ]
+
+class ComponentBulkEditForm(NetBoxModelBulkEditForm):
+    device = forms.ModelChoiceField(
+        label=_('Device'),
+        queryset=Device.objects.all(),
+        required=False,
+        disabled=True,
+        widget=forms.HiddenInput()
+    )
+    module = forms.ModelChoiceField(
+        label=_('Module'),
+        queryset=Module.objects.all(),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Limit module queryset to Modules which belong to the parent Device
+        if 'device' in self.initial:
+            device = Device.objects.filter(pk=self.initial['device']).first()
+            self.fields['module'].queryset = Module.objects.filter(device=device)
+        else:
+            self.fields['module'].choices = ()
+            self.fields['module'].widget.attrs['disabled'] = True
+
+class SlurpitInterfaceBulkEditForm(
+    form_from_model(SlurpitInterface, [
+        'label',  'type', 'speed', 'duplex',  'description', 'mode'
+    ]),
+    ComponentBulkEditForm
+):
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming Device Interface data')
+    )
+    
+    vlan_group = DynamicModelChoiceField(
+        queryset=VLANGroup.objects.all(),
+        required=False,
+        label=_('VLAN group')
+    )
+
+    untagged_vlan = DynamicModelChoiceField(
+        queryset=VLAN.objects.all(),
+        required=False,
+        label=_('Untagged VLAN'),
+        query_params={
+            'group_id': '$vlan_group',
+            'available_on_device': '$device',
+        }
+    )
+
+    tagged_vlans = DynamicModelMultipleChoiceField(
+        queryset=VLAN.objects.all(),
+        required=False,
+        label=_('Tagged VLANs'),
+        query_params={
+            'group_id': '$vlan_group',
+            'available_on_device': '$device',
+        }
+    )
+
+    model = SlurpitInterface
+
+    nullable_fields = (
+        'module', 'label', 'parent', 'bridge', 'lag', 'speed', 'duplex', 'mac_address', 'wwn', 'vdcs', 'mtu',
+        'description', 'poe_mode', 'poe_type', 'mode', 'rf_channel', 'rf_channel_frequency', 'rf_channel_width',
+        'tx_power', 'untagged_vlan', 'tagged_vlans', 'vrf', 'wireless_lans'
+    )
+
+    fields = [
+        'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
+    ]
+
+class SlurpitPrefixBulkEditForm(
+    form_from_model(SlurpitPrefix, [
+        'vrf', 'site', 'status', 'role','tenant', 'description', 'comments'
+    ]),
+    NetBoxModelBulkEditForm
+):
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming Prefix data')
+    )
+
+    nullable_fields = (
+        'site', 'vrf', 'tenant', 'role', 'description', 'comments',
+    )
+    model = SlurpitPrefix
+    fields = [
+       'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
+        'description', 'comments', 'tags'
+    ]
+
+class SlurpitIPAddressBulkEditForm(
+    form_from_model(SlurpitInitIPAddress, [
+        'vrf', 'status', 'role', 'tenant', 'description'
+    ]),
+    NetBoxModelBulkEditForm
+):
+
+    nullable_fields = (
+        'vrf', 'role', 'tenant', 'dns_name', 'description', 'comments',
+    )
+    model = SlurpitInitIPAddress
+    fields = [
+            'vrf', 'status', 'role', 'tenant_group',
+            'tenant', 'tags','description'
         ]

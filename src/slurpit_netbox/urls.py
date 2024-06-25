@@ -30,4 +30,9 @@ urlpatterns = (
     path('slurpitinterface/<int:pk>/edit/', views.SlurpitInterfaceEditView.as_view(), name='slurpitinterface_edit'),
     path('slurpitipaddress/<int:pk>/edit/', views.SlurpitIPAddressEditView.as_view(), name='slurpitipaddress_edit'),
     path('slurpitprefix/<int:pk>/edit/', views.SlurpitPrefixEditView.as_view(), name='slurpitprefix_edit'),
+
+    path('slurpitprefix/edit/', views.SlurpitPrefixBulkEditView.as_view(), name='slurpitprefix_bulk_edit'),
+    path('slurpitipaddress/edit/', views.SlurpitIPAddressBulkEditView.as_view(), name='slurpitipaddress_bulk_edit'),
+    path('slurpitinterface/edit/', views.SlurpitInterfaceBulkEditView.as_view(), name='slurpitinterface_bulk_edit'),
+
 )

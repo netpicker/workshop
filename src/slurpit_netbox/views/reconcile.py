@@ -225,11 +225,18 @@ class ReconcileView(generic.ObjectListView):
                 'object_type': object_type
             }
 
+        if reconcile_type == 'interface':
+            edit_bulk_url = reverse("plugins:slurpit_netbox:slurpitinterface_bulk_edit")
+        elif reconcile_type == 'prefix':
+            edit_bulk_url = reverse("plugins:slurpit_netbox:slurpitprefix_bulk_edit")
+        else:
+            edit_bulk_url = reverse("plugins:slurpit_netbox:slurpitipaddress_bulk_edit")
         return_values = {
             **return_values,
             'ipam_count': models.SlurpitInitIPAddress.objects.exclude(address = None).count(),
             'interface_count': models.SlurpitInterface.objects.exclude(name = '').count(),
             'prefix_count': models.SlurpitPrefix.objects.exclude(prefix = None).count(),
+            'edit_bulk_url': edit_bulk_url
         }
 
         return return_values
@@ -708,3 +715,21 @@ class SlurpitIPAddressEditView(generic.ObjectEditView):
     queryset = SlurpitInitIPAddress.objects.all()
     form = SlurpitInitIPAMForm
     # template_name = 'slurpit_netbox/prefix_edit.html'
+
+class SlurpitInterfaceBulkEditView(generic.BulkEditView):
+    queryset = SlurpitInterface.objects.all()
+    filterset = SlurpitInterfaceFilterSet
+    table = tables.SlurpitInterfaceTable
+    form = forms.SlurpitInterfaceBulkEditForm
+
+class SlurpitPrefixBulkEditView(generic.BulkEditView):
+    queryset = SlurpitPrefix.objects.all()
+    filterset = SlurpitPrefixFilterSet
+    table = tables.SlurpitPrefixTable
+    form = forms.SlurpitPrefixBulkEditForm
+
+class SlurpitIPAddressBulkEditView(generic.BulkEditView):
+    queryset = SlurpitInitIPAddress.objects.all()
+    filterset = SlurpitIPAddressFilterSet
+    table = tables.SlurpitIPAMTable
+    form = forms.SlurpitIPAddressBulkEditForm
