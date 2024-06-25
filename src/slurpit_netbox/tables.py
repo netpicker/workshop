@@ -264,7 +264,8 @@ class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
 
     commit_action = tables.Column(
         verbose_name = _('Commit Action'),
-        empty_values=()
+        empty_values=(),
+        orderable=False
     )
 
     pk = ToggleColumn()
@@ -306,7 +307,8 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
 
     commit_action = tables.Column(
         verbose_name = _('Commit Action'),
-        empty_values=()
+        empty_values=(),
+        orderable=False
     )
 
     edit = tables.TemplateColumn(
@@ -403,7 +405,8 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
 
     commit_action = tables.Column(
         verbose_name = _('Commit Action'),
-        empty_values=()
+        empty_values=(),
+        orderable=False
     )
 
     vlan = tables.Column(
