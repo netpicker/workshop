@@ -276,7 +276,7 @@ Context:
         </div>
       </div>
     </div>
-    <div class="modal-backdrop fade show"></div>
+    <div class="modal-backdrop fade show" id="modal-backdrop"></div>
 
     <script>
       function removeTabParameterWithoutReloading() {
@@ -296,22 +296,21 @@ Context:
         
         removeTabParameterWithoutReloading();
 
-        var backdrops = document.getElementsByClassName('modal-backdrop');
+        var backdrop = document.getElementById('modal-backdrop');
         // Loop through each backdrop element and hide it by setting its display style to 'none'
-        for (var i = 0; i < backdrops.length; i++) {
-          backdrops[i].style.display = 'none';
-        }
-
+        
+        backdrop.remove()
+        
         // Get the element with the 'reconcile-detail-modal' ID
-          var modal = document.getElementById('reconcile-detail-modal');
+        var modal = document.getElementById('reconcile-detail-modal');
 
         // Set its display style to 'none' to hide it
         if (modal) {
-          modal.style.display = 'none';
+          modal.remove()
         }
         
         // Optionally prevent the default action if needed (e.g., if the anchor navigates to a URL)
-        event.preventDefault();
+        // event.preventDefault();
       }
 
       // Add the event listener for the 'click' event
