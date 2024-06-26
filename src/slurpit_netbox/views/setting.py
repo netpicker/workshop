@@ -279,6 +279,7 @@ class SettingsView(View):
         connection_test = f"{server_url}/api/platform/ping"
         try:
             response = requests.get(connection_test, headers=headers, timeout=15, verify=False)
+            r = response.json()
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed testing the connection to the Slurp'it server."          
