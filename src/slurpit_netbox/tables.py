@@ -220,16 +220,16 @@ class SlurpitPlanningTable(tables.Table):
 
 IPADDRESS_LINK = """
 {% if record.address %}
-    <a href="?tab=ipam&pk={{record.pk}}" id="ipaddress_{{ record.pk }}" >{{ record.address }}</a>
+    <a id="ipaddress_{{ record.pk }}" pk={{record.pk}} class="reconcile-detail-btn">{{ record.address }}</a>
 {% else %}
     <span>Default</span>
 {% endif %}
 """
 
-
+# href="?tab=interface&pk={{record.pk}}"
 NAME_LINK = """
 {% if record.name != '' %}
-    <a href="?tab=interface&pk={{record.pk}}" id="interface_{{ record.pk }}">{{ record.name }}</a>
+    <a id="interface_{{ record.pk }}" class="reconcile-detail-btn" pk="{{record.pk}}">{{ record.name }}</a>
 {% else %}
     <span></span>
 {% endif %}
@@ -347,7 +347,7 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
 PREFIX_LINK = """
 {% if record.pk %}
     {% if record.prefix %}
-        <a href="?tab=prefix&pk={{record.pk}}" id="prefix_{{ record.pk }}">{{ record.prefix }}</a>
+        <a id="prefix_{{ record.pk }}" pk={{record.pk}} class="reconcile-detail-btn">{{ record.prefix }}</a>
     {% else %}
         <span>Default</span>
     {% endif %}
