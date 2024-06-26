@@ -428,11 +428,11 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = SlurpitPrefix
         fields = (
-            'pk', 'id', 'prefix','status', 'vrf', 'utilization', 'tenant',
+            'pk', 'id', 'prefix','status', 'vrf',  'tenant',
             'site', 'vlan', 'role', 'description','commit_action'
         )
         default_columns = (
-            'pk', 'prefix', 'status','vrf', 'utilization', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description', 'edit',
+            'pk', 'prefix', 'status','vrf', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description', 'edit',
         )
         row_attrs = {
             'class': lambda record: 'success' if not record.pk else '',
