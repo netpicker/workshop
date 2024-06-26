@@ -163,6 +163,25 @@ def handle_changed():
                     'slurpit_fqdn': device.fqdn,
                     'slurpit_ipv4': device.ipv4,
                 })   
+                
+                if device.ipv4:
+                    interface = Interface.objects.filter(device=result.mapped_device)
+                    if interface:
+                        interface = interface.first()
+                    else:
+                        interface = Interface.objects.create(name='management1', device=result.mapped_device, type='other')
+
+                    address = f'{device.ipv4}/32'
+                    ipaddress = IPAddress.objects.filter(address=address)
+                    if ipaddress:
+                        ipaddress = ipaddress.first()
+                    else:
+                        ipaddress = IPAddress.objects.create(address=address, status='active')
+                    
+                    ipaddress.assigned_object = interface
+                    ipaddress.save()
+                    result.mapped_device.primary_ip4 = ipaddress
+
                 result.mapped_device.name = device.hostname
                 result.mapped_device.save()
         offset += BATCH_SIZE

@@ -38,9 +38,11 @@ class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
                 slurpit_fqdn=KeyTextTransform('slurpit_fqdn', 'mapped_device__' + custom_field_data_name),
                 slurpit_platform=KeyTextTransform('slurpit_platform', 'mapped_device__' + custom_field_data_name),
                 slurpit_manufacturer=KeyTextTransform('slurpit_manufacturer', 'mapped_device__' + custom_field_data_name),
+                slurpit_ipv4=KeyTextTransform('slurpit_ipv4', 'mapped_device__' + custom_field_data_name),
                 fdevicetype=F('device_type'),
                 fhostname=F('hostname'),
                 ffqdn=F('fqdn'),
+                fipv4=F('ipv4'),
                 fdeviceos=F('device_os'),
                 fbrand=F('brand')
             ).exclude(
@@ -48,7 +50,8 @@ class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
                 Q(slurpit_hostname=F('fhostname')) & 
                 Q(slurpit_fqdn=F('ffqdn')) & 
                 Q(slurpit_platform=F('fdeviceos')) & 
-                Q(slurpit_manufacturer=F('fbrand'))
+                Q(slurpit_manufacturer=F('fbrand')) &
+                Q(slurpit_ipv4=F('fipv4'))
             )
     
     queryset = to_onboard_queryset
