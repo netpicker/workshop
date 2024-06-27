@@ -21,7 +21,7 @@
         {% block controls %}
           <div class="btn-list">
             {% block control-buttons %}
-              <a type="submit" class="btn btn-danger" href="?clear=true">
+              <a type="submit" class="btn btn-danger protect-btn" href="?clear=true">
                 <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Clear all logging
               </a>
             {% endblock %}
@@ -32,6 +32,18 @@
     </div>
   </div>
 
+  <script>
+    const projectButtons = document.querySelectorAll('.protect-btn');
+  
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
+  
+  </script>
 {% endblock page-header %}
 
 

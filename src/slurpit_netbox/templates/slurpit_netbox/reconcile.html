@@ -137,7 +137,7 @@ Context:
                 </div>
         
                 <div class="btn-group" role="group">
-                  <button type="submit" name="_edit" formaction="{{edit_bulk_url}}" class="btn btn-yellow">
+                  <button type="submit" name="_edit" formaction="{{edit_bulk_url}}" class="btn btn-yellow protect-btn">
                     <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit Selected
                   </button>
                 </div>
@@ -160,7 +160,7 @@ Context:
   
         <!-- Modal Footer -->
         <div class="modal-footer">
-            <a class="btn btn-danger " id="decline_btn">{% trans "Decline" %}</a>
+            <a class="btn btn-danger protect-btn" id="decline_btn">{% trans "Decline" %}</a>
             <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
         </div>
   
@@ -181,7 +181,7 @@ Context:
   
         <!-- Modal Footer -->
         <div class="modal-footer">
-            <a class="btn btn-success " id="accept_btn">{% trans "Accept" %}</a>
+            <a class="btn btn-success protect-btn" id="accept_btn">{% trans "Accept" %}</a>
             <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
         </div>
   
@@ -414,6 +414,15 @@ Context:
       reconcile_form.submit()
     });
 
+    const projectButtons = document.querySelectorAll('.protect-btn');
+
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
   </script>
 {% endblock content %}
 

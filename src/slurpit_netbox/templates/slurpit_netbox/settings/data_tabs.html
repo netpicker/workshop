@@ -31,11 +31,11 @@
             <div class="action">
               {% if appliance_type == 'both' or appliance_type == 'pull'  %}
                 {% if connection_status == 'connected' %}
-                  <a name="sync"  class="btn btn-orange  mx-2" href="{% url 'plugins:slurpit_netbox:settings' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Sync" %}</a>
+                  <a name="sync"  class="btn btn-orange  mx-2 protect-btn" href="{% url 'plugins:slurpit_netbox:settings' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Sync" %}</a>
                 {% endif %}
               {% endif %}
               
-              <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:settings' %}?return_url={% url 'plugins:slurpit_netbox:settings' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue  px-3">
+              <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:settings' %}?return_url={% url 'plugins:slurpit_netbox:settings' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue  px-3 protect-btn">
                 {% trans "Save" %}
               </button>
             </div>
@@ -80,4 +80,14 @@
         checkbox.checked = allElement.checked;
     });
   });
+
+  const projectButtons = document.querySelectorAll('.protect-btn');
+
+  projectButtons.forEach(button => {
+    button.addEventListener('click', protectButton);
+  });
+  function protectButton(event) {
+    event.target.classList.add('disabled');
+    event.target.textContent = 'Please wait'
+  }
 </script>

@@ -69,6 +69,17 @@
     {% endif %}
   </div> 
 
+  <script>
+    const projectButtons = document.querySelectorAll('.protect-btn');
+
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
+  </script>
 {% endblock content %}
 
 
