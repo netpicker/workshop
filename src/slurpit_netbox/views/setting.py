@@ -161,15 +161,15 @@ class SettingsView(View):
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/sync_start"
+                    "url": "api/plugins/slurpit/device/sync_start/"
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/sync"
+                    "url": "api/plugins/slurpit/device/sync/"
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/sync_end"
+                    "url": "api/plugins/slurpit/device/sync_end/"
                 },
                 {
                     "type": "DELETE",
