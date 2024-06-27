@@ -118,7 +118,7 @@
               </div>
 
               <div class="text-end">
-                <button type="submit" name="_apply" id="applyButton" disabled-onclick="set_apply_btn()" class="btn btn-primary">{% trans "Apply" %}</button>
+                <button type="submit" name="_apply" id="applyButton" class="btn btn-primary">{% trans "Apply" %}</button>
                 <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
               </div>
             </div>
@@ -136,26 +136,4 @@
         </div>
       </div>
     </div>
-
-  <script>
-
-    function set_apply_btn(){
-
-        var applyButton = document.getElementById('applyButton');
-        var bulkForm = document.getElementById('bulkForm');
-
-        // Show alert to not leave this page until all devices are onboarded
-        alert("Depending on the number of devices, onboarding can take a couple of minutes. Please keep this page open until onboarding is finished.");
-
-        // Disable the button
-        applyButton.disabled = true;
-
-        // Change the text
-        applyButton.innerHTML = 'Please wait...';
-
-        // Submit form
-        bulkForm.submit();
-
-    };
-  </script>
   {% endblock content %}
