@@ -247,17 +247,17 @@ Context:
 
   <script>
 
-  document.addEventListener("DOMContentLoaded", function() {
-    // Select all elements with the class 'd-print-none' within the #results element
-    const elements = document.querySelectorAll('#results .d-print-none');
-    
-    // Check if there is more than one element with the class 'd-print-none'
-    if (elements.length > 1) {
-      // Remove the class 'd-print-none' from the second element
-      elements[1].remove('d-print-none');
-      elements[2].remove('d-print-none');
-    }
-  });
+    document.addEventListener("DOMContentLoaded", function() {
+      // Select all elements with the class 'd-print-none' within the #results element
+      const elements = document.querySelectorAll('#results .d-print-none');
+      
+      // Check if there is more than one element with the class 'd-print-none'
+      if (elements.length > 1) {
+        // Remove the class 'd-print-none' from the second element
+        elements[1].remove('d-print-none');
+        elements[2].remove('d-print-none');
+      }
+    });
 
     var tabInput = document.getElementById('tab_input')
 
