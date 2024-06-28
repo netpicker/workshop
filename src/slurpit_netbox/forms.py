@@ -16,7 +16,7 @@ from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from virtualization.models import VMInterface
-from ipam.models import FHRPGroup, VRF, IPAddress, VLANGroup, VLAN
+from ipam.models import FHRPGroup, VRF, IPAddress, VLANGroup, VLAN, Role
 from ipam.choices import *
 from ipam.constants import *
 from dcim.forms.common import InterfaceCommonForm
@@ -356,10 +356,10 @@ class SlurpitInterfaceBulkEditForm(
     ]),
     ComponentBulkEditForm
 ):
-    enable_reconcile = forms.BooleanField(
-        required=False,
-        label=_('Enable to reconcile every incoming Device Interface data')
-    )
+    # enable_reconcile = forms.BooleanField(
+    #     required=False,
+    #     label=_('Enable to reconcile every incoming Device Interface data')
+    # )
     
     vlan_group = DynamicModelChoiceField(
         queryset=VLANGroup.objects.all(),
@@ -405,13 +405,28 @@ class SlurpitPrefixBulkEditForm(
     ]),
     NetBoxModelBulkEditForm
 ):
-    enable_reconcile = forms.BooleanField(
-        required=False,
-        label=_('Enable to reconcile every incoming Prefix data')
-    )
+    # enable_reconcile = forms.BooleanField(
+    #     required=False,
+    #     label=_('Enable to reconcile every incoming Prefix data')
+    # )
 
     nullable_fields = (
         'site', 'vrf', 'tenant', 'role', 'description', 'comments',
+    )
+    tenant = DynamicModelChoiceField(
+        label=_('Tenant'),
+        queryset=Tenant.objects.all(),
+        required=False
+    )
+    role = DynamicModelChoiceField(
+        label=_('Role'),
+        queryset=Role.objects.all(),
+        required=False
+    )
+    vrf = DynamicModelChoiceField(
+        queryset=VRF.objects.all(),
+        required=False,
+        label=_('VRF')
     )
     model = SlurpitPrefix
     fields = [
@@ -425,7 +440,16 @@ class SlurpitIPAddressBulkEditForm(
     ]),
     NetBoxModelBulkEditForm
 ):
-
+    tenant = DynamicModelChoiceField(
+        label=_('Tenant'),
+        queryset=Tenant.objects.all(),
+        required=False
+    )
+    vrf = DynamicModelChoiceField(
+        queryset=VRF.objects.all(),
+        required=False,
+        label=_('VRF')
+    )
     nullable_fields = (
         'vrf', 'role', 'tenant', 'dns_name', 'description', 'comments',
     )
