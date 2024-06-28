@@ -353,7 +353,7 @@ Context:
         let diffContent = ''
 
         if(diffAdded == diffRemoved) {
-          diffContent = `<span class="text-muted" style="margin-left: 10px;">Object ${action}</span>`
+          diffContent = `<span class="text-muted" style="margin-left: 10px;">None</span>`
         }else{
           diffContent = `<pre class="change-diff change-removed">${JSON.stringify(diffRemoved, null, 4)}</pre>`
           diffContent += `<pre class="change-diff change-added">${JSON.stringify(diffAdded, null, 4)}</pre>`
@@ -395,6 +395,10 @@ Context:
     }
     pre.change-data>span.added {
         background-color: #2fb34433 !important;
+    }
+    .reconcile-detail-btn {
+      cursor: pointer;
+      text-decoration: none !important;
     }
   </style>
 
