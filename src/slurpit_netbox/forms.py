@@ -254,8 +254,8 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
     class Meta:
         model = SlurpitInitIPAddress
         fields = [
-            'vrf', 'status', 'role', 'enable_reconcile', 'tenant_group',
-            'tenant','description'
+            'vrf', 'status', 'role', 'tenant_group',
+            'tenant','description', 'enable_reconcile',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -264,7 +264,12 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         kwargs['initial'] = initial
 
         super().__init__(*args, **kwargs)
-
+        del self.fields['tags']
+    
+class SlurpitInitIPAMEditForm(SlurpitInitIPAMForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['enable_reconcile']
 class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -312,6 +317,15 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
             'mode': '802.1Q Mode',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['tags']
+        del self.fields['device']
+
+class SlurpitDeviceInterfaceEditForm(SlurpitInitIPAMForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['enable_reconcile']
 class SlurpitPrefixForm(PrefixForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -325,6 +339,9 @@ class SlurpitPrefixForm(PrefixForm):
             'description', 'comments', 'tags','enable_reconcile'
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['tags']
 class ComponentBulkEditForm(NetBoxModelBulkEditForm):
     device = forms.ModelChoiceField(
         label=_('Device'),
@@ -361,32 +378,6 @@ class SlurpitInterfaceBulkEditForm(
     #     label=_('Enable to reconcile every incoming Device Interface data')
     # )
     
-    vlan_group = DynamicModelChoiceField(
-        queryset=VLANGroup.objects.all(),
-        required=False,
-        label=_('VLAN group')
-    )
-
-    untagged_vlan = DynamicModelChoiceField(
-        queryset=VLAN.objects.all(),
-        required=False,
-        label=_('Untagged VLAN'),
-        query_params={
-            'group_id': '$vlan_group',
-            'available_on_device': '$device',
-        }
-    )
-
-    tagged_vlans = DynamicModelMultipleChoiceField(
-        queryset=VLAN.objects.all(),
-        required=False,
-        label=_('Tagged VLANs'),
-        query_params={
-            'group_id': '$vlan_group',
-            'available_on_device': '$device',
-        }
-    )
-
     model = SlurpitInterface
 
     nullable_fields = (
@@ -396,8 +387,14 @@ class SlurpitInterfaceBulkEditForm(
     )
 
     fields = [
-        'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
+        'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode',
     ]
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['add_tags']
+        del self.fields['remove_tags']
 
 class SlurpitPrefixBulkEditForm(
     form_from_model(SlurpitPrefix, [
@@ -434,6 +431,10 @@ class SlurpitPrefixBulkEditForm(
         'description', 'comments', 'tags'
     ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['add_tags']
+        del self.fields['remove_tags']
 class SlurpitIPAddressBulkEditForm(
     form_from_model(SlurpitInitIPAddress, [
         'vrf', 'status', 'role', 'tenant', 'description'
@@ -458,3 +459,8 @@ class SlurpitIPAddressBulkEditForm(
         'vrf', 'status', 'role', 'tenant_group',
         'tenant','description'
     ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['add_tags']
+        del self.fields['remove_tags']

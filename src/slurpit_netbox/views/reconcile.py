@@ -873,12 +873,12 @@ class SlurpitPrefixEditView(generic.ObjectEditView):
 
 class SlurpitInterfaceEditView(generic.ObjectEditView):
     queryset = SlurpitInterface.objects.all()
-    form = SlurpitDeviceInterfaceForm
+    form = forms.SlurpitDeviceInterfaceEditForm
     # template_name = 'slurpit_netbox/prefix_edit.html'
 
 class SlurpitIPAddressEditView(generic.ObjectEditView):
     queryset = SlurpitInitIPAddress.objects.all()
-    form = SlurpitInitIPAMForm
+    form = forms.SlurpitInitIPAMEditForm
     # template_name = 'slurpit_netbox/prefix_edit.html'
 
 class SlurpitInterfaceBulkEditView(generic.BulkEditView):
