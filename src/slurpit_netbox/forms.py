@@ -255,7 +255,7 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         model = SlurpitInitIPAddress
         fields = [
             'vrf', 'status', 'role', 'enable_reconcile', 'tenant_group',
-            'tenant', 'tags','description'
+            'tenant','description'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -300,7 +300,7 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
     class Meta:
         model = SlurpitInterface
         fields = [
-           'device', 'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
+           'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
         ]
         widgets = {
             'speed': NumberWithOptions(
@@ -455,6 +455,6 @@ class SlurpitIPAddressBulkEditForm(
     )
     model = SlurpitInitIPAddress
     fields = [
-            'vrf', 'status', 'role', 'tenant_group',
-            'tenant', 'tags','description'
-        ]
+        'vrf', 'status', 'role', 'tenant_group',
+        'tenant','description'
+    ]
