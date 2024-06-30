@@ -118,8 +118,8 @@
               </div>
 
               <div class="text-end">
-                <button type="submit" name="_apply" id="applyButton" class="btn btn-primary">{% trans "Apply" %}</button>
-                <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+                <button type="submit" name="_apply" id="applyButton" class="btn btn-primary protect-btn">{% trans "Apply" %}</button>
+                <a href="{{ return_url }}" class="btn btn-outline-danger protect-btn">{% trans "Cancel" %}</a>
               </div>
             </div>
           </div>
@@ -136,4 +136,16 @@
         </div>
       </div>
     </div>
+
+    <script>
+      const projectButtons = document.querySelectorAll('.protect-btn');
+  
+      projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+      });
+      function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+      }
+  </script>
   {% endblock content %}

@@ -869,32 +869,33 @@ class ReconcileDetailView(generic.ObjectView):
 class SlurpitPrefixEditView(generic.ObjectEditView):
     queryset = SlurpitPrefix.objects.all()
     form = SlurpitPrefixForm
-    # template_name = 'slurpit_netbox/prefix_edit.html'
+    template_name = 'slurpit_netbox/object_edit.html'
 
 class SlurpitInterfaceEditView(generic.ObjectEditView):
     queryset = SlurpitInterface.objects.all()
     form = forms.SlurpitDeviceInterfaceEditForm
-    # template_name = 'slurpit_netbox/prefix_edit.html'
+    template_name = 'slurpit_netbox/object_edit.html'
 
 class SlurpitIPAddressEditView(generic.ObjectEditView):
     queryset = SlurpitInitIPAddress.objects.all()
     form = forms.SlurpitInitIPAMEditForm
-    # template_name = 'slurpit_netbox/prefix_edit.html'
+    template_name = 'slurpit_netbox/object_edit.html'
 
 class SlurpitInterfaceBulkEditView(generic.BulkEditView):
     queryset = SlurpitInterface.objects.all()
     filterset = SlurpitInterfaceFilterSet
     table = tables.SlurpitInterfaceTable
     form = forms.SlurpitInterfaceBulkEditForm
-
+    template_name = 'slurpit_netbox/object_bulkedit.html'
 class SlurpitPrefixBulkEditView(generic.BulkEditView):
     queryset = SlurpitPrefix.objects.all()
     filterset = SlurpitPrefixFilterSet
     table = tables.SlurpitPrefixTable
     form = forms.SlurpitPrefixBulkEditForm
-
+    template_name = 'slurpit_netbox/object_bulkedit.html'
 class SlurpitIPAddressBulkEditView(generic.BulkEditView):
     queryset = SlurpitInitIPAddress.objects.all()
     filterset = SlurpitIPAddressFilterSet
     table = tables.SlurpitIPAMTable
     form = forms.SlurpitIPAddressBulkEditForm
+    template_name = 'slurpit_netbox/object_bulkedit.html'
