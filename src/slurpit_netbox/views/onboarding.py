@@ -162,7 +162,12 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
             if form.is_valid():
                 try:
                     with transaction.atomic():
-                        updated_objects = self._update_objects(form, request)
+                        updated_objects, status, error, obj_name = self._update_objects(form, request)
+                        
+                        if status == "fail":
+                            msg = f'{error[0:-1]} at {obj_name}.'
+                            messages.error(self.request, msg)
+                            return redirect(self.get_return_url(request))
                         if updated_objects:
                             msg = f'Onboarded {len(updated_objects)} {model._meta.verbose_name_plural}'
                             messages.success(self.request, msg)
@@ -177,7 +182,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     messages.error(self.request, str(e))
                     form.add_error(None, str(e))
                     # clear_webhooks.send(sender=self)
-                    return JsonResponse({"status": "error", "error": str(e)})
+                    return JsonResponse({"status": "Error", "error": str(e)})
             return JsonResponse({"status": "error", "error": "validation error"})  
         
         elif 'migrate' in request.GET:
@@ -336,11 +341,14 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
             dt = device_type
             if not device_type:
                 dt = obj.mapped_devicetype
-                
-            device = get_dcim_device(obj, device_type=dt, **data)
-            obj.mapped_device = device
-            obj.save()
-            updated_objects.append(obj)
+            
+            try:
+                device = get_dcim_device(obj, device_type=dt, **data)
+                obj.mapped_device = device
+                obj.save()
+                updated_objects.append(obj)
+            except Exception as e:
+                return [], "fail", str(e), obj.hostname
 
             SlurpitLog.success(category=LogCategoryChoices.ONBOARD, message=f"Onboarded device - {obj.hostname} successfully.")
 
@@ -353,7 +361,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
             if form.cleaned_data.get('remove_tags', None):
                 device.tags.remove(*form.cleaned_data['remove_tags'])
 
-        return updated_objects
+        return updated_objects, "success", "", ""
 
 
 @method_decorator(slurpit_plugin_registered, name='dispatch')
