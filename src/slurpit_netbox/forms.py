@@ -16,11 +16,12 @@ from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from virtualization.models import VMInterface
-from ipam.models import FHRPGroup, VRF, IPAddress, VLANGroup, VLAN
+from ipam.models import FHRPGroup, VRF, IPAddress, VLANGroup, VLAN, Role
 from ipam.choices import *
 from ipam.constants import *
 from dcim.forms.common import InterfaceCommonForm
 from ipam.forms import PrefixForm
+from utilities.forms import form_from_model
 
 class DeviceComponentForm(NetBoxModelForm):
     device = DynamicModelChoiceField(
@@ -253,8 +254,8 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
     class Meta:
         model = SlurpitInitIPAddress
         fields = [
-            'vrf', 'status', 'role', 'enable_reconcile', 'tenant_group',
-            'tenant', 'tags','description'
+            'vrf', 'status', 'role', 'tenant_group',
+            'tenant','description', 'enable_reconcile',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -263,7 +264,12 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         kwargs['initial'] = initial
 
         super().__init__(*args, **kwargs)
-
+        del self.fields['tags']
+    
+class SlurpitInitIPAMEditForm(SlurpitInitIPAMForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['enable_reconcile']
 class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -299,7 +305,7 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
     class Meta:
         model = SlurpitInterface
         fields = [
-           'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'tags', 'enable_reconcile', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans'
+           'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
         ]
         widgets = {
             'speed': NumberWithOptions(
@@ -311,6 +317,15 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
             'mode': '802.1Q Mode',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['tags']
+        del self.fields['device']
+
+class SlurpitDeviceInterfaceEditForm(SlurpitInitIPAMForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['enable_reconcile']
 class SlurpitPrefixForm(PrefixForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -323,3 +338,129 @@ class SlurpitPrefixForm(PrefixForm):
             'prefix', 'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
             'description', 'comments', 'tags','enable_reconcile'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['tags']
+class ComponentBulkEditForm(NetBoxModelBulkEditForm):
+    device = forms.ModelChoiceField(
+        label=_('Device'),
+        queryset=Device.objects.all(),
+        required=False,
+        disabled=True,
+        widget=forms.HiddenInput()
+    )
+    module = forms.ModelChoiceField(
+        label=_('Module'),
+        queryset=Module.objects.all(),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Limit module queryset to Modules which belong to the parent Device
+        if 'device' in self.initial:
+            device = Device.objects.filter(pk=self.initial['device']).first()
+            self.fields['module'].queryset = Module.objects.filter(device=device)
+        else:
+            self.fields['module'].choices = ()
+            self.fields['module'].widget.attrs['disabled'] = True
+
+class SlurpitInterfaceBulkEditForm(
+    form_from_model(SlurpitInterface, [
+        'label',  'type', 'speed', 'duplex',  'description', 'mode'
+    ]),
+    ComponentBulkEditForm
+):
+    # enable_reconcile = forms.BooleanField(
+    #     required=False,
+    #     label=_('Enable to reconcile every incoming Device Interface data')
+    # )
+    
+    model = SlurpitInterface
+
+    nullable_fields = (
+        'module', 'label', 'parent', 'bridge', 'lag', 'speed', 'duplex', 'mac_address', 'wwn', 'vdcs', 'mtu',
+        'description', 'poe_mode', 'poe_type', 'mode', 'rf_channel', 'rf_channel_frequency', 'rf_channel_width',
+        'tx_power', 'untagged_vlan', 'tagged_vlans', 'vrf', 'wireless_lans'
+    )
+
+    fields = [
+        'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode',
+    ]
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['add_tags']
+        del self.fields['remove_tags']
+
+class SlurpitPrefixBulkEditForm(
+    form_from_model(SlurpitPrefix, [
+        'vrf', 'site', 'status', 'role','tenant', 'description', 'comments'
+    ]),
+    NetBoxModelBulkEditForm
+):
+    # enable_reconcile = forms.BooleanField(
+    #     required=False,
+    #     label=_('Enable to reconcile every incoming Prefix data')
+    # )
+
+    nullable_fields = (
+        'site', 'vrf', 'tenant', 'role', 'description', 'comments',
+    )
+    tenant = DynamicModelChoiceField(
+        label=_('Tenant'),
+        queryset=Tenant.objects.all(),
+        required=False
+    )
+    role = DynamicModelChoiceField(
+        label=_('Role'),
+        queryset=Role.objects.all(),
+        required=False
+    )
+    vrf = DynamicModelChoiceField(
+        queryset=VRF.objects.all(),
+        required=False,
+        label=_('VRF')
+    )
+    model = SlurpitPrefix
+    fields = [
+       'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
+        'description', 'comments', 'tags'
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['add_tags']
+        del self.fields['remove_tags']
+class SlurpitIPAddressBulkEditForm(
+    form_from_model(SlurpitInitIPAddress, [
+        'vrf', 'status', 'role', 'tenant', 'description'
+    ]),
+    NetBoxModelBulkEditForm
+):
+    tenant = DynamicModelChoiceField(
+        label=_('Tenant'),
+        queryset=Tenant.objects.all(),
+        required=False
+    )
+    vrf = DynamicModelChoiceField(
+        queryset=VRF.objects.all(),
+        required=False,
+        label=_('VRF')
+    )
+    nullable_fields = (
+        'vrf', 'role', 'tenant', 'dns_name', 'description', 'comments',
+    )
+    model = SlurpitInitIPAddress
+    fields = [
+        'vrf', 'status', 'role', 'tenant_group',
+        'tenant','description'
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['add_tags']
+        del self.fields['remove_tags']

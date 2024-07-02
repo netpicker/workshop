@@ -161,15 +161,15 @@ class SettingsView(View):
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/sync_start"
+                    "url": "api/plugins/slurpit/device/sync_start/"
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/sync"
+                    "url": "api/plugins/slurpit/device/sync/"
                 },
                 {
                     "type": "POST",
-                    "url": "api/plugins/slurpit/device/sync_end"
+                    "url": "api/plugins/slurpit/device/sync_end/"
                 },
                 {
                     "type": "DELETE",
@@ -279,6 +279,7 @@ class SettingsView(View):
         connection_test = f"{server_url}/api/platform/ping"
         try:
             response = requests.get(connection_test, headers=headers, timeout=15, verify=False)
+            r = response.json()
         except Exception as e:
             messages.error(request, "Please confirm the Slurp'it server is running and reachable.")
             log_message ="Failed testing the connection to the Slurp'it server."          

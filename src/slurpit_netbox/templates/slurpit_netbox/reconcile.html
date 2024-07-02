@@ -94,7 +94,7 @@ Context:
                   <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
                   <label for="select-all" class="form-check-label">
                     {% blocktrans trimmed with count=table.rows|length object_type_plural=table.data.verbose_name_plural %}
-                      Select <strong>all {{ count }} {{ object_type_plural }}</strong> matching query
+                      Select <strong>all of the {{ count }} {{ object_type_plural }}</strong>
                     {% endblocktrans %}
                   </label>
                 </div>
@@ -136,7 +136,12 @@ Context:
                   </div>
                 </div>
         
-                
+                <div class="btn-group" role="group">
+                  <button type="submit" name="_edit" formaction="{{edit_bulk_url}}" class="btn btn-yellow protect-btn">
+                    <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit Selected
+                  </button>
+                </div>
+
               </div>
               
         </form>
@@ -155,7 +160,7 @@ Context:
   
         <!-- Modal Footer -->
         <div class="modal-footer">
-            <a class="btn btn-danger " id="decline_btn">{% trans "Decline" %}</a>
+            <a class="btn btn-danger protect-btn" id="decline_btn">{% trans "Decline" %}</a>
             <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
         </div>
   
@@ -176,7 +181,7 @@ Context:
   
         <!-- Modal Footer -->
         <div class="modal-footer">
-            <a class="btn btn-success " id="accept_btn">{% trans "Accept" %}</a>
+            <a class="btn btn-success protect-btn" id="accept_btn">{% trans "Accept" %}</a>
             <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
         </div>
   
@@ -187,134 +192,210 @@ Context:
     
   </div>
 
-  {% if request.GET.pk %}
-    <div class="modal fade show" style="display: block" tabindex="-1" id="reconcile-detail-modal" aria-modal="true" role="dialog">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+  <div class="modal fade" tabindex="-1" id="reconcile-detail-modal" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
 
-          <!-- Modal Header -->
-          <div class="modal-header">
-            <h4 class="modal-title">
-              {{ title }} | {{ object_type }}|  {{ action }} 
-            </h4>
-            <!-- <a type="button" class="btn-close" href="?{% if request.GET.tab %}tab={{request.GET.tab}}{% endif %}" aria-label="Close"></a> -->
-            <a type="button" class="btn-close" aria-label="Close" id="reconcile-close"></a>
-          </div>
-          <div class="modal-body">
-            <div class="row mb-3" style="align-items: stretch;">
-              <div class="col col-md-6">
-                  <div class="card" style="height: 100%;">
-                      <h5 class="card-header">
-                          {% trans "Current state" %}
-                      </h5>
-                      <div class="card-body">
-                      {% if current_state %}
-                          <pre class="change-data">{% for k, v in current_state.items %}{% spaceless %}
-                              <span{% if k in diff_removed %} class="removed"{% endif %}>{{ k }}: {{ v|json }}</span>
-                          {% endspaceless %}{% endfor %}
-                          </pre>
-                      {% elif non_atomic_change %}
-                          {% trans "Warning: Comparing non-atomic change to previous change record" %} (<a href="{% url 'extras:objectchange' pk=prev_change.pk %}">{{ prev_change.pk }}</a>)
-                      {% else %}
-                          <span class="text-muted">{% trans "None" %}</span>
-                      {% endif %}
-                      </div>
-                  </div>
-              </div>
-              <div class="col col-md-6">
-                  <div class="card" style="height: 100%;">
-                      <h5 class="card-header">
-                          {% trans "Incomming change" %}
-                      </h5>
-                      <div class="card-body">
-                          {% if incomming_change %}
-                              <pre class="change-data">{% for k, v in incomming_change.items %}{% spaceless %}
-                                  <span{% if k in diff_added %} class="added"{% endif %}>{{ k }}: {{ v|json }}</span>
-                                  {% endspaceless %}{% endfor %}
-                              </pre>
-                          {% else %}
-                              <span class="text-muted">{% trans "None" %}</span>
-                          {% endif %}
-                      </div>
-                  </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col col-md-12">
-                <div class="card">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-title">
+            <!-- {{ title }} | {{ object_type }}|  {{ action }}  -->
+          </h4>
+          <!-- <a type="button" class="btn-close" href="?{% if request.GET.tab %}tab={{request.GET.tab}}{% endif %}" aria-label="Close"></a> -->
+          <a type="button" class="btn-close" aria-label="Close" id="reconcile-close"></a>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3" style="align-items: stretch;">
+            <div class="col col-md-6">
+                <div class="card" style="height: 100%;">
                     <h5 class="card-header">
-                      {% trans "Difference" %}
+                        {% trans "Current state" %}
                     </h5>
-                    <div class="card-body">
-                        {% if diff_added == diff_removed %}
-                            <span class="text-muted" style="margin-left: 10px;">
-                                {% if object.action == 'create' %}
-                                    {% trans "Object Created" %}
-                                {% elif object.action == 'delete' %}
-                                    {% trans "Object Deleted" %}
-                                {% else %}
-                                    {% trans "No Changes" %}
-                                {% endif %}
-                            </span>
-                        {% else %}
-                            <pre class="change-diff change-removed">{{ diff_removed|json }}</pre>
-                            <pre class="change-diff change-added">{{ diff_added|json }}</pre>
-                        {% endif %}
+                    <div class="card-body" id="current-card-body">
                     </div>
                 </div>
+            </div>
+            <div class="col col-md-6">
+                <div class="card" style="height: 100%;">
+                    <h5 class="card-header">
+                        {% trans "Incomming change" %}
+                    </h5>
+                    <div class="card-body" id="incomming-card-body">
+                       
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col col-md-12">
+              <div class="card">
+                  <h5 class="card-header">
+                    {% trans "Difference" %}
+                  </h5>
+                  <div class="card-body" id="diff-card-body">
+                      
+                  </div>
               </div>
             </div>
           </div>
-
-          <!-- Modal Body -->
-          
         </div>
+        <!-- Modal Body -->
       </div>
     </div>
-    <div class="modal-backdrop fade show"></div>
+  </div>
+  <div class="modal-backdrop fade" id="modal-backdrop"></div>
 
-    <script>
-      function removeTabParameterWithoutReloading() {
-        let url = new URL(window.location.href);
-        url.searchParams.delete('pk');
+  <script>
 
-        // Update the URL without reloading the page
-        window.history.replaceState(null, '', url.href);
-      }
-
+    document.addEventListener("DOMContentLoaded", function() {
+      // Select all elements with the class 'd-print-none' within the #results element
+      const elements = document.querySelectorAll('#results .d-print-none');
       
-      // Find the button element on the page
-      var closeButton = document.getElementById('reconcile-close');
+      // Check if there is more than one element with the class 'd-print-none'
+      if (elements.length > 1) {
+        // Remove the class 'd-print-none' from the second element
+        elements[1].remove('d-print-none');
+        elements[2].remove('d-print-none');
+      }
+    });
 
-      // Define the function to be called when the button is clicked
-      function handleCloseButtonClick(event) {
-        
-        removeTabParameterWithoutReloading();
+    var tabInput = document.getElementById('tab_input')
 
-        var backdrops = document.getElementsByClassName('modal-backdrop');
-        // Loop through each backdrop element and hide it by setting its display style to 'none'
-        for (var i = 0; i < backdrops.length; i++) {
-          backdrops[i].style.display = 'none';
-        }
+    const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfTokenInput.value;
+    const buttons = document.querySelectorAll('.reconcile-detail-btn');
 
-        // Get the element with the 'reconcile-detail-modal' ID
-          var modal = document.getElementById('reconcile-detail-modal');
+    // Find the button element on the page
+    var closeButton = document.getElementById('reconcile-close');
+    var reconcileDetailModal = document.getElementById('reconcile-detail-modal');
+    var modalBackdrop = document.getElementById('modal-backdrop')
 
-        // Set its display style to 'none' to hide it
-        if (modal) {
-          modal.style.display = 'none';
-        }
-        
-        // Optionally prevent the default action if needed (e.g., if the anchor navigates to a URL)
-        event.preventDefault();
+    modalBackdrop.style.display = 'none'
+
+    buttons.forEach(button => {
+      button.addEventListener('click', handleClick);
+    });
+
+    function removeWhitespace(html) {
+      return html.replace(/>\s+</g, '><').trim();
+    }
+
+    // Attach event listener to a parent element that exists when the page loads
+    document.addEventListener('click', function(event) {
+      // Check if the clicked element is one of our buttons
+      if (event.target.matches('.reconcile-detail-btn')) {
+        handleClick(event);
+      }
+    });
+
+    function handleClick(event) {
+      const pk = event.target.getAttribute('pk');
+      const currentUrl = window.location.href;
+      const url = new URL(currentUrl);
+      const urlWithoutParams = url.origin + url.pathname;
+      
+      const data = { 
+        pk: pk, tab: 
+        tabInput.value, 
+        action: "get"
+      };
+
+      const formData = new FormData();
+      for (let key in data) {
+        formData.append(key, data[key]);
       }
 
-      // Add the event listener for the 'click' event
-      closeButton.addEventListener('click', handleCloseButtonClick);
+      fetch(urlWithoutParams, {
 
-    </script>
-  {% endif %}
-  
+        method: 'POST', // Specify the method
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        body: formData 
+      })
+      .then(response => {
+          return response.json();
+      })
+      .then(data => {
+        const title = data['title']
+        const objectType = data['object_type']
+
+        const action = data['action']
+        const currentState = data['current-state']
+        const incommingChange = data['incomming_change']
+        const diffRemoved = data['diff_removed']
+        const diffAdded = data['diff_added']
+        const modalTitle = document.getElementById('modal-title');
+        modalTitle.textContent = `${title} | ${objectType} | ${action}`
+
+        const currentCardBody = document.getElementById('current-card-body')
+        let currentContent = '<span class="text-muted">None</span>'
+
+        if(currentState) {
+          currentContent = '<pre class="change-data">'
+          for(const [k, v] of Object.entries(currentState)) {
+            if(diffRemoved && diffRemoved.hasOwnProperty(k)) 
+              currentContent += `<span class="removed">${k}: ${JSON.stringify(v, null, 4)}</span>`
+            else
+              currentContent += `<span>${k}: ${JSON.stringify(v, null, 4)}</span>`
+          }
+          currentContent += '</pre>'
+          currentContent = removeWhitespace(currentContent);
+        }
+        currentCardBody.innerHTML = currentContent
+
+        const incommingCardBody = document.getElementById('incomming-card-body')
+        
+        let incommingContent = '<span class="text-muted">None</span>'
+
+        if(incommingChange) {
+          incommingContent = '<pre class="change-data">'
+          for(const [k, v] of Object.entries(incommingChange)) {
+            console.log(k)
+            if(diffAdded && diffAdded.hasOwnProperty(k)) 
+              incommingContent += `<span class="added">${k}: ${JSON.stringify(v, null, 4)}</span>`
+            else
+              incommingContent += `<span>${k}: ${JSON.stringify(v, null, 4)}</span>`
+          }
+          incommingContent += '</pre>'
+          incommingContent = removeWhitespace(incommingContent);
+        }
+        incommingCardBody.innerHTML = incommingContent
+
+        const diffCardBody = document.getElementById('diff-card-body')
+        let diffContent = ''
+
+        if(diffAdded == diffRemoved) {
+          diffContent = `<span class="text-muted" style="margin-left: 10px;">None</span>`
+        }else{
+          diffContent = `<pre class="change-diff change-removed">${JSON.stringify(diffRemoved, null, 4)}</pre>`
+          diffContent += `<pre class="change-diff change-added">${JSON.stringify(diffAdded, null, 4)}</pre>`
+          diffContent = removeWhitespace(diffContent);
+        }
+        diffCardBody.innerHTML = diffContent
+
+        reconcileDetailModal.style.display = "block"
+        reconcileDetailModal.classList.add("show")
+        modalBackdrop.style.display = "block"
+      })
+      .catch(error => {
+        
+      });
+    }
+    
+    // reconcileDetailModal.style.display = 'block'
+    // Define the function to be called when the button is clicked
+    function handleCloseButtonClick(event) {
+      reconcileDetailModal.style.display = "none"
+      reconcileDetailModal.classList.remove("show")
+      modalBackdrop.style.display = "none"
+    }
+
+    // Add the event listener for the 'click' event
+    closeButton.addEventListener('click', handleCloseButtonClick);
+
+  </script>
+
   <style>
     pre.change-diff.change-added {
         background-color: #2fb34433 !important;
@@ -327,6 +408,10 @@ Context:
     }
     pre.change-data>span.added {
         background-color: #2fb34433 !important;
+    }
+    .reconcile-detail-btn {
+      cursor: pointer;
+      text-decoration: none !important;
     }
   </style>
 
@@ -346,6 +431,15 @@ Context:
       reconcile_form.submit()
     });
 
+    const projectButtons = document.querySelectorAll('.protect-btn');
+
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
   </script>
 {% endblock content %}
 

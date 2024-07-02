@@ -220,16 +220,26 @@ class SlurpitPlanningTable(tables.Table):
 
 IPADDRESS_LINK = """
 {% if record.address %}
-    <a href="?tab=ipam&pk={{record.pk}}" id="ipaddress_{{ record.pk }}" >{{ record.address }}</a>
+    <a id="ipaddress_{{ record.pk }}" pk={{record.pk}} class="reconcile-detail-btn">{{ record.address }}</a>
 {% else %}
     <span>Default</span>
 {% endif %}
 """
 
-
+# href="?tab=interface&pk={{record.pk}}"
 NAME_LINK = """
 {% if record.name != '' %}
-    <a href="?tab=interface&pk={{record.pk}}" id="interface_{{ record.pk }}">{{ record.name }}</a>
+    <a id="interface_{{ record.pk }}" class="reconcile-detail-btn" pk="{{record.pk}}">{{ record.name }}</a>
+{% else %}
+    <span></span>
+{% endif %}
+"""
+
+EDIT_LINK = """
+{% if record.name != '' %}
+    <a href="{{record.get_edit_url}}" id="interface_{{ record.pk }}" type="button" class="btn btn-yellow">
+        <i class="mdi mdi-pencil"></i>
+    </a>
 {% else %}
     <span></span>
 {% endif %}
@@ -254,15 +264,20 @@ class SlurpitIPAMTable(TenancyColumnsMixin,NetBoxTable):
 
     commit_action = tables.Column(
         verbose_name = _('Commit Action'),
-        empty_values=()
+        empty_values=(),
+        orderable=False
     )
 
     pk = ToggleColumn()
-
+    
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
+    )
     class Meta(NetBoxTable.Meta):
         model = SlurpitInitIPAddress
         fields = ('pk', 'id', 'address', 'vrf', 'status','dns_name', 'description', 'last_updated', 'commit_action')
-        default_columns = ('address', 'vrf', 'status', 'commit_action', 'dns_name', 'description', 'last_updated')
+        default_columns = ('address', 'vrf', 'status', 'commit_action', 'dns_name', 'description', 'last_updated', 'edit')
 
     def render_commit_action(self, record):
         obj = IPAddress.objects.filter(address=record.address, vrf=record.vrf)
@@ -292,7 +307,13 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
 
     commit_action = tables.Column(
         verbose_name = _('Commit Action'),
-        empty_values=()
+        empty_values=(),
+        orderable=False
+    )
+
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
     )
 
     actions = columns.ActionsColumn(actions=tuple())
@@ -302,7 +323,7 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
         fields = (
             'pk', 'name', 'device', 'label', 'enabled', 'type', 'description','commit_action'
         )
-        default_columns = ('pk', 'name', 'device', 'commit_action', 'label', 'enabled', 'type', 'description')
+        default_columns = ('pk', 'name', 'device', 'commit_action', 'label', 'enabled', 'type', 'description', 'edit')
 
     def render_commit_action(self, record):
         obj = Interface.objects.filter(name=record.name, device=record.device)
@@ -326,7 +347,7 @@ class SlurpitInterfaceTable(BaseInterfaceTable):
 PREFIX_LINK = """
 {% if record.pk %}
     {% if record.prefix %}
-        <a href="?tab=prefix&pk={{record.pk}}" id="prefix_{{ record.pk }}">{{ record.prefix }}</a>
+        <a id="prefix_{{ record.pk }}" pk={{record.pk}} class="reconcile-detail-btn">{{ record.prefix }}</a>
     {% else %}
         <span>Default</span>
     {% endif %}
@@ -384,7 +405,8 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
 
     commit_action = tables.Column(
         verbose_name = _('Commit Action'),
-        empty_values=()
+        empty_values=(),
+        orderable=False
     )
 
     vlan = tables.Column(
@@ -395,17 +417,22 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
         verbose_name=_('Role'),
         linkify=True
     )
+    
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
+    )
 
     actions = columns.ActionsColumn(actions=tuple())
 
     class Meta(NetBoxTable.Meta):
         model = SlurpitPrefix
         fields = (
-            'pk', 'id', 'prefix','status', 'vrf', 'utilization', 'tenant',
+            'pk', 'id', 'prefix','status', 'vrf',  'tenant',
             'site', 'vlan', 'role', 'description','commit_action'
         )
         default_columns = (
-            'pk', 'prefix', 'status','vrf', 'utilization', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description',
+            'pk', 'prefix', 'status','vrf', 'commit_action', 'tenant', 'site', 'vlan', 'role', 'description', 'edit',
         )
         row_attrs = {
             'class': lambda record: 'success' if not record.pk else '',

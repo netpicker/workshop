@@ -1,5 +1,4 @@
 from django.urls import include, path
-from utilities.urls import get_model_urls
 from netbox.views.generic import ObjectChangeLogView
 from . import views
 from . import models
@@ -27,5 +26,13 @@ urlpatterns = (
     path('slurpitinitaddress/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinitipaddress_list'),
     path('slurpitprefix/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitprefix_list'),
     path('slurpitinterface/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinterface_list'),
+
+    path('slurpitinterface/<int:pk>/edit/', views.SlurpitInterfaceEditView.as_view(), name='slurpitinterface_edit'),
+    path('slurpitipaddress/<int:pk>/edit/', views.SlurpitIPAddressEditView.as_view(), name='slurpitipaddress_edit'),
+    path('slurpitprefix/<int:pk>/edit/', views.SlurpitPrefixEditView.as_view(), name='slurpitprefix_edit'),
+
+    path('slurpitprefix/edit/', views.SlurpitPrefixBulkEditView.as_view(), name='slurpitprefix_bulk_edit'),
+    path('slurpitipaddress/edit/', views.SlurpitIPAddressBulkEditView.as_view(), name='slurpitipaddress_bulk_edit'),
+    path('slurpitinterface/edit/', views.SlurpitInterfaceBulkEditView.as_view(), name='slurpitinterface_bulk_edit'),
 
 )

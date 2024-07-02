@@ -27,7 +27,7 @@
               
             </ul>
             {% endblock %}
-            <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2" >
+            <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2 protect-btn" >
               <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Remove" %}
             </button>
           </div>
@@ -49,7 +49,7 @@
                 <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
                 <label for="select-all" class="form-check-label">
                   {% blocktrans trimmed with count=table.rows|length object_type_plural=table.data.verbose_name_plural %}
-                    Select <strong>all {{ count }} {{ object_type_plural }}</strong> matching query
+                    Select <strong>all of the {{ count }} {{ object_type_plural }}</strong>
                   {% endblocktrans %}
                 </label>
               </div>

@@ -10,7 +10,7 @@
             
               <div class="card-header" style="display:flex;justify-content: space-between;">
                   <h4 class="my-auto">NetBox Server</h4>
-                  <button class="btn btn-blue  mx-3 px-3">
+                  <button class="btn btn-blue  mx-3 px-3 protect-btns">
                       {% trans "Save" %}
                   </button>
               </div>
@@ -128,7 +128,7 @@
             <div class="card">
                 <div class="card-header" style="display:flex;justify-content: space-between;">
                     <h4 class="my-auto">Status</h4>
-                    <a name="Edit" class="btn btn-blue  mx-3 px-3" href="{% url 'plugins:slurpit_netbox:settings' %}?test=test"> {% trans "Test" %}</a>
+                    <a name="Edit" class="btn btn-blue  mx-3 px-3 protect-btn" href="{% url 'plugins:slurpit_netbox:settings' %}?test=test"> {% trans "Test" %}</a>
                 </div>
                 <div class="card-body">
                   <table class="table table-hover attr-table">
@@ -184,7 +184,7 @@
     
             <!-- Modal Footer -->
             <div class="modal-footer">
-                <button type="submit" class="btn btn-outline-success" id="edit_setting_btn" >{% trans "Save" %}</button>
+                <button type="submit" class="btn btn-outline-success protect-btn" id="edit_setting_btn" >{% trans "Save" %}</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </form>
@@ -207,7 +207,7 @@
 
       <!-- Modal Footer -->
       <div class="modal-footer">
-          <a class="btn btn-danger " id="" href="?reset=true" >{% trans "Reset" %}</a>
+          <a class="btn btn-danger protect-btn" id="" href="?reset=true" >{% trans "Reset" %}</a>
           <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
       </div>
 
@@ -222,3 +222,16 @@
     padding-bottom: 0px !important;
   }
 </style>
+
+<script>
+  const projectButtons = document.querySelectorAll('.protect-btn');
+
+  projectButtons.forEach(button => {
+    button.addEventListener('click', protectButton);
+  });
+  function protectButton(event) {
+    event.target.classList.add('disabled');
+    event.target.textContent = 'Please wait'
+  }
+
+</script>

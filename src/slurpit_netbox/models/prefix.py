@@ -10,7 +10,7 @@ from ipam.choices import PrefixStatusChoices
 from ipam.querysets import PrefixQuerySet
 from netbox.config import get_config
 from django.core.exceptions import ValidationError
-
+from urllib.parse import urlencode
 class GetAvailablePrefixesMixin:
 
     def get_available_prefixes(self):
@@ -319,3 +319,14 @@ class SlurpitPrefix(GetAvailablePrefixesMixin, PrimaryModel):
 
         return min(utilization, 100)
 
+    def get_edit_url(self):
+        query_params = {'tab': "prefix"}
+        base_url = reverse("plugins:slurpit_netbox:reconcile_list")
+        # Encode your query parameters and append them to the base URL
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        base_url = reverse('plugins:slurpit_netbox:slurpitprefix_edit', args=[self.pk])
+        query_params = {'return_url': url_with_querystring}
+        url_with_querystring = f"{base_url}?{urlencode(query_params)}"
+
+        return url_with_querystring
