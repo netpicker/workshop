@@ -20,7 +20,7 @@ menu = PluginMenu(
                     permissions=["slurpit_netbox.view_settings"]
                 ),
                 PluginMenuItem(
-                    link='plugins:slurpit_netbox:importeddevice_list',
+                    link='plugins:slurpit_netbox:slurpitimporteddevice_list',
                     link_text='Onboard devices',
                     # buttons=imported_device_buttons,
                     permissions=["slurpit_netbox.view_onboard_devices"]

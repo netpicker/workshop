@@ -23,10 +23,10 @@
                       </button>
                     {% endif %}
                   {% endif %}
-                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue protect-btn">
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:slurpitimporteddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue protect-btn">
                     <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Onboard" %}
                   </button>
-                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&return_url={% url 'plugins:slurpit_netbox:importeddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2 protect-btn" >
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&return_url={% url 'plugins:slurpit_netbox:slurpitimporteddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2 protect-btn" >
                     <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Remove" %}
                   </button>
               </div>
