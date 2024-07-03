@@ -9,7 +9,7 @@ urlpatterns = (
     path("settings/",           views.SettingsView.as_view(), name="settings"),
     
     ## onboard device ##
-    path('devices/',            views.SlurpitImportedDeviceListView.as_view(), name='importeddevice_list'),
+    path('devices/',            views.SlurpitImportedDeviceListView.as_view(), name='slurpitimporteddevice_list'),
     path('devices/onboard',     views.SlurpitImportedDeviceOnboardView.as_view(), name='onboard'),
     path('devices/import',      views.ImportDevices.as_view(), name='import'),
 
