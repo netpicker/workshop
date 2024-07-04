@@ -19,7 +19,7 @@ from ..management.choices import *
 from ..importer import get_dcim_device, import_from_queryset, run_import, get_devices, BATCH_SIZE, import_devices, process_import, start_device_import
 from ..decorators import slurpit_plugin_registered
 from ..references import base_name, custom_field_data_name
-from ..references.generic import create_form, get_form_device_data, SlurpitViewMixim, get_default_objects, set_device_custom_fields, status_inventory
+from ..references.generic import create_form, get_form_device_data, SlurpitViewMixim, get_default_objects, set_device_custom_fields, status_inventory, get_create_dcim_objects
 from ..references.imports import * 
 from ..filtersets import SlurpitImportedDeviceFilterSet
 from dcim.models import DeviceType, Interface
@@ -207,7 +207,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     })               
 
                     manu = Manufacturer.objects.get(name=obj.brand)
-                    device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
+                    device.device_type = get_create_dcim_objects(obj)
                     device.platform = Platform.objects.get(name=obj.device_os)
                     device.save()
                     obj.save()
@@ -259,7 +259,7 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     obj.mapped_device = device    
 
                     manu = Manufacturer.objects.get(name=obj.brand)
-                    device.device_type = DeviceType.objects.get(model=obj.device_type, manufacturer=manu)
+                    device.device_type = get_create_dcim_objects(obj)
                     device.platform = Platform.objects.get(name=obj.device_os)
                     device.save()
                     obj.save()
