@@ -872,7 +872,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                             slurpit_prefix_item.role = item['role']
                         if 'tenant' in item:
                             slurpit_prefix_item.tenant = item['tenant']
-                        if 'site' in item:
+                        if 'site' in item and item['site'] is not None:
                             slurpit_prefix_item.site = item['site']
                         if 'vlan' in item:
                             slurpit_prefix_item.vlan = item['vlan']
@@ -881,17 +881,8 @@ class SlurpitPrefixView(SlurpitViewSet):
                         batch_update_qs.append(slurpit_prefix_item)
                     else:
                         obj = Prefix.objects.filter(prefix=item['prefix'], vrf=item['vrf'])
-
+                        new_site = item['site']
                         if obj:
-                            new_prefix= {
-                                'status': item['status'], 
-                                'vrf' : item['vrf'],
-                                'vlan' : item['vlan'],
-                                'tenant' : tenant,
-                                'site' : item['site'],
-                                'role' : item['role'],
-                                'description' : item['description']
-                            }
                             obj = obj.first()
                             old_prefix = {
                                 'status': obj.status, 
@@ -902,7 +893,19 @@ class SlurpitPrefixView(SlurpitViewSet):
                                 'role' : obj.role,
                                 'description' : obj.description
                             }
+                            if new_site is None:
+                                new_site = obj.site
 
+                            new_prefix= {
+                                'status': item['status'], 
+                                'vrf' : item['vrf'],
+                                'vlan' : item['vlan'],
+                                'tenant' : tenant,
+                                'site' : new_site,
+                                'role' : item['role'],
+                                'description' : item['description']
+                            }
+                            
                             if new_prefix == old_prefix:
                                 continue
 
@@ -913,7 +916,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                             role = item['role'],
                             tenant = item['tenant'],
                             vlan = item['vlan'],
-                            site = item['site'],
+                            site = new_site,
                             vrf = item['vrf']
                         ))
                 
@@ -962,11 +965,6 @@ class SlurpitPrefixView(SlurpitViewSet):
                 for update_item in update_data:
                     item = Prefix.objects.get(prefix=update_item['prefix'], vrf=update_item['vrf'])
                     
-                    if 'site' not in update_item or update_item['site'] is None:
-                        continue
-                    if 'location' not in update_item or update_item['location'] is None:
-                        continue
-                    
                     # update
                     if 'description' in update_item:
                         item.description = update_item['description']
@@ -978,7 +976,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                         item.role = update_item['role']
                     if 'tenant' in update_item:
                         item.tenant = update_item['tenant']
-                    if 'site' in update_item:
+                    if 'site' in update_item and update_item['site'] is not None:
                         item.site = update_item['site']
                     if 'vlan' in update_item:
                         item.vlan = update_item['vlan']
