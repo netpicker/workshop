@@ -391,7 +391,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
                             slurpit_interface_item.speed = item['speed']
                         if 'type' in item:
                             slurpit_interface_item.type = item['type']
-                        if 'duplex' in item:
+                        if 'duplex' in item and item['duplex'] is not None:
                             slurpit_interface_item.duplex = item['duplex']
                         if 'module' in item:
                             slurpit_interface_item.module = item['module']
@@ -400,17 +400,9 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     else:
                         
                         obj = Interface.objects.filter(name=item['name'], device=item['device'])
+                        new_duplex = item['duplex']
 
                         if obj:
-                            new_interface= {
-                                'label': item['label'], 
-                                'device' : item['device'],
-                                'module' : item['module'],
-                                'type' : item['type'],
-                                'duplex' : item['duplex'],
-                                'speed' : item['speed'],
-                                'description' : item['description']
-                            }
                             obj = obj.first()
                             old_interface = {
                                 'label': obj.label, 
@@ -421,6 +413,18 @@ class SlurpitInterfaceView(SlurpitViewSet):
                                 'speed' : obj.speed,
                                 'description' : obj.description
                             }
+                            if new_duplex is None:
+                                new_duplex = obj.duplex
+                            new_interface= {
+                                'label': item['label'], 
+                                'device' : item['device'],
+                                'module' : item['module'],
+                                'type' : item['type'],
+                                'duplex' : new_duplex,
+                                'speed' : item['speed'],
+                                'description' : item['description']
+                            }
+                            
 
                             if new_interface == old_interface:
                                 continue
@@ -432,7 +436,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
                             speed = item['speed'],
                             description = item['description'],
                             type = item['type'],
-                            duplex = item['duplex'],
+                            duplex = new_duplex,
                             module = item['module'],
                         ))
                 
@@ -490,7 +494,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
                         item.speed = update_item['speed']
                     if 'type' in update_item:
                         item.type = update_item['type']
-                    if 'duplex' in update_item:
+                    if 'duplex' in update_item and update_item['duplex'] is not None:
                         item.duplex = update_item['duplex']
                     if 'module' in update_item:
                         item.module = update_item['module']
@@ -617,8 +621,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                         slurpit_ipaddress_item = slurpit_ipaddress_item.first()
                         
                         slurpit_ipaddress_item.status = item['status']
-                        slurpit_ipaddress_item.role = item['role']
-                        slurpit_ipaddress_item.tennat = tenant
+                        if 'role' in item and item['role'] is not None:
+                            slurpit_ipaddress_item.role = item['role']
+                        if 'tenant' in item and item['tenant'] is not None:
+                            slurpit_ipaddress_item.tennat = item['tenant']
                         
                         if 'dns_name' in item:
                             slurpit_ipaddress_item.dns_name = item['dns_name']
@@ -628,15 +634,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                         batch_update_qs.append(slurpit_ipaddress_item)
                     else:
                         obj = IPAddress.objects.filter(address=item['address'], vrf=vrf)
+                        new_tenant = item['tenant']
+                        new_role = item['role']
 
                         if obj:
-                            new_ipaddress = {
-                                'status': item['status'], 
-                                'role' : item['role'],
-                                'description' : item['description'],
-                                'tenant' : tenant,
-                                'dns_name' : item['dns_name']
-                            }
                             obj = obj.first()
                             old_ipaddress = {
                                 'status': obj.status, 
@@ -645,6 +646,19 @@ class SlurpitIPAMView(SlurpitViewSet):
                                 'tenant' : obj.tenant,
                                 'dns_name' : obj.dns_name
                             }
+                            if new_tenant is None:
+                                new_tenant = obj.tenant
+                            if new_role is None:
+                                new_role = obj.role
+
+                            new_ipaddress = {
+                                'status': item['status'], 
+                                'role' : new_role,
+                                'description' : item['description'],
+                                'tenant' : new_tenant,
+                                'dns_name' : item['dns_name']
+                            }
+                            
 
                             if new_ipaddress == old_ipaddress:
                                 continue
@@ -653,9 +667,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                             address = item['address'], 
                             vrf = vrf,
                             status = item['status'], 
-                            role = item['role'],
+                            role = new_role,
                             description = item['description'],
-                            tenant = tenant,
+                            tenant = new_tenant,
                             dns_name = item['dns_name'],
                         )
 
@@ -707,8 +721,10 @@ class SlurpitIPAMView(SlurpitViewSet):
 
                     # Update
                     item.status = update_item['status']
-                    item.role = update_item['role']
-                    item.tennat = update_item['tenant']
+                    if 'role' in update_item and update_item['role'] is not None:
+                        item.role = update_item['role']
+                    if 'tenant' in update_item and update_item['tenant'] is not None:
+                        item.tennat = update_item['tenant']
 
                     if 'dns_name' in update_item:
                         item.dns_name = update_item['dns_name']
@@ -857,24 +873,19 @@ class SlurpitPrefixView(SlurpitViewSet):
                     if slurpit_prefix_item:
                         slurpit_prefix_item = slurpit_prefix_item.first()
 
-                        if  'site' not in item or item['site'] is None:
-                            continue
-                        if  'location' not in item or item['location'] is None:
-                            continue
-                            
                         if 'description' in item:
                             slurpit_prefix_item.description = item['description']
                         if 'vrf' in item:
                             slurpit_prefix_item.vrf = item['vrf']
                         if 'status' in item:
                             slurpit_prefix_item.status = item['status']
-                        if 'role' in item:
+                        if 'role' in item and item['role'] is not None:
                             slurpit_prefix_item.role = item['role']
-                        if 'tenant' in item:
+                        if 'tenant' in item and item['tenant'] is not None:
                             slurpit_prefix_item.tenant = item['tenant']
                         if 'site' in item and item['site'] is not None:
                             slurpit_prefix_item.site = item['site']
-                        if 'vlan' in item:
+                        if 'vlan' in item and item['vlan'] is not None:
                             slurpit_prefix_item.vlan = item['vlan']
 
 
@@ -882,6 +893,10 @@ class SlurpitPrefixView(SlurpitViewSet):
                     else:
                         obj = Prefix.objects.filter(prefix=item['prefix'], vrf=item['vrf'])
                         new_site = item['site']
+                        new_role = item['role']
+                        new_vlan = item['vlan']
+                        new_tenant = item['tenant']
+                        
                         if obj:
                             obj = obj.first()
                             old_prefix = {
@@ -893,16 +908,22 @@ class SlurpitPrefixView(SlurpitViewSet):
                                 'role' : obj.role,
                                 'description' : obj.description
                             }
-                            if new_site is None:
+                            if new_site is None: 
                                 new_site = obj.site
+                            if new_role is None: 
+                                new_role = obj.role
+                            if new_tenant is None: 
+                                new_tenant = obj.tenant
+                            if new_vlan is None: 
+                                new_vlan = obj.vlan
 
                             new_prefix= {
                                 'status': item['status'], 
                                 'vrf' : item['vrf'],
-                                'vlan' : item['vlan'],
-                                'tenant' : tenant,
+                                'vlan' : new_vlan,
+                                'tenant' : new_tenant,
                                 'site' : new_site,
-                                'role' : item['role'],
+                                'role' : new_role,
                                 'description' : item['description']
                             }
                             
@@ -913,9 +934,9 @@ class SlurpitPrefixView(SlurpitViewSet):
                             prefix = item['prefix'],
                             description = item['description'],
                             status = item['status'],
-                            role = item['role'],
-                            tenant = item['tenant'],
-                            vlan = item['vlan'],
+                            role = new_role,
+                            tenant = new_tenant,
+                            vlan = new_vlan,
                             site = new_site,
                             vrf = item['vrf']
                         ))
