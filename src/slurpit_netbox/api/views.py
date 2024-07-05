@@ -383,61 +383,43 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     if slurpit_interface_item:
                         slurpit_interface_item = slurpit_interface_item.first()
 
-                        if 'label' in item:
-                            slurpit_interface_item.label = item['label']
-                        if 'description' in item:
-                            slurpit_interface_item.description = item['description']
-                        if 'speed' in item:
-                            slurpit_interface_item.speed = item['speed']
-                        if 'type' in item:
-                            slurpit_interface_item.type = item['type']
-                        if 'duplex' in item and item['duplex'] is not None:
-                            slurpit_interface_item.duplex = item['duplex']
-                        if 'module' in item:
-                            slurpit_interface_item.module = item['module']
+                        # Update
+                        allowed_fields_with_none = {'label', 'description', 'speed', 'type', 'module'}
+                        allowed_fields = {'duplex'}
+
+                        for field, value in item.items():
+                            if field in allowed_fields and value is not None:
+                                setattr(slurpit_interface_item, field, value)
+                            if field in allowed_fields_with_none:
+                                setattr(slurpit_interface_item, field, value)
 
                         batch_update_qs.append(slurpit_interface_item)
                     else:
-                        
                         obj = Interface.objects.filter(name=item['name'], device=item['device'])
-                        new_duplex = item['duplex']
+                        fields = {'label', 'device', 'module', 'type', 'duplex', 'speed', 'description'}
+                        not_null_fields = {'duplex'}
 
+                        new_interface = {}
                         if obj:
                             obj = obj.first()
-                            old_interface = {
-                                'label': obj.label, 
-                                'device' : obj.device,
-                                'module' : obj.module,
-                                'type' : obj.type,
-                                'duplex' : obj.duplex,
-                                'speed' : obj.speed,
-                                'description' : obj.description
-                            }
-                            if new_duplex is None:
-                                new_duplex = obj.duplex
-                            new_interface= {
-                                'label': item['label'], 
-                                'device' : item['device'],
-                                'module' : item['module'],
-                                'type' : item['type'],
-                                'duplex' : new_duplex,
-                                'speed' : item['speed'],
-                                'description' : item['description']
-                            }
-                            
+                            old_interface = {}
+
+                            for field in fields:
+                                old_interface[field] = getattr(obj, field)
+                                new_interface[field] = item[field]
+
+                                if field in not_null_fields and new_interface[field] is None:
+                                    new_interface[field] = old_interface[field]
 
                             if new_interface == old_interface:
                                 continue
+                        else:
+                            for field in fields: 
+                                new_interface[field] = item[field]
 
                         batch_insert_qs.append(SlurpitInterface(
                             name = item['name'], 
-                            device = device,
-                            label = item['label'], 
-                            speed = item['speed'],
-                            description = item['description'],
-                            type = item['type'],
-                            duplex = new_duplex,
-                            module = item['module'],
+                            **new_interface
                         ))
                 
                 count = len(batch_insert_qs)
@@ -486,18 +468,14 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     item = Interface.objects.get(name=update_item['name'], device=update_item['device'])
                     
                     # Update
-                    if 'label' in update_item:
-                        item.label = update_item['label']
-                    if 'description' in update_item:
-                        item.description = update_item['description']
-                    if 'speed' in update_item:
-                        item.speed = update_item['speed']
-                    if 'type' in update_item:
-                        item.type = update_item['type']
-                    if 'duplex' in update_item and update_item['duplex'] is not None:
-                        item.duplex = update_item['duplex']
-                    if 'module' in update_item:
-                        item.module = update_item['module']
+                    allowed_fields_with_none = {'label', 'speed', 'type', 'description', 'module'}
+                    allowed_fields = {'duplex'}
+
+                    for field, value in update_item.items():
+                        if field in allowed_fields and value is not None:
+                            setattr(item, field, value)
+                        if field in allowed_fields_with_none:
+                            setattr(item, field, value)
 
                     batch_update_qs.append(item)
 
@@ -619,58 +597,44 @@ class SlurpitIPAMView(SlurpitViewSet):
                     
                     if slurpit_ipaddress_item:
                         slurpit_ipaddress_item = slurpit_ipaddress_item.first()
-                        
-                        slurpit_ipaddress_item.status = item['status']
-                        if 'role' in item and item['role'] is not None:
-                            slurpit_ipaddress_item.role = item['role']
-                        if 'tenant' in item and item['tenant'] is not None:
-                            slurpit_ipaddress_item.tennat = item['tenant']
-                        
-                        if 'dns_name' in item:
-                            slurpit_ipaddress_item.dns_name = item['dns_name']
-                        if 'description' in item:
-                            slurpit_ipaddress_item.description = item['description']
+
+                        allowed_fields_with_none = {'status', 'dns_name', 'description'}
+                        allowed_fields = {'role', 'tenant'}
+
+                        for field, value in item.items():
+                            if field in allowed_fields and value is not None:
+                                setattr(slurpit_ipaddress_item, field, value)
+                            if field in allowed_fields_with_none:
+                                setattr(slurpit_ipaddress_item, field, value)
 
                         batch_update_qs.append(slurpit_ipaddress_item)
                     else:
                         obj = IPAddress.objects.filter(address=item['address'], vrf=vrf)
-                        new_tenant = item['tenant']
-                        new_role = item['role']
+                        fields = ['status', 'role', 'description', 'tenant', 'dns_name']
+                        not_null_fields = {'tenant', 'role'}
+                        new_ipaddress = {}
 
                         if obj:
                             obj = obj.first()
-                            old_ipaddress = {
-                                'status': obj.status, 
-                                'role' : obj.role,
-                                'description' : obj.description,
-                                'tenant' : obj.tenant,
-                                'dns_name' : obj.dns_name
-                            }
-                            if new_tenant is None:
-                                new_tenant = obj.tenant
-                            if new_role is None:
-                                new_role = obj.role
-
-                            new_ipaddress = {
-                                'status': item['status'], 
-                                'role' : new_role,
-                                'description' : item['description'],
-                                'tenant' : new_tenant,
-                                'dns_name' : item['dns_name']
-                            }
+                            old_ipaddress = {}
                             
+                            for field in fields:
+                                old_ipaddress[field] = getattr(obj, field)
+                                new_ipaddress[field] = item[field]
+
+                                if field in not_null_fields and new_ipaddress[field] is None:
+                                    new_ipaddress[field] = old_ipaddress[field]
 
                             if new_ipaddress == old_ipaddress:
                                 continue
+                        else:
+                            for field in fields:
+                                new_ipaddress[field] = item[field]
                         
                         obj = SlurpitInitIPAddress(
                             address = item['address'], 
                             vrf = vrf,
-                            status = item['status'], 
-                            role = new_role,
-                            description = item['description'],
-                            tenant = new_tenant,
-                            dns_name = item['dns_name'],
+                            **new_ipaddress
                         )
 
                         batch_insert_qs.append(obj)
@@ -720,16 +684,14 @@ class SlurpitIPAMView(SlurpitViewSet):
                     item = IPAddress.objects.get(address=update_item['address'], vrf=update_item['vrf'])
 
                     # Update
-                    item.status = update_item['status']
-                    if 'role' in update_item and update_item['role'] is not None:
-                        item.role = update_item['role']
-                    if 'tenant' in update_item and update_item['tenant'] is not None:
-                        item.tennat = update_item['tenant']
+                    allowed_fields_with_none = {'status', 'dns_name', 'description'}
+                    allowed_fields = {'role', 'tenant'}
 
-                    if 'dns_name' in update_item:
-                        item.dns_name = update_item['dns_name']
-                    if 'description' in update_item:
-                        item.description = update_item['description']
+                    for field, value in update_item.items():
+                        if field in allowed_fields and value is not None:
+                            setattr(item, field, value)
+                        if field in allowed_fields_with_none:
+                            setattr(item, field, value)
 
                     batch_update_qs.append(item)
 
@@ -873,72 +835,44 @@ class SlurpitPrefixView(SlurpitViewSet):
                     if slurpit_prefix_item:
                         slurpit_prefix_item = slurpit_prefix_item.first()
 
-                        if 'description' in item:
-                            slurpit_prefix_item.description = item['description']
-                        if 'vrf' in item:
-                            slurpit_prefix_item.vrf = item['vrf']
-                        if 'status' in item:
-                            slurpit_prefix_item.status = item['status']
-                        if 'role' in item and item['role'] is not None:
-                            slurpit_prefix_item.role = item['role']
-                        if 'tenant' in item and item['tenant'] is not None:
-                            slurpit_prefix_item.tenant = item['tenant']
-                        if 'site' in item and item['site'] is not None:
-                            slurpit_prefix_item.site = item['site']
-                        if 'vlan' in item and item['vlan'] is not None:
-                            slurpit_prefix_item.vlan = item['vlan']
+                        allowed_fields_with_none = {'status', 'vrf', 'description'}
+                        allowed_fields = {'role', 'tenant', 'site', 'vlan'}
 
+                        for field, value in item.items():
+                            if field in allowed_fields and value is not None:
+                                setattr(slurpit_prefix_item, field, value)
+                            if field in allowed_fields_with_none:
+                                setattr(slurpit_prefix_item, field, value)
 
                         batch_update_qs.append(slurpit_prefix_item)
                     else:
                         obj = Prefix.objects.filter(prefix=item['prefix'], vrf=item['vrf'])
-                        new_site = item['site']
-                        new_role = item['role']
-                        new_vlan = item['vlan']
-                        new_tenant = item['tenant']
                         
+                        fields = {'status', 'vrf', 'vlan', 'tenant', 'site', 'role', 'description'}
+                        not_null_fields = {'site', 'role', 'vlan', 'tenant'}
+                        
+                        new_prefix = {}
+
                         if obj:
                             obj = obj.first()
-                            old_prefix = {
-                                'status': obj.status, 
-                                'vrf' : obj.vrf,
-                                'vlan' : obj.vlan,
-                                'tenant' : obj.tenant,
-                                'site' : obj.site,
-                                'role' : obj.role,
-                                'description' : obj.description
-                            }
-                            if new_site is None: 
-                                new_site = obj.site
-                            if new_role is None: 
-                                new_role = obj.role
-                            if new_tenant is None: 
-                                new_tenant = obj.tenant
-                            if new_vlan is None: 
-                                new_vlan = obj.vlan
-
-                            new_prefix= {
-                                'status': item['status'], 
-                                'vrf' : item['vrf'],
-                                'vlan' : new_vlan,
-                                'tenant' : new_tenant,
-                                'site' : new_site,
-                                'role' : new_role,
-                                'description' : item['description']
-                            }
+                            old_prefix = {}
                             
+                            for field in fields:
+                                old_prefix[field] = getattr(obj, field)
+                                new_prefix[field] = item[field]
+
+                                if field in not_null_fields and new_prefix[field] is None:
+                                    new_prefix[field] = old_prefix[field]
+
                             if new_prefix == old_prefix:
                                 continue
+                        else:
+                            for field in fields:
+                                new_prefix[field] = item[field]
 
                         batch_insert_qs.append(SlurpitPrefix(
                             prefix = item['prefix'],
-                            description = item['description'],
-                            status = item['status'],
-                            role = new_role,
-                            tenant = new_tenant,
-                            vlan = new_vlan,
-                            site = new_site,
-                            vrf = item['vrf']
+                            **new_prefix
                         ))
                 
                 count = len(batch_insert_qs)
@@ -986,23 +920,16 @@ class SlurpitPrefixView(SlurpitViewSet):
                 for update_item in update_data:
                     item = Prefix.objects.get(prefix=update_item['prefix'], vrf=update_item['vrf'])
                     
-                    # update
-                    if 'description' in update_item:
-                        item.description = update_item['description']
-                    if 'vrf' in update_item:
-                        item.vrf = update_item['vrf']
-                    if 'status' in update_item:
-                        item.status = update_item['status']
-                    if 'role' in update_item:
-                        item.role = update_item['role']
-                    if 'tenant' in update_item:
-                        item.tenant = update_item['tenant']
-                    if 'site' in update_item and update_item['site'] is not None:
-                        item.site = update_item['site']
-                    if 'vlan' in update_item:
-                        item.vlan = update_item['vlan']
+                    # Update
+                    allowed_fields_with_none = {'vrf', 'status', 'description'}
+                    allowed_fields = {'role', 'tenant', 'site', 'vlan'}
 
-
+                    for field, value in update_item.items():
+                        if field in allowed_fields and value is not None:
+                            setattr(item, field, value)
+                        if field in allowed_fields_with_none:
+                            setattr(item, field, value)
+                    
                     batch_update_qs.append(item)
 
                 
@@ -1015,7 +942,9 @@ class SlurpitPrefixView(SlurpitViewSet):
                         to_import.append(prefix_item)
 
                     Prefix.objects.bulk_update(to_import, 
-                        fields={'description', 'vrf', 'tenant', 'status', 'vlan', 'site', 'role'}
+                        fields={
+                            'description', 'vrf', 'tenant', 'status', 'vlan', 'site', 'role'
+                        }
                     )
                     offset += BATCH_SIZE
 
