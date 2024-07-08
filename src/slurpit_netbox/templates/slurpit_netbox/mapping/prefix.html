@@ -77,3 +77,13 @@
     display: none !important;
   }
 </style>
+
+<script>
+  // Select the button using the hx-target attribute and class
+  const buttons = document.querySelectorAll('button[hx-target="#htmx-modal-content"]');
+
+  // Iterate through the NodeList and remove each button
+  buttons.forEach(button => {
+      button.remove();
+  });
+</script>

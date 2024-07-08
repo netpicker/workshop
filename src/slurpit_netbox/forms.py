@@ -322,10 +322,11 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
         del self.fields['tags']
         del self.fields['device']
 
-class SlurpitDeviceInterfaceEditForm(SlurpitInitIPAMForm):
+class SlurpitDeviceInterfaceEditForm(SlurpitDeviceInterfaceForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         del self.fields['enable_reconcile']
+
 class SlurpitPrefixForm(PrefixForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -462,5 +463,6 @@ class SlurpitIPAddressBulkEditForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         del self.fields['add_tags']
         del self.fields['remove_tags']

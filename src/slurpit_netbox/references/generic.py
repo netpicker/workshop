@@ -51,7 +51,7 @@ def status_offline():
 def status_decommissioning():
     return DeviceStatusChoices.STATUS_DECOMMISSIONING
 
-def get_create_dcim_objects(staged: SlurpitStagedDevice):
+def get_create_dcim_objects(staged):
     manu, new = Manufacturer.objects.get_or_create(name=staged.brand, defaults={'slug':slugify(staged.brand)})
     if new:
         ensure_slurpit_tags(manu)
