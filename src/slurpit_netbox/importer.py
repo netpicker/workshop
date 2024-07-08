@@ -241,7 +241,7 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
 
     #Interface for new device.
     if staged.ipv4:
-        interface = Interface.objects.create(name=interface_name, device=device, type='other')
+        interface = Interface.objects.get_or_create(name=interface_name, device=device, defaults={'type': 'other'})
     
         address = f'{staged.ipv4}/32'
         ipaddress = IPAddress.objects.filter(address=address)

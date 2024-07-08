@@ -463,5 +463,6 @@ class SlurpitIPAddressBulkEditForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         del self.fields['add_tags']
         del self.fields['remove_tags']
