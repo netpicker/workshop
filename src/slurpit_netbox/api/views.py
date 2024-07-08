@@ -384,11 +384,11 @@ class SlurpitInterfaceView(SlurpitViewSet):
                         slurpit_interface_item = slurpit_interface_item.first()
 
                         # Update
-                        allowed_fields_with_none = {'label', 'description', 'speed', 'type', 'module'}
-                        allowed_fields = {'duplex'}
+                        allowed_fields_with_none = {}
+                        allowed_fields = {'duplex', 'label', 'description', 'speed', 'type', 'module'}
 
                         for field, value in item.items():
-                            if field in allowed_fields and value is not None:
+                            if field in allowed_fields and value is not None and value != "":
                                 setattr(slurpit_interface_item, field, value)
                             if field in allowed_fields_with_none:
                                 setattr(slurpit_interface_item, field, value)
@@ -397,7 +397,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     else:
                         obj = Interface.objects.filter(name=item['name'], device=item['device'])
                         fields = {'label', 'device', 'module', 'type', 'duplex', 'speed', 'description'}
-                        not_null_fields = {'duplex'}
+                        not_null_fields = {'label', 'device', 'module', 'type', 'duplex', 'speed', 'description'}
 
                         new_interface = {}
                         if obj:
@@ -408,7 +408,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
                                 old_interface[field] = getattr(obj, field)
                                 new_interface[field] = item[field]
 
-                                if field in not_null_fields and new_interface[field] is None:
+                                if field in not_null_fields and (new_interface[field] is None or new_interface[field] == ""):
                                     new_interface[field] = old_interface[field]
 
                             if new_interface == old_interface:
@@ -468,11 +468,11 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     item = Interface.objects.get(name=update_item['name'], device=update_item['device'])
                     
                     # Update
-                    allowed_fields_with_none = {'label', 'speed', 'type', 'description', 'module'}
-                    allowed_fields = {'duplex'}
+                    allowed_fields_with_none = {}
+                    allowed_fields = {'duplex', 'label', 'speed', 'type', 'description', 'module'}
 
                     for field, value in update_item.items():
-                        if field in allowed_fields and value is not None:
+                        if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
                             setattr(item, field, value)
@@ -598,11 +598,11 @@ class SlurpitIPAMView(SlurpitViewSet):
                     if slurpit_ipaddress_item:
                         slurpit_ipaddress_item = slurpit_ipaddress_item.first()
 
-                        allowed_fields_with_none = {'status', 'dns_name', 'description'}
-                        allowed_fields = {'role', 'tenant'}
+                        allowed_fields_with_none = {'status'}
+                        allowed_fields = {'role', 'tenant', 'dns_name', 'description'}
 
                         for field, value in item.items():
-                            if field in allowed_fields and value is not None:
+                            if field in allowed_fields and value is not None and value != "":
                                 setattr(slurpit_ipaddress_item, field, value)
                             if field in allowed_fields_with_none:
                                 setattr(slurpit_ipaddress_item, field, value)
@@ -611,7 +611,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                     else:
                         obj = IPAddress.objects.filter(address=item['address'], vrf=vrf)
                         fields = ['status', 'role', 'description', 'tenant', 'dns_name']
-                        not_null_fields = {'tenant', 'role'}
+                        not_null_fields = {'role', 'description', 'tenant', 'dns_name'}
                         new_ipaddress = {}
 
                         if obj:
@@ -622,7 +622,7 @@ class SlurpitIPAMView(SlurpitViewSet):
                                 old_ipaddress[field] = getattr(obj, field)
                                 new_ipaddress[field] = item[field]
 
-                                if field in not_null_fields and new_ipaddress[field] is None:
+                                if field in not_null_fields and (new_ipaddress[field] is None or new_ipaddress[field] == ""):
                                     new_ipaddress[field] = old_ipaddress[field]
 
                             if new_ipaddress == old_ipaddress:
@@ -684,11 +684,11 @@ class SlurpitIPAMView(SlurpitViewSet):
                     item = IPAddress.objects.get(address=update_item['address'], vrf=update_item['vrf'])
 
                     # Update
-                    allowed_fields_with_none = {'status', 'dns_name', 'description'}
-                    allowed_fields = {'role', 'tenant'}
+                    allowed_fields_with_none = {'status'}
+                    allowed_fields = {'role', 'tenant', 'dns_name', 'description'}
 
                     for field, value in update_item.items():
-                        if field in allowed_fields and value is not None:
+                        if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
                             setattr(item, field, value)
@@ -835,11 +835,11 @@ class SlurpitPrefixView(SlurpitViewSet):
                     if slurpit_prefix_item:
                         slurpit_prefix_item = slurpit_prefix_item.first()
 
-                        allowed_fields_with_none = {'status', 'vrf', 'description'}
-                        allowed_fields = {'role', 'tenant', 'site', 'vlan'}
+                        allowed_fields_with_none = {'status'}
+                        allowed_fields = {'role', 'tenant', 'site', 'vlan', 'vrf', 'description'}
 
                         for field, value in item.items():
-                            if field in allowed_fields and value is not None:
+                            if field in allowed_fields and value is not None and value != "":
                                 setattr(slurpit_prefix_item, field, value)
                             if field in allowed_fields_with_none:
                                 setattr(slurpit_prefix_item, field, value)
@@ -849,7 +849,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                         obj = Prefix.objects.filter(prefix=item['prefix'], vrf=item['vrf'])
                         
                         fields = {'status', 'vrf', 'vlan', 'tenant', 'site', 'role', 'description'}
-                        not_null_fields = {'site', 'role', 'vlan', 'tenant'}
+                        not_null_fields = {'vlan', 'tenant', 'site', 'role', 'description'}
                         
                         new_prefix = {}
 
@@ -861,7 +861,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                                 old_prefix[field] = getattr(obj, field)
                                 new_prefix[field] = item[field]
 
-                                if field in not_null_fields and new_prefix[field] is None:
+                                if field in not_null_fields and (new_prefix[field] is None or new_prefix[field] == ""):
                                     new_prefix[field] = old_prefix[field]
 
                             if new_prefix == old_prefix:
@@ -921,11 +921,11 @@ class SlurpitPrefixView(SlurpitViewSet):
                     item = Prefix.objects.get(prefix=update_item['prefix'], vrf=update_item['vrf'])
                     
                     # Update
-                    allowed_fields_with_none = {'vrf', 'status', 'description'}
-                    allowed_fields = {'role', 'tenant', 'site', 'vlan'}
+                    allowed_fields_with_none = {'status'}
+                    allowed_fields = {'role', 'tenant', 'site', 'vlan', 'description', 'vrf'}
 
                     for field, value in update_item.items():
-                        if field in allowed_fields and value is not None:
+                        if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
                             setattr(item, field, value)
