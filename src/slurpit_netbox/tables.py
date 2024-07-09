@@ -113,6 +113,12 @@ class PlatformTypeColumn(Column):
         if record.mapped_device:
             return record.mapped_device.device_type.default_platform
         return "-"
+    
+class ManufactureColumn(Column):
+    def render(self, value, bound_column, record):
+        if record.mapped_device:
+            return record.mapped_device.device_type.manufacturer
+        return "-"
 
 
 class SlurpitOnboardedDeviceTable(NetBoxTable):
@@ -121,7 +127,7 @@ class SlurpitOnboardedDeviceTable(NetBoxTable):
     hostname = ConditionalLink()
     device_type = DeviceTypeColumn()
 
-    brand = tables.Column(
+    brand = ManufactureColumn(
         verbose_name = _('Manufacturer')
     )
 

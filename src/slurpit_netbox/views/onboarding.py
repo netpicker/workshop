@@ -12,6 +12,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.utils.text import slugify
 
 from .. import get_config, forms, importer, models, tables
 from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
@@ -207,7 +208,6 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                         'slurpit_ipv4': obj.ipv4,
                     })               
 
-                    manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = get_create_dcim_objects(obj)
 
                     device.platform = Platform.objects.get(name=obj.device_os)
@@ -263,7 +263,6 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     })      
                     obj.mapped_device = device    
 
-                    manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = get_create_dcim_objects(obj)
 
                     device.platform = Platform.objects.get(name=obj.device_os)
