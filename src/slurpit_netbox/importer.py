@@ -214,10 +214,24 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'slurpit_devicetype': staged.device_type,
         'slurpit_ipv4': staged.ipv4
     })    
+
+    platform = Platform.objects.get(name=staged.device_os)
+    
+    devicetype = None
+    if 'device_type' in extra:
+        devicetype = extra['device_type']
+        staged.mapped_devicetype = extra['device_type']
+        staged.save()
+
+    elif 'device_type' not in extra and staged.mapped_devicetype is not None:
+        devicetype = staged.mapped_devicetype
+    
+    if devicetype:
+        platform = devicetype.default_platform
         
     kw.update({
         'name': staged.hostname,
-        'platform': Platform.objects.get(name=staged.device_os),
+        'platform': platform,
         custom_field_data_name: cf,
         **extra,
         # 'primary_ip4_id': int(ip_address(staged.fqdn)),

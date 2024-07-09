@@ -71,7 +71,8 @@ class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
             self.table = tables.ConflictDeviceTable
         elif request.GET.get('tab') == "onboarded":
             self.queryset = self.onboarded_queryset
-
+            self.table = tables.SlurpitOnboardedDeviceTable
+            
         return super().get(request, *args, **kwargs)
     
     def post(self, request):
@@ -208,7 +209,11 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
 
                     manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = get_create_dcim_objects(obj)
+
                     device.platform = Platform.objects.get(name=obj.device_os)
+                    if device.device_type:
+                        device.platform = device.device_type.default_platform
+                    
                     device.save()
                     obj.save()
 
@@ -260,7 +265,11 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
 
                     manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = get_create_dcim_objects(obj)
+
                     device.platform = Platform.objects.get(name=obj.device_os)
+                    if device.device_type:
+                        device.platform = device.device_type.default_platform
+
                     device.save()
                     obj.save()
 

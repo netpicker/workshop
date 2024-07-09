@@ -78,7 +78,7 @@ class DeviceTypeColumn(Column):
         if record.mapped_devicetype_id is None:
             return value
         link = LinkTransform(attrs=self.attrs.get("a", {}), accessor=Accessor("mapped_devicetype"))
-        return link(value, value=value, record=record, bound_column=bound_column)
+        return link(record.mapped_devicetype.model, value=record.mapped_devicetype.model, record=record, bound_column=bound_column)
 
 
 class SlurpitImportedDeviceTable(NetBoxTable):
@@ -94,6 +94,38 @@ class SlurpitImportedDeviceTable(NetBoxTable):
     device_os = tables.Column(
         verbose_name = _('Platform')
     )
+
+    ipv4 = tables.Column(
+        verbose_name = _('IPv4')
+    )
+
+    last_updated = tables.Column(
+        verbose_name = _('Last seen')
+    )
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitImportedDevice
+        fields = ('pk', 'id', 'hostname', 'fqdn','brand', 'IP', 'ipv4', 'device_os', 'device_type', 'last_updated')
+        default_columns = ('hostname', 'fqdn', 'device_os', 'brand' , 'device_type', 'ipv4', 'last_updated')
+
+class PlatformTypeColumn(Column):
+    def render(self, value, bound_column, record):
+        if record.mapped_device:
+            return record.mapped_device.device_type.default_platform
+        return "-"
+
+
+class SlurpitOnboardedDeviceTable(NetBoxTable):
+    actions = columns.ActionsColumn(actions=tuple())
+    pk = ConditionalToggle()
+    hostname = ConditionalLink()
+    device_type = DeviceTypeColumn()
+
+    brand = tables.Column(
+        verbose_name = _('Manufacturer')
+    )
+
+    device_os = PlatformTypeColumn(verbose_name="Platform Type")
 
     ipv4 = tables.Column(
         verbose_name = _('IPv4')
