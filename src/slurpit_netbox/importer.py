@@ -7,6 +7,7 @@ from django.db import connection, transaction
 from django.db.models import QuerySet, F, OuterRef, Subquery
 from django.utils import timezone
 from django.db.models.expressions import RawSQL
+from django.utils.text import slugify
 
 from . import get_config
 from .models import SlurpitImportedDevice, SlurpitStagedDevice, ensure_slurpit_tags, SlurpitLog, SlurpitSetting, SlurpitPlanning, SlurpitSnapshot
@@ -215,7 +216,10 @@ def get_dcim_device(staged: SlurpitStagedDevice | SlurpitImportedDevice, **extra
         'slurpit_ipv4': staged.ipv4
     })    
 
-    platform = Platform.objects.get(name=staged.device_os)
+    try:
+        platform = Platform.objects.get(name=staged.device_os)
+    except:
+        platform = Platform.objects.get(slug=slugify(staged.device_os))
     
     devicetype = None
     if 'device_type' in extra:

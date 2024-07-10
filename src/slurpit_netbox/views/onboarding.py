@@ -209,8 +209,12 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     })               
 
                     device.device_type = get_create_dcim_objects(obj)
+                    
+                    try:
+                        device.platform = Platform.objects.get(name=obj.device_os)
+                    except:
+                        device.platform = Platform.objects.get(slug=slugify(obj.device_os))
 
-                    device.platform = Platform.objects.get(name=obj.device_os)
                     if device.device_type:
                         device.platform = device.device_type.default_platform
                     
@@ -265,7 +269,11 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
 
                     device.device_type = get_create_dcim_objects(obj)
 
-                    device.platform = Platform.objects.get(name=obj.device_os)
+                    try:
+                        device.platform = Platform.objects.get(name=obj.device_os)
+                    except:
+                        device.platform = Platform.objects.get(slug=slugify(obj.device_os))
+                    
                     if device.device_type:
                         device.platform = device.device_type.default_platform
 
