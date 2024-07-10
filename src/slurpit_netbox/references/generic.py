@@ -52,11 +52,18 @@ def status_decommissioning():
     return DeviceStatusChoices.STATUS_DECOMMISSIONING
 
 def get_create_dcim_objects(staged):
-    manu, new = Manufacturer.objects.get_or_create(name=staged.brand, defaults={'slug':slugify(staged.brand)})
+    try:
+        manu, new = Manufacturer.objects.get_or_create(name=staged.brand, defaults={'slug':slugify(staged.brand)})
+    except:
+        manu, new = Manufacturer.objects.get_or_create(slug=slugify(staged.brand), defaults={'name':staged.brand})
+    
     if new:
         ensure_slurpit_tags(manu)
-    platform, new = Platform.objects.get_or_create(name=staged.device_os, defaults={'slug':slugify(staged.device_os)})
     
+    try:
+        platform, new = Platform.objects.get_or_create(name=staged.device_os, defaults={'slug':slugify(staged.device_os)})
+    except:
+        platform, new = Platform.objects.get_or_create(slug=slugify(staged.device_os), defaults={'name':staged.device_os})
     try:
         dtype, new = DeviceType.objects.get_or_create(
             model=staged.device_type, 

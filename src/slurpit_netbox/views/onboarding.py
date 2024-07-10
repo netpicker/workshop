@@ -12,6 +12,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.utils.text import slugify
 
 from .. import get_config, forms, importer, models, tables
 from ..models import SlurpitImportedDevice, SlurpitLog, SlurpitSetting
@@ -71,7 +72,8 @@ class SlurpitImportedDeviceListView(SlurpitViewMixim, generic.ObjectListView):
             self.table = tables.ConflictDeviceTable
         elif request.GET.get('tab') == "onboarded":
             self.queryset = self.onboarded_queryset
-
+            self.table = tables.SlurpitOnboardedDeviceTable
+            
         return super().get(request, *args, **kwargs)
     
     def post(self, request):
@@ -206,9 +208,16 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                         'slurpit_ipv4': obj.ipv4,
                     })               
 
-                    manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = get_create_dcim_objects(obj)
-                    device.platform = Platform.objects.get(name=obj.device_os)
+                    
+                    try:
+                        device.platform = Platform.objects.get(name=obj.device_os)
+                    except:
+                        device.platform = Platform.objects.get(slug=slugify(obj.device_os))
+
+                    if device.device_type:
+                        device.platform = device.device_type.default_platform
+                    
                     device.save()
                     obj.save()
 
@@ -258,9 +267,16 @@ class SlurpitImportedDeviceOnboardView(SlurpitViewMixim, generic.BulkEditView):
                     })      
                     obj.mapped_device = device    
 
-                    manu = Manufacturer.objects.get(name=obj.brand)
                     device.device_type = get_create_dcim_objects(obj)
-                    device.platform = Platform.objects.get(name=obj.device_os)
+
+                    try:
+                        device.platform = Platform.objects.get(name=obj.device_os)
+                    except:
+                        device.platform = Platform.objects.get(slug=slugify(obj.device_os))
+                    
+                    if device.device_type:
+                        device.platform = device.device_type.default_platform
+
                     device.save()
                     obj.save()
 
