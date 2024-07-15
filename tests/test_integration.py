@@ -24,9 +24,9 @@ def connection():
 @pytest.fixture(scope="module")
 def setup():
     with connection() as conn, conn.cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM auth_user WHERE username = %s", ("admin",))
+        cur.execute("SELECT COUNT(*) FROM users_user WHERE username = %s", ("admin",))
         if cur.fetchone()[0] == 0:
-            cur.execute("INSERT INTO auth_user (id, password, username, first_name, last_name, email, is_superuser, is_staff, is_active, date_joined ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+            cur.execute("INSERT INTO users_user (id, password, username, first_name, last_name, email, is_superuser, is_staff, is_active, date_joined ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
                 (1, "pbkdf2_sha256$600000$gXgBKCHH0zV22o4Rx20Pcw$HDRkA9cQ8adWvn1Ihs2+ArGeEZyn0Njdgzs4XB3iJdQ=", "admin", "", "", "", True, True, True, datetime.now()))
             cur.execute("INSERT INTO users_token (key, write_enabled, user_id, created, description) VALUES (%s, %s, %s, %s, %s)", 
                 ("0d8a4cd172ae30bff3293dd409d8e4f3416f6e18", True, 1, datetime.now(), ""))
@@ -345,16 +345,13 @@ def get_planning_from_id(id):
         cur.execute("SELECT * FROM slurpit_netbox_slurpitplanning WHERE planning_id=%s", (id,))
         return cur.fetchone()
 
-def compare_snapshots(snapshots):
-    device_name = list(snapshots.keys())[0]
-    planning_id = snapshots[device_name]['planning_id']
-
+def compare_snapshots(content, device_name, planning_id):
     with connection() as conn, conn.cursor() as cur:
         cur = conn.cursor(cursor_factory=NamedTupleCursor)
         cur.execute("SELECT * FROM slurpit_netbox_slurpitsnapshot WHERE hostname=%s and planning_id=%s and result_type='planning_result'", (device_name,planning_id))
         planning_result = cur.fetchone()
         assert planning_result != None, "Imported Planning result is not exsited"
-        assert json.loads(planning_result.content) == snapshots[device_name]['planning_results'][0], "Imported Planning result is different with Original Data"
+        assert planning_result.content == content, "Imported Planning result is different with Original Data"
     pass
 
 def test_planning_snapshots(setup):
@@ -393,18 +390,20 @@ def test_planning_snapshots(setup):
             ]
         }
     }
-
-    response = do_request('planning-data/', method="POST",data={
-        'planning_snapshots': snapshots,
+    content = {
+                    'name': 'slurpit',
+                    'role': 'slurpit'
+                }
+    response = do_request('planning-data/', method="POST",data=[{
         'hostname': 'slurpit',
         'planning_id': '10',
-        'content': '',
+        'content': {'planning_result': content, 'template_result': ''},
         'result_type': 'planning_result'
-    })
+    }])
     assert response.status_code == 200, f"Status wasnt 200 \n{response.text}"
     assert response.json()['status'] == "success"
 
-    compare_snapshots(snapshots)
+    compare_snapshots(content, 'slurpit', 10)
 
 def compare_mapping_fields():
 
