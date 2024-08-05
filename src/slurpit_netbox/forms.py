@@ -249,12 +249,33 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         required=False,
         label=_('Enable to reconcile every incoming IPAM data')
     )
+    ignore_status = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_role = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+    ignore_vrf = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+    ignore_tenant = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+    ignore_description = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+
     comments = CommentField()
 
     class Meta:
         model = SlurpitInitIPAddress
         fields = [
-            'vrf', 'status', 'role', 'tenant_group',
+            'vrf', 'status', 'ignore_status', 'role', 'tenant_group',
             'tenant','description', 'enable_reconcile',
         ]
 
@@ -302,6 +323,23 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
         }
     )
 
+    ignore_module = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_type = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_speed = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_duplex = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+
     class Meta:
         model = SlurpitInterface
         fields = [
@@ -332,7 +370,35 @@ class SlurpitPrefixForm(PrefixForm):
         required=False,
         label=_('Enable to reconcile every incoming Prefix data')
     )
-
+    ignore_status = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_vrf = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_role = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_site = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_vlan = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_tenant = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_description = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    
     class Meta:
         model = SlurpitPrefix
         fields = [

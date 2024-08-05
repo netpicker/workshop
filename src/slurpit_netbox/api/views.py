@@ -290,11 +290,16 @@ class SlurpitInterfaceView(SlurpitViewSet):
             enable_reconcile = True
             initial_obj = SlurpitInterface.objects.filter(name='').values('module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile').first()
             initial_interface_values = {}
+            interface_update_ignore_values = []
 
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
                 initial_interface_values = {**initial_obj}
+
+                for key in initial_interface_values.keys():
+                    if key.startswith('ignore_') and initial_interface_values[key]:
+                        interface_update_ignore_values.append(key)
             else:
                 initial_interface_values = {
                     'type': "other",
@@ -472,6 +477,10 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     allowed_fields = {'duplex', 'label', 'speed', 'type', 'description', 'module'}
 
                     for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in interface_update_ignore_values:
+                            continue 
+
                         if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
@@ -518,6 +527,7 @@ class SlurpitIPAMView(SlurpitViewSet):
             enable_reconcile = True
             initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
             initial_ipaddress_values = {}
+            ipaddress_update_ignore_values = []
             vrf = None
             tenant = None
             if initial_obj:
@@ -535,6 +545,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
 
+                for key in initial_ipaddress_values.keys():
+                    if key.startswith('ignore_') and initial_ipaddress_values[key]:
+                        ipaddress_update_ignore_values.append(key)
+                
             else:
                 initial_ipaddress_values['vrf'] = None
                 initial_ipaddress_values['tenant'] = None
@@ -688,6 +702,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                     allowed_fields = {'role', 'tenant', 'dns_name', 'description'}
 
                     for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in ipaddress_update_ignore_values:
+                            continue 
+
                         if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
@@ -736,6 +754,7 @@ class SlurpitPrefixView(SlurpitViewSet):
             enable_reconcile = True
             initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
             initial_prefix_values = {}
+            prefix_update_ignore_values = []
 
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
@@ -758,6 +777,10 @@ class SlurpitPrefixView(SlurpitViewSet):
                 initial_prefix_values['tenant'] = tenant
                 initial_prefix_values['vlan'] = vlan
                 initial_prefix_values['role'] = role
+
+                for key in initial_prefix_values.keys():
+                    if key.startswith('ignore_') and initial_prefix_values[key]:
+                        prefix_update_ignore_values.append(key)
 
             else:
                 initial_prefix_values = {
@@ -925,6 +948,10 @@ class SlurpitPrefixView(SlurpitViewSet):
                     allowed_fields = {'role', 'tenant', 'site', 'vlan', 'description', 'vrf'}
 
                     for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in prefix_update_ignore_values:
+                            continue 
+                        
                         if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:

@@ -28,11 +28,16 @@
                     <div class="field-group my-2">
                         {% render_field form.enable_reconcile %}
                         {% render_field form.status %}
+                        {% render_field form.ignore_status %}
                         {% render_field form.role %}
+                        {% render_field form.ignore_role %}
                         {% render_field form.vrf %}
+                        <!-- {% render_field form.ignore_vrf %} -->
                         {% render_field form.tenant_group %}
                         {% render_field form.tenant %}
+                        {% render_field form.ignore_tenant %}
                         {% render_field form.description %}
+                        {% render_field form.ignore_description %}
                     </div>
                     </div>
             
@@ -51,16 +56,12 @@
 </div>
 
 <style>
-  .ipam-tab-pane .row {
-    display: grid !important;
-  }
 
   .ipam-tab-pane label.text-lg-end {
     text-align: left !important;
   }
-
   .ipam-tab-pane .offset-3 {
-    margin-left: 0px !important;
+    margin-bottom: 8px;
   }
 
   .ipam-tab-pane .mb-3 {
@@ -73,5 +74,9 @@
 
   .ipam-tab-pane .form-text {
     display: none !important;
+  }
+
+  .ipam-tab-pane .row:first-child .offset-3 {
+    margin-left: 0px !important;
   }
 </style>
