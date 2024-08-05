@@ -288,7 +288,9 @@ class SlurpitInterfaceView(SlurpitViewSet):
         try:
             # Get initial values for Interface
             enable_reconcile = True
-            initial_obj = SlurpitInterface.objects.filter(name='').values('module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile').first()
+            initial_obj = SlurpitInterface.objects.filter(name='').values(
+                'module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile', 'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_label', 'ignore_description', 'ignore_duplex'
+            ).first()
             initial_interface_values = {}
             interface_update_ignore_values = []
 
@@ -410,6 +412,8 @@ class SlurpitInterfaceView(SlurpitViewSet):
                             old_interface = {}
 
                             for field in fields:
+                                if field in interface_update_ignore_values:
+                                    continue
                                 old_interface[field] = getattr(obj, field)
                                 new_interface[field] = item[field]
 
@@ -525,7 +529,10 @@ class SlurpitIPAMView(SlurpitViewSet):
         try:
             # Get initial values for IPAM
             enable_reconcile = True
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
+            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values(
+                'status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description', 'ignore_status', 'ignore_vrf', 'ignore_tenant', 'ignore_role', 'ignore_description'
+            ).first()
+
             initial_ipaddress_values = {}
             ipaddress_update_ignore_values = []
             vrf = None
@@ -633,6 +640,8 @@ class SlurpitIPAMView(SlurpitViewSet):
                             old_ipaddress = {}
                             
                             for field in fields:
+                                if field in ipaddress_update_ignore_values:
+                                    continue
                                 old_ipaddress[field] = getattr(obj, field)
                                 new_ipaddress[field] = item[field]
 
@@ -752,7 +761,9 @@ class SlurpitPrefixView(SlurpitViewSet):
         try:
             # Get initial values for prefix
             enable_reconcile = True
-            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
+            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values(
+                'status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description', 'ignore_status', 'ignore_vrf', 'ignore_role', 'ignore_site', 'ignore_vlan', 'ignore_tenant', 'ignore_description'
+            ).first()
             initial_prefix_values = {}
             prefix_update_ignore_values = []
 
@@ -881,6 +892,8 @@ class SlurpitPrefixView(SlurpitViewSet):
                             old_prefix = {}
                             
                             for field in fields:
+                                if field in prefix_update_ignore_values:
+                                    continue
                                 old_prefix[field] = getattr(obj, field)
                                 new_prefix[field] = item[field]
 

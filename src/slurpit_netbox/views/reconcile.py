@@ -453,26 +453,38 @@ class ReconcileView(generic.ObjectListView):
                     else:
                         reconcile_items = SlurpitInterface.objects.filter(pk__in=pk_list)
 
+                    initial_obj = SlurpitInterface.objects.filter(name='').values(
+                        'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_label', 'ignore_description', 'ignore_duplex'
+                    ).first()
+                    initial_interface_values = {}
+                    interface_update_ignore_values = []
+
+                    if initial_obj:
+                        initial_interface_values = {**initial_obj}
+
+                        for key in initial_interface_values.keys():
+                            if initial_interface_values[key]:
+                                interface_update_ignore_values.append(key)
+
+                    updated_fields = {'label', 'speed', 'description', 'type', 'duplex', 'module'}
+                    fields_to_remove = set()
+                    
+                    for field in updated_fields:
+                        if field in prefix_update_ignore_values:
+                            fields_to_remove.add(field)
+
+                    updated_fields -= fields_to_remove
+
                     for item in reconcile_items:
                         netbox_interface = Interface.objects.filter(name=item.name, device=item.device)
                         # If the interface is existed in netbox
                         if netbox_interface:
                             netbox_interface = netbox_interface.first()
 
-                            if item.label:
-                                netbox_interface.label = item.label
-                            if item.speed:
-                                netbox_interface.speed = item.speed
-                            if item.description:
-                                netbox_interface.description = item.description
-
-                            if item.type:
-                                netbox_interface.type = item.type
-                            if item.duplex:
-                                netbox_interface.duplex = item.duplex
-                            if item.module:
-                                netbox_interface.module = item.module
-
+                            
+                            for field, value in item.items():
+                                if field in updated_fields and value is not None and value != "":
+                                    setattr(netbox_interface, field, value)
 
                             batch_update_qs.append(netbox_interface)
                             batch_update_ids.append(item.pk)
@@ -514,7 +526,7 @@ class ReconcileView(generic.ObjectListView):
                             to_import.append(interface_item)
 
                         with transaction.atomic():
-                            Interface.objects.bulk_update(to_import, fields={'label', 'speed', 'type', 'duplex', 'description', 'module'})
+                            Interface.objects.bulk_update(to_import, fields=updated_fields)
                         
                             SlurpitInterface.objects.filter(pk__in=batch_ids).delete()
 
@@ -524,28 +536,42 @@ class ReconcileView(generic.ObjectListView):
                         reconcile_items =SlurpitPrefix.objects.exclude(prefix=None)
                     else:
                         reconcile_items =SlurpitPrefix.objects.filter(pk__in=pk_list)
+                    
+                    initial_obj = SlurpitPrefix.objects.filter(prefix=None).values(
+                        'ignore_status', 'ignore_vrf', 'ignore_role', 'ignore_site', 'ignore_vlan', 'ignore_tenant', 'ignore_description'
+                    ).first()
+                    initial_prefix_values = {}
+                    prefix_update_ignore_values = []
+
+                    if initial_obj:
+                        initial_prefix_values = {**initial_obj}
+
+                        for key in initial_prefix_values.keys():
+                            if initial_prefix_values[key]:
+                                prefix_update_ignore_values.append(key)
+
+                    updated_fields = {'status', 'tenant', 'description', 'role', 'vlan', 'site'}
+                    fields_to_remove = set()
+                    
+                    for field in updated_fields:
+                        if field in prefix_update_ignore_values:
+                            fields_to_remove.add(field)
+
+                    updated_fields -= fields_to_remove
+
                     for item in reconcile_items:
                         netbox_prefix = Prefix.objects.filter(prefix=item.prefix, vrf=item.vrf)
                         # If the prefix is existed in netbox
                         if netbox_prefix:
                             netbox_prefix = netbox_prefix.first()
+                            
+                            for field, value in item.items():
+                                if field in updated_fields and value is not None and value != "":
+                                    setattr(netbox_prefix, field, value)
 
-                            if item.status:
-                                netbox_prefix.status = item.status
-                            if item.description:
-                                netbox_prefix.description = item.description
-                            else:
+                            if item.description is None:
                                 netbox_prefix.description = ""
-                                
-                            if item.tenant:
-                                netbox_prefix.tenant = item.tenant
-                            if item.role:
-                                netbox_prefix.role = item.role
-                            if item.vlan:
-                                netbox_prefix.vlan = item.vlan
-                            if item.site:
-                                netbox_prefix.site = item.site
-
+                            
                             batch_update_qs.append(netbox_prefix)
                             batch_update_ids.append(item.pk)
                         else:
@@ -586,7 +612,7 @@ class ReconcileView(generic.ObjectListView):
                             to_import.append(prefix_item)
 
                         with transaction.atomic():
-                            Prefix.objects.bulk_update(to_import, fields={'status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'description'})
+                            Prefix.objects.bulk_update(to_import, fields=updated_fields)
                         
                             SlurpitPrefix.objects.filter(pk__in=batch_ids).delete()
 
@@ -597,24 +623,44 @@ class ReconcileView(generic.ObjectListView):
                     else:
                         reconcile_items =SlurpitInitIPAddress.objects.filter(pk__in=pk_list)
 
+                    initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values(
+                        'ignore_status', 'ignore_vrf', 'ignore_tenant', 'ignore_role', 'ignore_description'
+                    ).first()
+
+                    initial_ipaddress_values = {}
+                    ipaddress_update_ignore_values = []
+
+                    if initial_obj:
+                        initial_ipaddress_values = {**initial_obj}
+
+                        for key in initial_ipaddress_values.keys():
+                            if initial_ipaddress_values[key]:
+                                ipaddress_update_ignore_values.append(key)
+
+                    updated_fields = {'status', 'role', 'tennat', 'dns_name', 'description'}
+                    fields_to_remove = set()
+                    
+                    for field in updated_fields:
+                        if field in prefix_update_ignore_values:
+                            fields_to_remove.add(field)
+
+                    updated_fields -= fields_to_remove
+
                     for item in reconcile_items:
                         netbox_ipaddress = IPAddress.objects.filter(address=item.address, vrf=item.vrf)
                         # If the ip address is existed in netbox
                         if netbox_ipaddress:
                             netbox_ipaddress = netbox_ipaddress.first()
-                            netbox_ipaddress.status = item.status
-                            netbox_ipaddress.role = item.role
-                            netbox_ipaddress.tennat = item.tenant
 
+                            for field, value in item.items():
+                                if field in updated_fields and value is not None and value != "":
+                                    setattr(netbox_ipaddress, field, value)
 
-                            if item.dns_name:
-                                netbox_ipaddress.dns_name = item.dns_name
-                            else:
+                            
+                            if item.dns_name is None:
                                 netbox_ipaddress.dns_name = ""
 
-                            if item.description:
-                                netbox_ipaddress.description = item.description
-                            else:
+                            if item.description is None:
                                 netbox_ipaddress.description = ""
 
                             batch_update_qs.append(netbox_ipaddress)
@@ -657,7 +703,7 @@ class ReconcileView(generic.ObjectListView):
                             to_import.append(ipaddress_item)
 
                         with transaction.atomic():
-                            IPAddress.objects.bulk_update(to_import, fields={'status', 'role', 'tenant', 'dns_name', 'description'})
+                            IPAddress.objects.bulk_update(to_import, fields=updated_fields)
                         
                             SlurpitInitIPAddress.objects.filter(pk__in=batch_ids).delete()
 
