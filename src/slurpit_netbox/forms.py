@@ -276,7 +276,7 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         model = SlurpitInitIPAddress
         fields = [
             'vrf', 'status', 'ignore_status', 'role', 'tenant_group',
-            'tenant','description', 'enable_reconcile',
+            'tenant','description', 'enable_reconcile','ignore_role', 'ignore_tenant', 'ignore_description'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -344,6 +344,7 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
         model = SlurpitInterface
         fields = [
            'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
+            'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_duplex'
         ]
         widgets = {
             'speed': NumberWithOptions(
@@ -403,7 +404,8 @@ class SlurpitPrefixForm(PrefixForm):
         model = SlurpitPrefix
         fields = [
             'prefix', 'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
-            'description', 'comments', 'tags','enable_reconcile'
+            'description', 'comments', 'tags','enable_reconcile', 'ignore_status', 'ignore_vrf', 'ignore_role', 'ignore_site', 'ignore_vlan',
+            'ignore_tenant', 'ignore_description'
         ]
 
     def __init__(self, *args, **kwargs):

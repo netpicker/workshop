@@ -289,7 +289,7 @@ class SlurpitInterfaceView(SlurpitViewSet):
             # Get initial values for Interface
             enable_reconcile = True
             initial_obj = SlurpitInterface.objects.filter(name='').values(
-                'module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile', 'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_label', 'ignore_description', 'ignore_duplex'
+                'module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile', 'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_duplex'
             ).first()
             initial_interface_values = {}
             interface_update_ignore_values = []

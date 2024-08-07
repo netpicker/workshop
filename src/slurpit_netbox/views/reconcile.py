@@ -454,7 +454,7 @@ class ReconcileView(generic.ObjectListView):
                         reconcile_items = SlurpitInterface.objects.filter(pk__in=pk_list)
 
                     initial_obj = SlurpitInterface.objects.filter(name='').values(
-                        'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_label', 'ignore_description', 'ignore_duplex'
+                        'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_duplex'
                     ).first()
                     initial_interface_values = {}
                     interface_update_ignore_values = []
@@ -466,14 +466,15 @@ class ReconcileView(generic.ObjectListView):
                             if initial_interface_values[key]:
                                 interface_update_ignore_values.append(key)
 
-                    updated_fields = {'label', 'speed', 'description', 'type', 'duplex', 'module'}
-                    fields_to_remove = set()
+                    updated_fields = ['label', 'speed', 'description', 'type', 'duplex', 'module']
+                    fields_to_remove = []
                     
                     for field in updated_fields:
-                        if field in prefix_update_ignore_values:
-                            fields_to_remove.add(field)
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in interface_update_ignore_values:
+                            fields_to_remove.append(field)
 
-                    updated_fields -= fields_to_remove
+                    updated_fields = list(set(updated_fields) - set(fields_to_remove))
 
                     for item in reconcile_items:
                         netbox_interface = Interface.objects.filter(name=item.name, device=item.device)
@@ -482,9 +483,11 @@ class ReconcileView(generic.ObjectListView):
                             netbox_interface = netbox_interface.first()
 
                             
-                            for field, value in item.items():
-                                if field in updated_fields and value is not None and value != "":
-                                    setattr(netbox_interface, field, value)
+                            for field in item._meta.fields:
+                                field_name = field.name
+                                field_value = getattr(item, field_name)
+                                if field_name in updated_fields and field_value is not None and field_value != "":
+                                    setattr(netbox_interface, field_name, field_value)
 
                             batch_update_qs.append(netbox_interface)
                             batch_update_ids.append(item.pk)
@@ -550,14 +553,15 @@ class ReconcileView(generic.ObjectListView):
                             if initial_prefix_values[key]:
                                 prefix_update_ignore_values.append(key)
 
-                    updated_fields = {'status', 'tenant', 'description', 'role', 'vlan', 'site'}
-                    fields_to_remove = set()
+                    updated_fields = ['status', 'tenant', 'description', 'role', 'vlan', 'site']
+                    fields_to_remove = []
                     
                     for field in updated_fields:
-                        if field in prefix_update_ignore_values:
-                            fields_to_remove.add(field)
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in prefix_update_ignore_values:
+                            fields_to_remove.append(field)
 
-                    updated_fields -= fields_to_remove
+                    updated_fields = list(set(updated_fields) - set(fields_to_remove))
 
                     for item in reconcile_items:
                         netbox_prefix = Prefix.objects.filter(prefix=item.prefix, vrf=item.vrf)
@@ -565,9 +569,11 @@ class ReconcileView(generic.ObjectListView):
                         if netbox_prefix:
                             netbox_prefix = netbox_prefix.first()
                             
-                            for field, value in item.items():
-                                if field in updated_fields and value is not None and value != "":
-                                    setattr(netbox_prefix, field, value)
+                            for field in item._meta.fields:
+                                field_name = field.name
+                                field_value = getattr(item, field_name)
+                                if field_name in updated_fields and field_value is not None and field_value != "":
+                                    setattr(netbox_prefix, field_name, field_value)
 
                             if item.description is None:
                                 netbox_prefix.description = ""
@@ -637,14 +643,15 @@ class ReconcileView(generic.ObjectListView):
                             if initial_ipaddress_values[key]:
                                 ipaddress_update_ignore_values.append(key)
 
-                    updated_fields = {'status', 'role', 'tennat', 'dns_name', 'description'}
-                    fields_to_remove = set()
+                    updated_fields = ['status', 'role', 'tenant', 'dns_name', 'description']
+                    fields_to_remove = []
                     
                     for field in updated_fields:
-                        if field in prefix_update_ignore_values:
-                            fields_to_remove.add(field)
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in ipaddress_update_ignore_values:
+                            fields_to_remove.append(field)
 
-                    updated_fields -= fields_to_remove
+                    updated_fields = list(set(updated_fields) - set(fields_to_remove))
 
                     for item in reconcile_items:
                         netbox_ipaddress = IPAddress.objects.filter(address=item.address, vrf=item.vrf)
@@ -652,9 +659,11 @@ class ReconcileView(generic.ObjectListView):
                         if netbox_ipaddress:
                             netbox_ipaddress = netbox_ipaddress.first()
 
-                            for field, value in item.items():
-                                if field in updated_fields and value is not None and value != "":
-                                    setattr(netbox_ipaddress, field, value)
+                            for field in item._meta.fields:
+                                field_name = field.name
+                                field_value = getattr(item, field_name)
+                                if field_name in updated_fields and field_value is not None and field_value != "":
+                                    setattr(netbox_ipaddress, field_name, field_value)
 
                             
                             if item.dns_name is None:
