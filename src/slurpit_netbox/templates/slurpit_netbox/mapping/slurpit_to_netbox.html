@@ -23,6 +23,11 @@
     </a>
   </li>
 
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.subtab == 'vlan' %}active{% endif %}" href="?tab=slurpit_to_netbox&subtab=vlan">
+      Vlans
+    </a>
+  </li>
 </ul>
 
 <div class="tab-content">
@@ -32,6 +37,8 @@
     {% include "slurpit_netbox/mapping/interface.html" %}
   {% elif request.GET.subtab == 'prefix' %}
     {% include "slurpit_netbox/mapping/prefix.html" %}
+  {% elif request.GET.subtab == 'vlan' %}
+    {% include "slurpit_netbox/mapping/vlan.html" %}
   {% endif %}
 </div>
 

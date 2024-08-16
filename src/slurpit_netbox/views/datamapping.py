@@ -1,10 +1,19 @@
 from django.views.generic import View
-from ..models import SlurpitImportedDevice, SlurpitMapping, SlurpitLog, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from ..models import (
+    SlurpitImportedDevice, 
+    SlurpitMapping, 
+    SlurpitLog, 
+    SlurpitSetting, 
+    SlurpitInitIPAddress, 
+    SlurpitInterface, 
+    SlurpitPrefix,
+    SlurpitVLAN
+)
 from .. import forms, importer, models, tables
 from ..decorators import slurpit_plugin_registered
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
-from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm, SlurpitInitIPAMForm, SlurpitDeviceInterfaceForm, SlurpitPrefixForm
+from ..forms import SlurpitMappingForm, SlurpitDeviceForm, SlurpitDeviceStatusForm, SlurpitInitIPAMForm, SlurpitDeviceInterfaceForm, SlurpitPrefixForm, SlurpitVLANForm
 from ..management.choices import *
 from django.contrib import messages
 from dcim.models import Device
@@ -152,6 +161,12 @@ class DataMappingView(View):
                     form = SlurpitPrefixForm(instance=obj)
                 else:
                     form = SlurpitPrefixForm(data={'enable_reconcile':True, 'status': 'active'})
+            elif subtab == 'vlan':
+                obj = SlurpitVLAN.objects.filter(name='').first()
+                if obj is not None:
+                    form = SlurpitPrefixForm(instance=obj)
+                else:
+                    form = SlurpitVLANForm(data={'enable_reconcile':True, 'status': 'active'})
             else:
                 obj = SlurpitInterface.objects.filter(name='').first()
 
@@ -329,6 +344,25 @@ class DataMappingView(View):
                 else:
                     messages.error(request, "Slurpit Prefix Form Validation Failed.")
                     pass
+            elif mapping_type == 'vlan':
+                obj = SlurpitVLAN.objects.filter(name='').first()
+                if obj is None:
+                    obj = SlurpitVLAN()
+                form = SlurpitVLANForm(data=request.POST, instance=obj)
+                restrict_form_fields(form, request.user)
+
+                if form.is_valid():
+                    try:
+                        with transaction.atomic():
+                            obj = form.save()
+                            messages.success(request, "Updated the Slurpit VLAN Default values successfully.")
+                    except (AbortRequest, PermissionsViolation) as e:
+                        # logger.debug(e.message)
+                        form.add_error(None, e.message)
+                else:
+                    form_errors = form.errors
+                    print(form_errors)
+                    messages.error(request, "Slurpit VLAN Form Validation Failed.")
 
         base_url = request.path
 

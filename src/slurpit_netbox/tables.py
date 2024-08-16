@@ -9,9 +9,9 @@ from django.utils.translation import gettext_lazy as _
 from netbox.tables import NetBoxTable, ToggleColumn, columns
 from dcim.models import  Device, Interface
 from dcim.tables import BaseInterfaceTable
-from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from .models import SlurpitImportedDevice, SlurpitLog, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix, SlurpitVLAN
 from tenancy.tables import TenancyColumnsMixin, TenantColumn
-from ipam.models import IPAddress, Prefix
+from ipam.models import IPAddress, Prefix, VLAN
 
 def check_link(**kwargs):
     return {}
@@ -267,7 +267,7 @@ IPADDRESS_LINK = """
 # href="?tab=interface&pk={{record.pk}}"
 NAME_LINK = """
 {% if record.name != '' %}
-    <a id="interface_{{ record.pk }}" class="reconcile-detail-btn" pk="{{record.pk}}">{{ record.name }}</a>
+    <a id="edit_{{ record.pk }}" class="reconcile-detail-btn" pk="{{record.pk}}">{{ record.name }}</a>
 {% else %}
     <span></span>
 {% endif %}
@@ -275,7 +275,7 @@ NAME_LINK = """
 
 EDIT_LINK = """
 {% if record.name != '' %}
-    <a href="{{record.get_edit_url}}" id="interface_{{ record.pk }}" type="button" class="btn btn-yellow">
+    <a href="{{record.get_edit_url}}" id="edit_{{ record.pk }}" type="button" class="btn btn-yellow">
         <i class="mdi mdi-pencil"></i>
     </a>
 {% else %}
@@ -478,6 +478,95 @@ class SlurpitPrefixTable(TenancyColumnsMixin, NetBoxTable):
 
     def render_commit_action(self, record):
         obj = Prefix.objects.filter(prefix=record.prefix, vrf=record.vrf)
+        if obj:
+            return 'Changing'
+        return 'Adding'
+
+VLAN_LINK = """
+{% if record.pk %}
+    <a href="{{ record.get_absolute_url }}">{{ record.vid }}</a>
+{% elif perms.ipam.add_vlan %}
+    <a href="{% url 'ipam:vlan_add' %}?vid={{ record.vid }}{% if record.vlan_group %}&group={{ record.vlan_group.pk }}{% endif %}" class="btn btn-sm btn-success">{{ record.available }} VLAN{{ record.available|pluralize }} available</a>
+{% else %}
+    {{ record.available }} VLAN{{ record.available|pluralize }} available
+{% endif %}
+"""
+
+VLAN_PREFIXES = """
+{% for prefix in value.all %}
+    <a href="{% url 'ipam:prefix' pk=prefix.pk %}">{{ prefix }}</a>{% if not forloop.last %}<br />{% endif %}
+{% endfor %}
+"""
+
+class SlurpitVLANTable(TenancyColumnsMixin, NetBoxTable):
+    vid = tables.Column(
+        verbose_name=_('VID')
+    )
+    name = tables.TemplateColumn(
+        template_code=NAME_LINK,
+        verbose_name=_('Name')
+    )
+    site = tables.Column(
+        verbose_name=_('Site'),
+        linkify=True
+    )
+    group = tables.Column(
+        verbose_name=_('Group'),
+    )
+    status = columns.ChoiceFieldColumn(
+        verbose_name=_('Status'),
+        default=AVAILABLE_LABEL
+    )
+    role = tables.Column(
+        verbose_name=_('Role'),
+        linkify=True
+    )
+    l2vpn = tables.Column(
+        accessor=tables.A('l2vpn_termination__l2vpn'),
+        linkify=True,
+        orderable=False,
+        verbose_name=_('L2VPN')
+    )
+    prefixes = columns.TemplateColumn(
+        template_code=VLAN_PREFIXES,
+        orderable=False,
+        verbose_name=_('Prefixes')
+    )
+    comments = columns.MarkdownColumn(
+        verbose_name=_('Comments'),
+    )
+    tags = columns.TagColumn(
+        url_name='ipam:vlan_list'
+    )
+
+    commit_action = tables.Column(
+        verbose_name = _('Commit Action'),
+        empty_values=(),
+        orderable=False
+    )
+
+    edit = tables.TemplateColumn(
+        template_code=EDIT_LINK,
+        verbose_name=_('')
+    )
+
+    actions = columns.ActionsColumn(actions=tuple())
+
+    class Meta(NetBoxTable.Meta):
+        model = SlurpitVLAN
+        fields = (
+            'pk', 'id', 'vid', 'name', 'site', 'group', 'prefixes', 'tenant', 'tenant_group', 'status', 'role',
+            'description', 'comments', 'tags', 'l2vpn', 'created', 'last_updated',
+        )
+        default_columns = ('pk', 'name', 'vid', 'group', 'commit_action', 'status', 'role', 'tenant', 'description', 'edit')
+        row_attrs = {
+            'class': lambda record: 'success' if not isinstance(record, SlurpitVLAN) else '',
+        }
+
+    def render_commit_action(self, record):
+        obj = VLAN.objects.filter(name=record.name, group__name=record.group)
+        if obj is None:
+            obj = VLAN.objects.filter(vid=record.vid, group__name=record.group)
         if obj:
             return 'Changing'
         return 'Adding'

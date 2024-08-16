@@ -10,7 +10,7 @@ from utilities.forms.fields import CommentField, DynamicModelChoiceField, Dynami
 from utilities.forms.widgets import APISelect, NumberWithOptions, HTMXSelect
 from tenancy.models import TenantGroup, Tenant
 from tenancy.forms import TenancyForm
-from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix, SlurpitVLAN
 from .management.choices import SlurpitApplianceTypeChoices
 from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
@@ -291,6 +291,7 @@ class SlurpitInitIPAMEditForm(SlurpitInitIPAMForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         del self.fields['enable_reconcile']
+
 class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -526,6 +527,111 @@ class SlurpitIPAddressBulkEditForm(
     model = SlurpitInitIPAddress
     fields = [
         'vrf', 'status', 'role', 'tenant_group',
+        'tenant','description'
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        del self.fields['add_tags']
+        del self.fields['remove_tags']
+
+class SlurpitVLANForm(TenancyForm, NetBoxModelForm):
+    site = DynamicModelChoiceField(
+        label=_('Site'),
+        queryset=Site.objects.all(),
+        required=False,
+        null_option='None',
+        selector=True
+    )
+    role = DynamicModelChoiceField(
+        label=_('Role'),
+        queryset=Role.objects.all(),
+        required=False
+    )
+
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming Prefix data')
+    )
+
+    ignore_status = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_site = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_group = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_vid = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_role = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_tenant = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_description = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    class Meta:
+        model = SlurpitVLAN
+        fields = [
+            'enable_reconcile', 
+            'site', 
+            'group', 
+            'vid', 
+            'name', 
+            'status', 
+            'role', 
+            'tenant_group', 
+            'tenant', 
+            'description',
+            'ignore_status',
+            'ignore_site',
+            'ignore_group',
+            'ignore_vid',
+            'ignore_role',
+            'ignore_tenant',
+            'ignore_description'
+        ]
+
+class SlurpitVLANEditForm(SlurpitVLANForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['enable_reconcile']
+
+class SlurpitVLANBulkEditForm(
+    form_from_model(SlurpitVLAN, [
+        'status', 'role', 'tenant', 'description'
+    ]),
+    NetBoxModelBulkEditForm
+):
+    tenant = DynamicModelChoiceField(
+        label=_('Tenant'),
+        queryset=Tenant.objects.all(),
+        required=False
+    )
+    role = DynamicModelChoiceField(
+        label=_('Role'),
+        queryset=Role.objects.all(),
+        required=False
+    )
+    nullable_fields = (
+        'role', 'tenant','description',
+    )
+    model = SlurpitVLAN
+    fields = [
+        'status', 'role', 'role', 'tenant_group',
         'tenant','description'
     ]
 

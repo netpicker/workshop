@@ -14,7 +14,7 @@ from .mapping import SlurpitMapping
 from .ipam import SlurpitInitIPAddress
 from .interface import SlurpitInterface
 from .prefix import SlurpitPrefix
-
+from .vlan import SlurpitVLAN
 __all__ = [
     'SlurpitImportedDevice', 'SlurpitStagedDevice', 'SlurpitInitIPAddress'
     'post_migration', 'SlurpitLog', 'SlurpitSetting'
