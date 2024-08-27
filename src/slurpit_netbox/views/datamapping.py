@@ -164,7 +164,7 @@ class DataMappingView(View):
             elif subtab == 'vlan':
                 obj = SlurpitVLAN.objects.filter(name='').first()
                 if obj is not None:
-                    form = SlurpitPrefixForm(instance=obj)
+                    form = SlurpitVLANForm(instance=obj)
                 else:
                     form = SlurpitVLANForm(data={'enable_reconcile':True, 'status': 'active'})
             else:
