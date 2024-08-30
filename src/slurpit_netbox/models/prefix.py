@@ -106,30 +106,37 @@ class SlurpitPrefix(GetAvailablePrefixesMixin, PrimaryModel):
 
     ignore_status = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore status'),
     )
     ignore_vrf = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore vrf'),
     )
     ignore_role = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore role'),
     )
     ignore_site = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore site'),
     )
     ignore_vlan = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore vlan'),
     )
     ignore_tenant = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore tenant'),
     )
     ignore_description = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore description'),
     )
     

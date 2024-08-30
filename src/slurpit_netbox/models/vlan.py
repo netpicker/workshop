@@ -90,30 +90,37 @@ class SlurpitVLAN(PrimaryModel):
     
     ignore_status = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore status'),
     )
     ignore_site = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore site'),
     )
     ignore_group = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore group'),
     )
     ignore_vid = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore vid'),
     )
     ignore_role = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore role'),
     )
     ignore_tenant = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore tenant'),
     )
     ignore_description = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore description'),
     )
     objects = VLANQuerySet.as_manager()

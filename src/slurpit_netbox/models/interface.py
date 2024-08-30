@@ -197,18 +197,22 @@ class SlurpitInterface(ModularComponentModel, BaseInterface, CabledObjectModel, 
 
     ignore_module = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore module'),
     )
     ignore_type = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore type'),
     )
     ignore_speed = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore speed'),
     )
     ignore_duplex = models.BooleanField(
         default=False,
+        null=True,
         verbose_name=_('ignore duplex'),
     )
     class Meta:
