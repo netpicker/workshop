@@ -7,9 +7,9 @@ from psycopg2.extras import DictCursor, NamedTupleCursor
 from datetime import datetime
 import json
 
-from dotenv import load_dotenv
-# # Load the .env file
-load_dotenv()
+# from dotenv import load_dotenv
+# # # Load the .env file
+# load_dotenv()
 
 def connection():
     return psycopg2.connect(
@@ -32,10 +32,10 @@ def setup():
                 ("0d8a4cd172ae30bff3293dd409d8e4f3416f6e18", True, 1, datetime.now(), ""))
 headers = {
     'Content-Type': 'application/json', 
-    'Authorization': 'Token 00ba2d1183e074e6d293c2c44701452f2f64bb02',
+    'Authorization': 'Token 0d8a4cd172ae30bff3293dd409d8e4f3416f6e18',
 }
 def do_request(url, method="GET", data={}, base_url = 'http://netbox:8080/api/plugins/slurpit'):
-    base_url = 'http://localhost:8000/api/plugins/slurpit'
+    # base_url = 'http://localhost:8000/api/plugins/slurpit'
     if method == "GET":
         return requests.get(f'{base_url}/{url}', headers=headers)
     if method == "DELETE":
