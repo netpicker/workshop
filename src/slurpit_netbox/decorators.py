@@ -3,11 +3,14 @@ from .models import SlurpitSetting
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
 from account.models import UserToken
+from django.shortcuts import redirect
 
 def slurpit_plugin_registered(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        
+        if not request.user.is_authenticated:
+            return redirect('login')
+
         paths = [
             'plugins/slurpit/settings/',
             'plugins/slurpit/devices/',
