@@ -375,8 +375,7 @@ class ReconcileView(generic.ObjectListView):
                 incomming_change = {**incomming_obj}
 
                 current_queryset = VLAN.objects.filter(name=name, group__name=incomming_change['group'])
-                if current_queryset is None:
-                    current_queryset = VLAN.objects.filter(vid=incomming_change['vid'], group__name=incomming_change['group'])
+                current_queryset = current_queryset or VLAN.objects.filter(vid=incomming_change['vid'], group__name=incomming_change['group'])
 
                 if current_queryset:
                     current_obj = current_queryset.values(*vlan_fields).first()
@@ -641,10 +640,13 @@ class ReconcileView(generic.ObjectListView):
                             batch_update_ids.append(item.pk)
                         else:
                             group = VLANGroup.objects.filter(name=item.group)
-                            if group is None:
-                                group = VLANGroup.objects.create(name=item.group, slug=item.group)
-                            else:
+                            print("vlan")
+                            print(group)
+                            if group:
                                 group = group.first()
+                            else:
+                                group = VLANGroup.objects.create(name=item.group, slug=item.group)
+                                
                             batch_insert_qs.append(
                                 VLAN(
                                     name = item.name,
