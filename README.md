@@ -26,3 +26,11 @@ See [NetBox Documentation](https://docs.netbox.dev/en/stable/plugins/#installing
 
 ## Getting started
 On our [getting started page](https://slurpit.io/getting-started/) you can take an Online Course to understand how the plugin works, or play with the plugin in a simulated network in our Sandbox.
+
+## Changelog
+Changelog can be found here: https://slurpit.io/knowledge-base/netbox-plugin-changelog
+
+## Training videos
+We made a series of videos on how to use Slurp'it and NetBox.
+https://slurpit.io/online-courses/
+
