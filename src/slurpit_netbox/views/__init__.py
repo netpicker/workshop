@@ -7,6 +7,7 @@ from .reconcile import (
     SlurpitInitIPAddressListView, 
     SlurpitPrefixListView, 
     SlurpitInterfaceListView, 
+    SlurpitVlanListView,
     SlurpitPrefixEditView, 
     SlurpitInterfaceEditView, 
     SlurpitIPAddressEditView, 

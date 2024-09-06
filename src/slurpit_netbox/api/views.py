@@ -1148,7 +1148,7 @@ class SlurpitVLANView(SlurpitViewSet):
                 for item in total_data:
 
                     slurpit_vlan_item = SlurpitVLAN.objects.filter(name=item['name'], group=item['hostname'])
-                    if slurpit_vlan_item is None:
+                    if not slurpit_vlan_item:
                         slurpit_vlan_item = SlurpitVLAN.objects.filter(vid=item['vid'], group=item['hostname'])
 
                     if slurpit_vlan_item:
@@ -1166,7 +1166,7 @@ class SlurpitVLANView(SlurpitViewSet):
                         batch_update_qs.append(slurpit_vlan_item)
                     else:
                         obj = VLAN.objects.filter(name=item['name'], group__name=item['hostname'])
-                        if obj is None:
+                        if not obj:
                             obj = VLAN.objects.filter(vid=item['vid'], group__name=item['hostname'])
 
                         fields = {'status', 'tenant', 'role', 'description'}
@@ -1183,7 +1183,7 @@ class SlurpitVLANView(SlurpitViewSet):
                                 if field_name in vlan_update_ignore_values:
                                     continue
                                 old_vlan[field] = getattr(obj, field)
-                                old_vlan[field] = item[field]
+                                new_vlan[field] = item[field]
 
                                 if field in not_null_fields and (new_vlan[field] is None or new_vlan[field] == ""):
                                     new_vlan[field] = old_vlan[field]

@@ -31,6 +31,10 @@ class SlurpitPrefixListView(generic.ObjectListView):
 class SlurpitInterfaceListView(generic.ObjectListView):
     queryset = SlurpitInterface.objects.all()
     table = tables.SlurpitInterfaceTable
+
+class SlurpitVlanListView(generic.ObjectListView):
+    queryset = SlurpitVLAN.objects.all()
+    table = tables.SlurpitVLANTable
     
 @method_decorator(slurpit_plugin_registered, name='dispatch')
 class ReconcileView(generic.ObjectListView):

@@ -24,8 +24,9 @@ urlpatterns = (
     
 
     path('slurpitinitaddress/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinitipaddress_list'),
-    path('slurpitprefix/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitprefix_list'),
-    path('slurpitinterface/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinterface_list'),
+    path('slurpitprefix/', views.SlurpitPrefixListView.as_view(), name='slurpitprefix_list'),
+    path('slurpitinterface/', views.SlurpitInterfaceListView.as_view(), name='slurpitinterface_list'),
+    path('slurpitvlan/', views.SlurpitVlanListView.as_view(), name='slurpitvlan_list'),
 
     path('slurpitinterface/<int:pk>/edit/', views.SlurpitInterfaceEditView.as_view(), name='slurpitinterface_edit'),
     path('slurpitipaddress/<int:pk>/edit/', views.SlurpitIPAddressEditView.as_view(), name='slurpitipaddress_edit'),
