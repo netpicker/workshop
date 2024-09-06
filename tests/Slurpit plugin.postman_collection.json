@@ -1,0 +1,401 @@
+{
+	"info": {
+		"_postman_id": "c97d9cb7-a111-4f84-a79a-16ca0d962495",
+		"name": "Slurpit plugin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1011784"
+	},
+	"item": [
+		{
+			"name": "test api",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/test/api/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"test",
+						"api",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_device",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\r\n    \"id\": \"1\",\r\n    \"hostname\": \"MikroTik\",\r\n    \"fqdn\": \"192.168.3.1\",\r\n    \"device_os\": \"mikrotik_routeros\",\r\n    \"device_type\": \"RB1200\",\r\n    \"brand\": \"MikroTik\",\r\n    \"disabled\": \"0\",\r\n    \"added\": \"finder\",\r\n    \"last_seen\": \"2023-12-19 17:00:23\",\r\n    \"createddate\": \"2023-11-27 14:05:26\",\r\n    \"changeddate\": \"2023-12-19 16:00:35\"\r\n  }]"
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/device/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"device",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sync_device",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\r\n    \"id\": \"1\",\r\n    \"hostname\": \"MikroTik\",\r\n    \"fqdn\": \"192.168.3.1\",\r\n    \"device_os\": \"mikrotik_routeros\",\r\n    \"device_type\": \"RB1200\",\r\n    \"brand\": \"MikroTik\",\r\n    \"disabled\": \"0\",\r\n    \"added\": \"finder\",\r\n    \"last_seen\": \"2023-12-19 17:00:23\",\r\n    \"createddate\": \"2023-11-27 14:05:26\",\r\n    \"changeddate\": \"2023-12-19 16:00:35\"\r\n  }]"
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/device/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"device",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sync_device_start",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/device/sync_start/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"device",
+						"sync_start",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sync_device_end",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/device/sync_end/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"device",
+						"sync_end",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sync_ipam",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\"address\":\"192.168.3.2\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.3\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.4\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.5\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.6\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.7\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.8\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.9\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.10\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.11\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.12\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.13\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.14\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.15\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.16\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.17\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.18\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.19\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.20\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.21\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.22\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.23\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.24\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.25\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.26\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.27\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.28\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.29\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.30\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.31\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.32\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.33\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.34\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.35\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.36\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.37\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.38\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.39\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.40\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.41\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.42\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.43\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.44\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.45\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.46\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.47\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.48\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.49\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.50\\/32\",\"description\":\"\"},{\"address\":\"192.168.3.51\\/32\",\"description\":\"\"}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/ipam/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"ipam",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_vlan",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\r\n   {\r\n      \"vlan_name\": \"vlan1\",\r\n      \"vlan_id\" : 1,\r\n     \"hostname\" : \"MikroTik\"\r\n    },\r\n    {\r\n      \"vlan_name\": \"vlan2\",\r\n      \"vlan_id\" : 2,\r\n     \"hostname\" : \"MikroTik\"\r\n    }\r\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/vlan/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"vlan",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sync_prefix",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\"prefix\":\"192.168.10.0\\/24\",\"vrf\" : \"\"},{\"prefix\":\"192.168.3.0\\/24\",\"vrf\" : \"\"},{\"prefix\":\"192.168.20.0\\/24\",\"vrf\" : \"\"}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/prefix/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"prefix",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sync_interfaces",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\r\n    {\r\n        \"name\": \"interface1\",\r\n        \"hostname\" : \"device1\"\r\n    },\r\n    {\r\n        \"name\": \"interface2\",\r\n        \"hostname\" : \"device2\"\r\n    }\r\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/interface/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"interface",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "planning-data/delete-all",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/planning-data/delete-all/MikroTik/3/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"planning-data",
+						"delete-all",
+						"MikroTik",
+						"3",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_planning",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\r\n    \"id\": \"1\",\r\n    \"hostname\": \"MikroTik\",\r\n    \"fqdn\": \"192.168.3.1\",\r\n    \"device_os\": \"mikrotik_routeros\",\r\n    \"device_type\": \"RB1200\",\r\n    \"brand\": \"MikroTik\",\r\n    \"disabled\": \"0\",\r\n    \"added\": \"finder\",\r\n    \"last_seen\": \"2023-12-19 17:00:23\",\r\n    \"createddate\": \"2023-11-27 14:05:26\",\r\n    \"changeddate\": \"2023-12-19 16:00:35\"\r\n  }]"
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/device/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"device",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_planning_data",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"0\",\"NAME\":\"ether1\",\"FLAGS\":\"R\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:23\"},\"planning_result\":{\"Interface\":\"ether1\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"1\",\"NAME\":\"ether2\",\"FLAGS\":\"S\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:24\"},\"planning_result\":{\"Interface\":\"ether2\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"2\",\"NAME\":\"ether3\",\"FLAGS\":\"S\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:25\"},\"planning_result\":{\"Interface\":\"ether3\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"3\",\"NAME\":\"ether4\",\"FLAGS\":\"RS\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:26\"},\"planning_result\":{\"Interface\":\"ether4\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"4\",\"NAME\":\"ether5\",\"FLAGS\":\"RS\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:27\"},\"planning_result\":{\"Interface\":\"ether5\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"5\",\"NAME\":\"ether6\",\"FLAGS\":\"RS\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:28\"},\"planning_result\":{\"Interface\":\"ether6\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"6\",\"NAME\":\"ether7\",\"FLAGS\":\"S\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:29\"},\"planning_result\":{\"Interface\":\"ether7\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"7\",\"NAME\":\"ether8\",\"FLAGS\":\"S\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:2A\"},\"planning_result\":{\"Interface\":\"ether8\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"8\",\"NAME\":\"ether9\",\"FLAGS\":\"RS\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:2B\"},\"planning_result\":{\"Interface\":\"ether9\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"9\",\"NAME\":\"ether10\",\"FLAGS\":\"S\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"9578\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:2C\"},\"planning_result\":{\"Interface\":\"ether10\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"10\",\"NAME\":\"sfp-sfpplus1\",\"FLAGS\":\"S\",\"TYPE\":\"ether\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1600\",\"MAX_MTU\":\"9586\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:2D\"},\"planning_result\":{\"Interface\":\"sfp-sfpplus1\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"11\",\"NAME\":\"Huis\",\"FLAGS\":\"R\",\"TYPE\":\"vlan\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1588\",\"MAX_MTU\":\"\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:24\"},\"planning_result\":{\"Interface\":\"Huis\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"12\",\"NAME\":\"Kantoor\",\"FLAGS\":\"R\",\"TYPE\":\"vlan\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1584\",\"MAX_MTU\":\"\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:24\"},\"planning_result\":{\"Interface\":\"Kantoor\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"13\",\"NAME\":\"Schuur\",\"FLAGS\":\"R\",\"TYPE\":\"vlan\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1588\",\"MAX_MTU\":\"\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:24\"},\"planning_result\":{\"Interface\":\"Schuur\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"14\",\"NAME\":\"bridge\",\"FLAGS\":\"R\",\"TYPE\":\"bridge\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"1592\",\"MAX_MTU\":\"\",\"MAC_ADDR\":\"2C:C8:1B:63:4A:24\"},\"planning_result\":{\"Interface\":\"bridge\"}}},{\"planning_id\":3,\"hostname\":\"MikroTik\",\"content\":{\"timestamp\":\"2024-06-10T12:01:44.307000\",\"template_result\":{\"INDEX\":\"16\",\"NAME\":\"loopback10\",\"FLAGS\":\"R\",\"TYPE\":\"bridge\",\"ACT_MTU\":\"1500\",\"L2_MTU\":\"65535\",\"MAX_MTU\":\"\",\"MAC_ADDR\":\"62:81:D4:B8:96:BB\"},\"planning_result\":{\"Interface\":\"loopback10\"}}}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/plugins/slurpit/planning-data/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"plugins",
+						"slurpit",
+						"planning-data",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "token",
+			"value": "57c09e07e52fd64ae11734f9ef681e72201f7075"
+		}
+	]
+}

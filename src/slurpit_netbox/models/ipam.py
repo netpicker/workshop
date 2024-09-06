@@ -77,6 +77,32 @@ class SlurpitInitIPAddress(PrimaryModel):
         help_text=_('Hostname or FQDN (not case-sensitive)')
     )
 
+    ignore_status = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore status'),
+    )
+    ignore_role = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore role'),
+    )
+    ignore_vrf = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore vrf'),
+    )
+    ignore_tenant = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore tenant'),
+    )
+    ignore_description = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore description'),
+    )
+
     class Meta:
         verbose_name = _('Slurpit IP address')
         verbose_name_plural = _('Slurpit  IP addresses')

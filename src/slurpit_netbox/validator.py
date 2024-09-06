@@ -74,3 +74,22 @@ def prefix_validator(data):
                 errors.append(f"Field {field} is missing or was None - {entry}")
 
     return errors
+
+def vlan_validator(data):
+    # {
+    #     "vlan_name": "vlan",
+    #     "vlan_id": 1,
+    #     "hostname": "slurpit" 
+    # }
+    required_fields = ['vlan_name', 'vlan_id', 'hostname']
+    
+    if not isinstance(data, list):
+        return ["Should be a list"]
+    
+    errors = []
+    for entry in data:
+        for field in required_fields:
+            if field not in entry or entry[field] is None or entry[field] == "":
+                errors.append(f"Field {field} is missing or was None - {entry}")
+
+    return errors

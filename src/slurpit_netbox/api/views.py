@@ -17,21 +17,50 @@ from django.utils import timezone
 from django.db.models import Q
 from django.core.serializers import serialize
 
-from .serializers import SlurpitPlanningSerializer, SlurpitSnapshotSerializer, SlurpitImportedDeviceSerializer, SlurpitPrefixSerializer, SlurpitInterfaceSerializer, SlurpitInitIPAddressSerializer
-from ..validator import device_validator, ipam_validator, interface_validator, prefix_validator
+from .serializers import (
+    SlurpitPlanningSerializer, 
+    SlurpitSnapshotSerializer, 
+    SlurpitImportedDeviceSerializer, 
+    SlurpitPrefixSerializer, 
+    SlurpitInterfaceSerializer, 
+    SlurpitInitIPAddressSerializer,
+    SlurpitVLANSerializer
+)
+from ..validator import (
+    device_validator, 
+    ipam_validator, 
+    interface_validator, 
+    prefix_validator,
+    vlan_validator
+)
 from ..importer import process_import, import_devices, import_plannings, start_device_import, BATCH_SIZE
 from ..management.choices import *
 from ..views.datamapping import get_device_dict
 from ..references import base_name 
 from ..references.generic import status_offline, SlurpitViewSet, status_decommissioning
 from ..references.imports import * 
-from ..models import SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from ..models import (
+    SlurpitPlanning, 
+    SlurpitSnapshot, 
+    SlurpitImportedDevice, 
+    SlurpitStagedDevice, 
+    SlurpitLog, 
+    SlurpitMapping, 
+    SlurpitInitIPAddress, 
+    SlurpitInterface, 
+    SlurpitPrefix,
+    SlurpitVLAN
+)
 from ..filtersets import SlurpitPlanningFilterSet, SlurpitSnapshotFilterSet, SlurpitImportedDeviceFilterSet
 from ..views.setting import sync_snapshot
-from ipam.models import FHRPGroup, VRF, IPAddress, VLAN, Role, Prefix
+from ipam.models import (
+    FHRPGroup, VRF, IPAddress, VLAN, Role, Prefix, VLANGroup
+)
 from dcim.models import Interface, Site
 from dcim.forms import InterfaceForm
-from ipam.forms import IPAddressForm, PrefixForm
+from ipam.forms import (
+    IPAddressForm, PrefixForm, VLANForm
+)
 from tenancy.models import Tenant
 from django.core.cache import cache
 
@@ -288,13 +317,20 @@ class SlurpitInterfaceView(SlurpitViewSet):
         try:
             # Get initial values for Interface
             enable_reconcile = True
-            initial_obj = SlurpitInterface.objects.filter(name='').values('module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile').first()
+            initial_obj = SlurpitInterface.objects.filter(name='').values(
+                'module', 'type', 'speed', 'label', 'description', 'duplex', 'enable_reconcile', 'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_duplex'
+            ).first()
             initial_interface_values = {}
+            interface_update_ignore_values = []
 
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
                 del initial_obj['enable_reconcile']
                 initial_interface_values = {**initial_obj}
+
+                for key in initial_interface_values.keys():
+                    if key.startswith('ignore_') and initial_interface_values[key]:
+                        interface_update_ignore_values.append(key)
             else:
                 initial_interface_values = {
                     'type': "other",
@@ -405,6 +441,9 @@ class SlurpitInterfaceView(SlurpitViewSet):
                             old_interface = {}
 
                             for field in fields:
+                                field_name = f'ignore_{field}'
+                                if field_name in interface_update_ignore_values:
+                                    continue
                                 old_interface[field] = getattr(obj, field)
                                 new_interface[field] = item[field]
 
@@ -457,7 +496,8 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     batch_qs = insert_data[offset:offset + BATCH_SIZE]
                     to_import = []        
                     for interface_item in batch_qs:
-                        to_import.append(Interface(**interface_item))
+                        filtered_interface_item = {k: v for k, v in interface_item.items() if not k.startswith('ignore_')}
+                        to_import.append(Interface(**filtered_interface_item))
                     Interface.objects.bulk_create(to_import)
                     offset += BATCH_SIZE
                 
@@ -472,6 +512,10 @@ class SlurpitInterfaceView(SlurpitViewSet):
                     allowed_fields = {'duplex', 'label', 'speed', 'type', 'description', 'module'}
 
                     for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in interface_update_ignore_values:
+                            continue 
+
                         if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
@@ -516,8 +560,12 @@ class SlurpitIPAMView(SlurpitViewSet):
         try:
             # Get initial values for IPAM
             enable_reconcile = True
-            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values('status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description').first()
+            initial_obj = SlurpitInitIPAddress.objects.filter(address=None).values(
+                'status', 'vrf', 'tenant', 'role', 'enable_reconcile', 'description', 'ignore_status', 'ignore_vrf', 'ignore_tenant', 'ignore_role', 'ignore_description'
+            ).first()
+
             initial_ipaddress_values = {}
+            ipaddress_update_ignore_values = []
             vrf = None
             tenant = None
             if initial_obj:
@@ -535,6 +583,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                 initial_ipaddress_values['vrf'] = vrf
                 initial_ipaddress_values['tenant'] = tenant
 
+                for key in initial_ipaddress_values.keys():
+                    if key.startswith('ignore_') and initial_ipaddress_values[key]:
+                        ipaddress_update_ignore_values.append(key)
+                
             else:
                 initial_ipaddress_values['vrf'] = None
                 initial_ipaddress_values['tenant'] = None
@@ -619,6 +671,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                             old_ipaddress = {}
                             
                             for field in fields:
+                                field_name = f'ignore_{field}'
+                                if field_name in ipaddress_update_ignore_values:
+                                    continue
                                 old_ipaddress[field] = getattr(obj, field)
                                 new_ipaddress[field] = item[field]
 
@@ -674,7 +729,9 @@ class SlurpitIPAMView(SlurpitViewSet):
                     batch_qs = insert_ips[offset:offset + BATCH_SIZE]
                     to_import = []        
                     for ipaddress_item in batch_qs:
-                        to_import.append(IPAddress(**ipaddress_item))
+                        filtered_ipaddress_item = {k: v for k, v in ipaddress_item.items() if not k.startswith('ignore_')}
+                        to_import.append(IPAddress(**filtered_ipaddress_item))
+
                     IPAddress.objects.bulk_create(to_import)
                     offset += BATCH_SIZE
                 
@@ -688,6 +745,10 @@ class SlurpitIPAMView(SlurpitViewSet):
                     allowed_fields = {'role', 'tenant', 'dns_name', 'description'}
 
                     for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in ipaddress_update_ignore_values:
+                            continue 
+
                         if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
@@ -734,8 +795,11 @@ class SlurpitPrefixView(SlurpitViewSet):
         try:
             # Get initial values for prefix
             enable_reconcile = True
-            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values('status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description').first()
+            initial_obj = SlurpitPrefix.objects.filter(prefix=None).values(
+                'status', 'vrf', 'role', 'site', 'vlan', 'tenant', 'enable_reconcile', 'description', 'ignore_status', 'ignore_vrf', 'ignore_role', 'ignore_site', 'ignore_vlan', 'ignore_tenant', 'ignore_description'
+            ).first()
             initial_prefix_values = {}
+            prefix_update_ignore_values = []
 
             if initial_obj:
                 enable_reconcile = initial_obj['enable_reconcile']
@@ -749,7 +813,7 @@ class SlurpitPrefixView(SlurpitViewSet):
                 if initial_prefix_values['tenant'] is not None:
                     tenant = Tenant.objects.get(pk=initial_prefix_values['tenant'])
                 if initial_prefix_values['vlan'] is not None:
-                    tenant = Tenant.objects.get(pk=initial_prefix_values['vlan'])
+                    vlan = VLAN.objects.get(pk=initial_prefix_values['vlan'])
                 if initial_prefix_values['role'] is not None:
                     role = Role.objects.get(pk=initial_prefix_values['role'])
 
@@ -758,6 +822,10 @@ class SlurpitPrefixView(SlurpitViewSet):
                 initial_prefix_values['tenant'] = tenant
                 initial_prefix_values['vlan'] = vlan
                 initial_prefix_values['role'] = role
+
+                for key in initial_prefix_values.keys():
+                    if key.startswith('ignore_') and initial_prefix_values[key]:
+                        prefix_update_ignore_values.append(key)
 
             else:
                 initial_prefix_values = {
@@ -858,6 +926,9 @@ class SlurpitPrefixView(SlurpitViewSet):
                             old_prefix = {}
                             
                             for field in fields:
+                                field_name = f'ignore_{field}'
+                                if field_name in prefix_update_ignore_values:
+                                    continue
                                 old_prefix[field] = getattr(obj, field)
                                 new_prefix[field] = item[field]
 
@@ -910,7 +981,8 @@ class SlurpitPrefixView(SlurpitViewSet):
                     batch_qs = insert_data[offset:offset + BATCH_SIZE]
                     to_import = []        
                     for prefix_item in batch_qs:
-                        to_import.append(Prefix(**prefix_item))
+                        filtered_prefix_item = {k: v for k, v in prefix_item.items() if not k.startswith('ignore_')}
+                        to_import.append(Prefix(**filtered_prefix_item))
                     Prefix.objects.bulk_create(to_import)
                     offset += BATCH_SIZE
                 
@@ -925,6 +997,10 @@ class SlurpitPrefixView(SlurpitViewSet):
                     allowed_fields = {'role', 'tenant', 'site', 'vlan', 'description', 'vrf'}
 
                     for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in prefix_update_ignore_values:
+                            continue 
+                        
                         if field in allowed_fields and value is not None and value != "":
                             setattr(item, field, value)
                         if field in allowed_fields_with_none:
@@ -952,4 +1028,268 @@ class SlurpitPrefixView(SlurpitViewSet):
             return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'errors', 'errors': str(e)}, status=400)
- 
+
+
+class SlurpitVLANView(SlurpitViewSet):
+    queryset = SlurpitVLAN.objects.all()
+
+    def get_serializer_class(self):
+        return SlurpitVLANSerializer
+    
+    def create(self, request):
+        # Validate request vlan data
+        errors = vlan_validator(request.data)
+        if errors:
+            return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+
+        tenant = None
+        role = None
+            
+        try:
+            # Get initial values for vlan
+            enable_reconcile = True
+            initial_obj = SlurpitVLAN.objects.filter(name='').values(
+                'status', 'role', 'tenant', 'enable_reconcile', 'description', 
+                'ignore_status', 'ignore_role', 'ignore_tenant', 'ignore_description'
+            ).first()
+            initial_vlan_values = {}
+            vlan_update_ignore_values = []
+
+            if initial_obj:
+                enable_reconcile = initial_obj['enable_reconcile']
+                del initial_obj['enable_reconcile']
+                initial_vlan_values = {**initial_obj}
+
+                if initial_vlan_values['tenant'] is not None:
+                    tenant = Tenant.objects.get(pk=initial_vlan_values['tenant'])
+                if initial_vlan_values['role'] is not None:
+                    role = Role.objects.get(pk=initial_vlan_values['role'])
+
+                initial_vlan_values['tenant'] = tenant
+                initial_vlan_values['role'] = role
+
+                for key in initial_vlan_values.keys():
+                    if key.startswith('ignore_') and initial_vlan_values[key]:
+                        vlan_update_ignore_values.append(key)
+
+            else:
+                initial_vlan_values = {
+                    'status': 'active',
+                    'tenant': None,
+                    'role': None,
+                    'description': ''
+                }
+
+            total_errors = {}
+            insert_data = []
+            update_data = []
+            total_data = []
+
+            duplicates = []
+            # Form validation 
+            for record in request.data[::-1]:
+                unique_group_name = f'{record["hostname"]}_{record["vlan_name"]}'
+                unique_group_id = f'{record["hostname"]}_{record["vlan_id"]}'
+                if unique_group_name in duplicates or unique_group_id in duplicates:
+                    continue
+                duplicates.append(unique_group_name)
+                duplicates.append(unique_group_id)
+
+                obj = VLAN()
+
+                new_data = {
+                    **initial_vlan_values, 
+                    "vid": record['vlan_id'],
+                    "name": record['vlan_name'],
+                    "hostname": record['hostname']
+                }
+                # Get VLANGroup ID 
+                group = VLANGroup.objects.filter(name=record['hostname'])
+                if group:
+                    group = group.first()
+                    new_data['group'] = group
+
+                form = VLANForm(data=new_data, instance=obj)
+                total_data.append(new_data)
+                
+                # Fail case
+                if form.is_valid() is False:
+                    form_errors = form.errors
+                    error_list_dict = {}
+
+                    for field, errors in form_errors.items():
+                        error_list_dict[field] = list(errors)
+
+                    # Duplicate VLAN
+                    keys = error_list_dict.keys()
+                    if len(keys) ==1 and '__all__' in keys:
+                        flag = True
+                        for errorItem in error_list_dict['__all__']:
+                            if not errorItem.endswith("already exists."):
+                                flag = False
+                                break
+                        if flag:
+                            update_data.append(new_data)
+                            continue
+                    if '__all__' in keys:
+                        del error_list_dict['__all__']
+                    
+                    error_key = f'{new_data["name"]}({new_data["vid"]})'
+                    total_errors[error_key] = error_list_dict
+
+                    return JsonResponse({'status': 'error', 'errors': total_errors}, status=400)
+                else:
+                    insert_data.append(new_data)
+        
+            if enable_reconcile:
+                batch_update_qs = []
+                batch_insert_qs = []
+
+                for item in total_data:
+
+                    slurpit_vlan_item = SlurpitVLAN.objects.filter(name=item['name'], group=item['hostname'])
+                    if not slurpit_vlan_item:
+                        slurpit_vlan_item = SlurpitVLAN.objects.filter(vid=item['vid'], group=item['hostname'])
+
+                    if slurpit_vlan_item:
+                        slurpit_vlan_item = slurpit_vlan_item.first()
+
+                        allowed_fields_with_none = {'status'}
+                        allowed_fields = {'role', 'tenant', 'description'}
+
+                        for field, value in item.items():
+                            if field in allowed_fields and value is not None and value != "":
+                                setattr(slurpit_vlan_item, field, value)
+                            if field in allowed_fields_with_none:
+                                setattr(slurpit_vlan_item, field, value)
+
+                        batch_update_qs.append(slurpit_vlan_item)
+                    else:
+                        obj = VLAN.objects.filter(name=item['name'], group__name=item['hostname'])
+                        if not obj:
+                            obj = VLAN.objects.filter(vid=item['vid'], group__name=item['hostname'])
+
+                        fields = {'status', 'tenant', 'role', 'description'}
+                        not_null_fields = {'tenant', 'role', 'description'}
+                        
+                        new_vlan = {}
+
+                        if obj:
+                            obj = obj.first()
+                            old_vlan = {}
+                            
+                            for field in fields:
+                                field_name = f'ignore_{field}'
+                                if field_name in vlan_update_ignore_values:
+                                    continue
+                                old_vlan[field] = getattr(obj, field)
+                                new_vlan[field] = item[field]
+
+                                if field in not_null_fields and (new_vlan[field] is None or new_vlan[field] == ""):
+                                    new_vlan[field] = old_vlan[field]
+
+                            if new_vlan == old_vlan:
+                                continue
+                        else:
+                            for field in fields:
+                                new_vlan[field] = item[field]
+
+                        batch_insert_qs.append(SlurpitVLAN(
+                            name = item['name'],
+                            vid = item['vid'],
+                            group = item['hostname'],
+                            **new_vlan
+                        ))
+                
+                count = len(batch_insert_qs)
+                offset = 0
+
+                while offset < count:
+                    batch_qs = batch_insert_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for vlan_item in batch_qs:
+                        to_import.append(vlan_item)
+
+                    SlurpitVLAN.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+
+
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for vlan_item in batch_qs:
+                        to_import.append(vlan_item)
+
+                    SlurpitVLAN.objects.bulk_update(to_import, 
+                        fields={'description', 'tenant', 'status', 'role'},
+                    )
+                    offset += BATCH_SIZE
+
+            else:
+
+                # Batch Insert
+                count = len(insert_data)
+                offset = 0
+                while offset < count:
+                    batch_qs = insert_data[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for vlan_item in batch_qs:
+                        filtered_vlan_item = {k: v for k, v in vlan_item.items() if not k.startswith('ignore_')}
+                        if not 'group' in filtered_vlan_item:
+                            vlan_group = VLANGroup.objects.create(name=filtered_vlan_item['hostname'],slug=filtered_vlan_item['hostname'])
+                            filtered_vlan_item['group'] = vlan_group
+                        del filtered_vlan_item['hostname']
+                        to_import.append(VLAN(**filtered_vlan_item))
+                    VLAN.objects.bulk_create(to_import)
+                    offset += BATCH_SIZE
+                
+                
+                # Batch Update
+                batch_update_qs = []
+                for update_item in update_data:
+                    if not 'group' in update_item:
+                        vlan_group = VLANGroup.objects.create(name=update_item['hostname'],slug=update_item['hostname'])
+                        update_item['group'] = vlan_group
+
+                    item = VLAN.objects.get(name=update_item['name'], group=update_item['group'])
+                    if item is None:
+                        item = VLAN.objects.get(vid=update_item['vid'], group=update_item['group'])
+                    # Update
+                    allowed_fields_with_none = {'status'}
+                    allowed_fields = {'role', 'tenant', 'description'}
+
+                    for field, value in update_item.items():
+                        ignore_field = f'ignore_{field}'
+                        if ignore_field in vlan_update_ignore_values:
+                            continue 
+                        
+                        if field in allowed_fields and value is not None and value != "":
+                            setattr(item, field, value)
+                        if field in allowed_fields_with_none:
+                            setattr(item, field, value)
+                    
+                    batch_update_qs.append(item)
+
+                
+                count = len(batch_update_qs)
+                offset = 0
+                while offset < count:
+                    batch_qs = batch_update_qs[offset:offset + BATCH_SIZE]
+                    to_import = []        
+                    for vlan_item in batch_qs:
+                        to_import.append(vlan_item)
+
+                    VLAN.objects.bulk_update(to_import, 
+                        fields={
+                            'description', 'tenant', 'status', 'role'
+                        }
+                    )
+                    offset += BATCH_SIZE
+
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'errors', 'errors': str(e)}, status=400)
+

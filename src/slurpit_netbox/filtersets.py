@@ -2,7 +2,7 @@ import django_filters
 from core.choices import DataSourceStatusChoices
 from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet, BaseFilterSet
-from .models import SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from .models import SlurpitLog, SlurpitPlanning, SlurpitSnapshot, SlurpitImportedDevice, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix, SlurpitVLAN
 from django.utils.translation import gettext as _
 from utilities.filters import (
     ContentTypeFilter, MultiValueCharFilter
@@ -168,4 +168,25 @@ class SlurpitInterfaceFilterSet(BaseFilterSet):
             Q(description__icontains=value) | 
             Q(type__icontains=value) | 
             Q(device__name__icontains=value)
+        )
+    
+class SlurpitVLANFilterSet(BaseFilterSet):
+    q = django_filters.CharFilter(
+        method='search',
+        label=_('Search'),
+    )
+
+    class Meta:
+        model = SlurpitVLAN
+        fields = [
+            'name', 'description'
+        ] 
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        
+        return queryset.filter(
+            Q(name__icontains=value) | 
+            Q(description__icontains=value)
         )

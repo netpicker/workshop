@@ -10,7 +10,7 @@ from utilities.forms.fields import CommentField, DynamicModelChoiceField, Dynami
 from utilities.forms.widgets import APISelect, NumberWithOptions, HTMXSelect
 from tenancy.models import TenantGroup, Tenant
 from tenancy.forms import TenancyForm
-from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from .models import SlurpitImportedDevice, SlurpitPlanning, SlurpitSetting, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix, SlurpitVLAN
 from .management.choices import SlurpitApplianceTypeChoices
 from extras.models import CustomField
 from django.contrib.contenttypes.models import ContentType
@@ -249,13 +249,34 @@ class SlurpitInitIPAMForm(TenancyForm, NetBoxModelForm):
         required=False,
         label=_('Enable to reconcile every incoming IPAM data')
     )
+    ignore_status = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_role = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+    ignore_vrf = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+    ignore_tenant = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+    ignore_description = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data'),
+    )
+
     comments = CommentField()
 
     class Meta:
         model = SlurpitInitIPAddress
         fields = [
-            'vrf', 'status', 'role', 'tenant_group',
-            'tenant','description', 'enable_reconcile',
+            'vrf', 'status', 'ignore_status', 'role', 'tenant_group',
+            'tenant','description', 'enable_reconcile','ignore_role', 'ignore_tenant', 'ignore_description'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -270,6 +291,7 @@ class SlurpitInitIPAMEditForm(SlurpitInitIPAMForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         del self.fields['enable_reconcile']
+
 class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm):
     enable_reconcile = forms.BooleanField(
         required=False,
@@ -302,10 +324,28 @@ class SlurpitDeviceInterfaceForm(InterfaceCommonForm, ModularDeviceComponentForm
         }
     )
 
+    ignore_module = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_type = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_speed = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_duplex = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+
     class Meta:
         model = SlurpitInterface
         fields = [
            'module', 'name', 'label', 'type', 'speed', 'duplex',  'description', 'mode', 'vlan_group', 'untagged_vlan', 'tagged_vlans', 'enable_reconcile',
+            'ignore_module', 'ignore_type', 'ignore_speed', 'ignore_duplex'
         ]
         widgets = {
             'speed': NumberWithOptions(
@@ -332,12 +372,41 @@ class SlurpitPrefixForm(PrefixForm):
         required=False,
         label=_('Enable to reconcile every incoming Prefix data')
     )
-
+    ignore_status = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_vrf = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_role = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_site = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_vlan = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_tenant = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_description = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    
     class Meta:
         model = SlurpitPrefix
         fields = [
             'prefix', 'vrf', 'site', 'vlan', 'status', 'role', 'is_pool', 'mark_utilized', 'tenant_group', 'tenant',
-            'description', 'comments', 'tags','enable_reconcile'
+            'description', 'comments', 'tags','enable_reconcile', 'ignore_status', 'ignore_vrf', 'ignore_role', 'ignore_site', 'ignore_vlan',
+            'ignore_tenant', 'ignore_description'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -458,6 +527,111 @@ class SlurpitIPAddressBulkEditForm(
     model = SlurpitInitIPAddress
     fields = [
         'vrf', 'status', 'role', 'tenant_group',
+        'tenant','description'
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        del self.fields['add_tags']
+        del self.fields['remove_tags']
+
+class SlurpitVLANForm(TenancyForm, NetBoxModelForm):
+    site = DynamicModelChoiceField(
+        label=_('Site'),
+        queryset=Site.objects.all(),
+        required=False,
+        null_option='None',
+        selector=True
+    )
+    role = DynamicModelChoiceField(
+        label=_('Role'),
+        queryset=Role.objects.all(),
+        required=False
+    )
+
+    enable_reconcile = forms.BooleanField(
+        required=False,
+        label=_('Enable to reconcile every incoming Prefix data')
+    )
+
+    ignore_status = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_site = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_group = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_vid = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_role = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_tenant = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    ignore_description = forms.BooleanField(
+        required=False,
+        label=_('Ignore value for updating data')
+    )
+    class Meta:
+        model = SlurpitVLAN
+        fields = [
+            'enable_reconcile', 
+            'site', 
+            'group', 
+            'vid', 
+            'name', 
+            'status', 
+            'role', 
+            'tenant_group', 
+            'tenant', 
+            'description',
+            'ignore_status',
+            'ignore_site',
+            'ignore_group',
+            'ignore_vid',
+            'ignore_role',
+            'ignore_tenant',
+            'ignore_description'
+        ]
+
+class SlurpitVLANEditForm(SlurpitVLANForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields['enable_reconcile']
+
+class SlurpitVLANBulkEditForm(
+    form_from_model(SlurpitVLAN, [
+        'status', 'role', 'tenant', 'description'
+    ]),
+    NetBoxModelBulkEditForm
+):
+    tenant = DynamicModelChoiceField(
+        label=_('Tenant'),
+        queryset=Tenant.objects.all(),
+        required=False
+    )
+    role = DynamicModelChoiceField(
+        label=_('Role'),
+        queryset=Role.objects.all(),
+        required=False
+    )
+    nullable_fields = (
+        'role', 'tenant','description',
+    )
+    model = SlurpitVLAN
+    fields = [
+        'status', 'role', 'role', 'tenant_group',
         'tenant','description'
     ]
 

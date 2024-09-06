@@ -66,6 +66,12 @@ Context:
                 Prefixes {% badge prefix_count %}
               </a>
             </li>
+
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'vlan' %}active{% endif %}" href="?tab=vlan">
+                Vlans {% badge vlan_count %}
+              </a>
+            </li>
           </ul>
         {% endblock %}
       </div>
@@ -321,7 +327,7 @@ Context:
         const objectType = data['object_type']
 
         const action = data['action']
-        const currentState = data['current-state']
+        const currentState = data['current_state']
         const incommingChange = data['incomming_change']
         const diffRemoved = data['diff_removed']
         const diffAdded = data['diff_added']

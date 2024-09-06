@@ -104,6 +104,43 @@ class SlurpitPrefix(GetAvailablePrefixesMixin, PrimaryModel):
         help_text=_("Treat as fully utilized")
     )
 
+    ignore_status = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore status'),
+    )
+    ignore_vrf = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore vrf'),
+    )
+    ignore_role = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore role'),
+    )
+    ignore_site = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore site'),
+    )
+    ignore_vlan = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore vlan'),
+    )
+    ignore_tenant = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore tenant'),
+    )
+    ignore_description = models.BooleanField(
+        default=False,
+        null=True,
+        verbose_name=_('ignore description'),
+    )
+    
+
     # Cached depth & child counts
     _depth = models.PositiveSmallIntegerField(
         default=0,

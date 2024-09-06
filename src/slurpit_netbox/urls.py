@@ -24,15 +24,17 @@ urlpatterns = (
     
 
     path('slurpitinitaddress/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinitipaddress_list'),
-    path('slurpitprefix/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitprefix_list'),
-    path('slurpitinterface/', views.SlurpitInitIPAddressListView.as_view(), name='slurpitinterface_list'),
+    path('slurpitprefix/', views.SlurpitPrefixListView.as_view(), name='slurpitprefix_list'),
+    path('slurpitinterface/', views.SlurpitInterfaceListView.as_view(), name='slurpitinterface_list'),
+    path('slurpitvlan/', views.SlurpitVlanListView.as_view(), name='slurpitvlan_list'),
 
     path('slurpitinterface/<int:pk>/edit/', views.SlurpitInterfaceEditView.as_view(), name='slurpitinterface_edit'),
     path('slurpitipaddress/<int:pk>/edit/', views.SlurpitIPAddressEditView.as_view(), name='slurpitipaddress_edit'),
     path('slurpitprefix/<int:pk>/edit/', views.SlurpitPrefixEditView.as_view(), name='slurpitprefix_edit'),
+    path('slurpitvlan/<int:pk>/edit/', views.SlurpitVLANEditView.as_view(), name='slurpitvlan_edit'),
 
     path('slurpitprefix/edit/', views.SlurpitPrefixBulkEditView.as_view(), name='slurpitprefix_bulk_edit'),
     path('slurpitipaddress/edit/', views.SlurpitIPAddressBulkEditView.as_view(), name='slurpitipaddress_bulk_edit'),
     path('slurpitinterface/edit/', views.SlurpitInterfaceBulkEditView.as_view(), name='slurpitinterface_bulk_edit'),
-
+    path('slurpitvlan/edit/', views.SlurpitVLANBulkEditView.as_view(), name='slurpitvlan_bulk_edit'),
 )

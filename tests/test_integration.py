@@ -8,7 +8,7 @@ from datetime import datetime
 import json
 
 # from dotenv import load_dotenv
-# # Load the .env file
+# # # Load the .env file
 # load_dotenv()
 
 def connection():
@@ -35,7 +35,7 @@ headers = {
     'Authorization': 'Token 0d8a4cd172ae30bff3293dd409d8e4f3416f6e18',
 }
 def do_request(url, method="GET", data={}, base_url = 'http://netbox:8080/api/plugins/slurpit'):
-    # base_url = 'http://netbox:8080/api/plugins/slurpit'
+    # base_url = 'http://localhost:8000/api/plugins/slurpit'
     if method == "GET":
         return requests.get(f'{base_url}/{url}', headers=headers)
     if method == "DELETE":
@@ -283,6 +283,13 @@ def check_direct_sync_prefix(prefixes):
             cnt = len(cur.fetchall())
             assert cnt > 0, f'{prefix["prefix"]} does not exist in NetBox.'
 
+def check_direct_sync_vlan(vlans):
+    with connection() as conn, conn.cursor() as cur:
+        for vlan in vlans:
+            cur.execute('SELECT * FROM ipam_vlan WHERE name=%s AND vid=%s', (vlan['vlan_name'],str(vlan['vlan_id']))) 
+            cnt = len(cur.fetchall())
+            assert cnt > 0, f'{vlan["vlan_name"]} does not exist in NetBox.'
+
 def check_reconcile_sync_prefix(prefixes):
     with connection() as conn, conn.cursor() as cur:
         for prefix in prefixes:
@@ -290,6 +297,12 @@ def check_reconcile_sync_prefix(prefixes):
             cnt = len(cur.fetchall())
             assert cnt > 0, f'{prefix["prefix"]} does not exist in Reconcile Table.'
 
+def check_reconcile_sync_vlan(vlans):
+    with connection() as conn, conn.cursor() as cur:
+        for vlan in vlans:
+            cur.execute('SELECT * FROM slurpit_netbox_slurpitvlan WHERE name=%s AND vid=%s', (vlan['vlan_name'],str(vlan['vlan_id']))) 
+            cnt = len(cur.fetchall())
+            assert cnt > 0, f'{vlan["name"]} does not exist in Reconcile Table.'
 
 def check_reconcile_sync_interface(interfaces):
     with connection() as conn, conn.cursor() as cur:
@@ -420,25 +433,27 @@ def test_data_mapping(setup):
     compare_mapping_fields()
 
 def add_device_to_netbox():
-    with connection() as conn, conn.cursor() as cur:
-        cur.execute("SELECT * FROM dcim_site WHERE name=%s", ("Slurp'it",))
-        temp = cur.fetchone()
-        site = temp['id']
+    try:
+        with connection() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM dcim_site WHERE name=%s", ("Slurp'it",))
+            temp = cur.fetchone()
+            site = temp['id']
 
-        cur.execute("SELECT * FROM dcim_devicerole WHERE name=%s", ("Slurp'it",))
-        temp = cur.fetchone()
-        devicerole = temp['id']
+            cur.execute("SELECT * FROM dcim_devicerole WHERE name=%s", ("Slurp'it",))
+            temp = cur.fetchone()
+            devicerole = temp['id']
 
-        cur.execute("SELECT * FROM dcim_devicetype WHERE model=%s",("Slurp'it",))
-        temp = cur.fetchone()
-        devicetype = temp['id']
+            cur.execute("SELECT * FROM dcim_devicetype WHERE model=%s",("Slurp'it",))
+            temp = cur.fetchone()
+            devicetype = temp['id']
 
-        cur.execute(
-                'INSERT INTO dcim_device (device_type_id, site_id, role_id, status, name, custom_field_data, serial, face, comments, airflow, description, inventory_item_count, console_port_count, console_server_port_count, device_bay_count, power_port_count, power_outlet_count, interface_count, rear_port_count, front_port_count, module_bay_count) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                (devicetype, site, devicerole, "active", "Slurp'it", json.dumps({}), "test", "test", "test", "test", "test", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-            )
-        conn.commit()
-    pass
+            cur.execute(
+                    'INSERT INTO dcim_device (device_type_id, site_id, role_id, status, name, custom_field_data, serial, face, comments, airflow, description, inventory_item_count, console_port_count, console_server_port_count, device_bay_count, power_port_count, power_outlet_count, interface_count, rear_port_count, front_port_count, module_bay_count) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                    (devicetype, site, devicerole, "active", "Slurp'it", json.dumps({}), "test", "test", "test", "test", "test", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+                )
+            conn.commit()
+    except:
+        pass
 
 def test_interface(setup):
     #Interface Direct Sync Test
@@ -515,3 +530,62 @@ def test_prefix(setup):
     response = do_request('prefix/', method="POST", data=valid_prefixes)
     assert response.status_code == 200, f"Prefix import is Failed. Status wasnt 200 \n{response.json()}"
     check_reconcile_sync_prefix(valid_prefixes)
+
+def set_reconcile_for_vlan(is_enable):
+    with connection() as conn, conn.cursor() as cur:
+
+        cur.execute(
+            'UPDATE slurpit_netbox_slurpitvlan SET enable_reconcile = %s WHERE name = %s',
+            (is_enable, "")
+        )
+        conn.commit()
+        # Not Existed Case
+        if cur.rowcount == 0:
+            cur.execute(
+                'INSERT INTO slurpit_netbox_slurpitvlan (name, status, vid, enable_reconcile, custom_field_data, description, comments) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                ('', "active", 1, is_enable, json.dumps({}), '', '')
+            )
+            conn.commit()
+        return cur.rowcount
+
+def test_vlan(setup):
+    #VLAN Direct Sync Test
+    #Set Enable to reconcile every incoming VLAN data
+    set_reconcile_for_vlan(False)
+    invalid_vlans = [
+        {
+            'vlan_name': 'vlan1',
+        }
+    ]
+    response = do_request('vlan/', method="POST", data=invalid_vlans)
+    assert response.status_code == 400, f"Validation is Failed. Status wasnt 400 \n{response.json()}"
+
+    valid_vlans = [
+        {
+            'vlan_name': 'vlan1',
+            'vlan_id': 1,
+            'hostname': 'slurpitvlan'
+        }
+    ]
+    response = do_request('vlan/', method="POST", data=valid_vlans)
+    assert response.status_code == 200, f"VLAN import is Failed. Status wasnt 200 \n{response.json()}"
+
+    check_direct_sync_vlan(valid_vlans)
+
+     #VLAN Reconcile Test
+    set_reconcile_for_vlan(True)
+    valid_vlans = [
+        {
+            'vlan_name': 'vlan2',
+            'vlan_id': 2,
+            'hostname': 'slurpitvlan'
+        },
+        {
+            'vlan_name': 'vlan3',
+            'vlan_id': 3,
+            'hostname': 'slurpitvlan1'
+        }
+    ]
+    response = do_request('vlan/', method="POST", data=valid_vlans)
+    assert response.status_code == 200, f"VLAN import is Failed. Status wasnt 200 \n{response.json()}"
+    check_reconcile_sync_vlan(valid_vlans)

@@ -3,7 +3,7 @@ from netbox.api.fields import ChoiceField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
-from slurpit_netbox.models import SlurpitPlanning, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitSetting, SlurpitSnapshot, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix
+from slurpit_netbox.models import SlurpitPlanning, SlurpitImportedDevice, SlurpitStagedDevice, SlurpitLog, SlurpitSetting, SlurpitSnapshot, SlurpitMapping, SlurpitInitIPAddress, SlurpitInterface, SlurpitPrefix, SlurpitVLAN
 
 __all__ = (
     'SlurpitPlanningSerializer',
@@ -65,6 +65,11 @@ class SlurpitSettingSerializer(NetBoxModelSerializer):
 class SlurpitMappingSerializer(NetBoxModelSerializer):
     class Meta:
         model = SlurpitMapping
+        fields = '__all__'
+
+class SlurpitVLANSerializer(NetBoxModelSerializer):
+    class Meta:
+        model = SlurpitVLAN
         fields = '__all__'
 
 class SlurpitPrefixSerializer(NetBoxModelSerializer):

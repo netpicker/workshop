@@ -1,6 +1,18 @@
 stages:
-- build
 - test
+- build
+
+test:
+  stage: test
+  image: python:latest
+  before_script:
+    - pip install bandit
+  script:
+    - bandit -c pyproject.toml -r ./src
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
 
 build-main:
   image: python:latest
@@ -14,11 +26,13 @@ build-main:
     - poetry config pypi-token.pypi $PYPI_TOKEN
     - poetry publish
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - if: '$CI_COMMIT_REF_NAME != "main"'
       when: never
-    - when: always
+    - when: on_success
 
 build-other:
   image: python:latest
@@ -33,23 +47,13 @@ build-other:
   - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
   - poetry publish --build --repository gitlab
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: '$CI_COMMIT_REF_NAME == "main"'
       when: never
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - when: always
-
-test:
-  stage: test
-  image: python:latest
-  before_script:
-    - pip install bandit
-  script:
-    - bandit -c pyproject.toml -r ./src
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: always
+    - when: on_success
 
 integration_test_main:
   image: docker:latest
@@ -71,6 +75,8 @@ integration_test_main:
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml down -v || true
     - docker system prune --filter "until=24h" -f || true
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $CI_PIPELINE_SOURCE != "schedule"
       when: never
     - if: '$CI_COMMIT_REF_NAME != "main"'
@@ -103,6 +109,8 @@ integration_test_other:
     - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml down -v || true
     - docker system prune --filter "until=24h" -f || true
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $CI_PIPELINE_SOURCE != "schedule"
       when: never
     - if: '$CI_COMMIT_REF_NAME == "main"'
