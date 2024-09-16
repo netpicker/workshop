@@ -1,0 +1,122 @@
+{% extends 'generic/object.html' %}
+{% load static %}
+{% load form_helpers %}
+{% load i18n %}
+
+{% block content %}
+
+  <div class="row px-3">
+    <div class="col col-12 py-3 mx-auto px-0 plan-filter">
+      <form action="" method="get" id="plan-form" class="form form-horizontal">
+        <div class="row">
+          <div class="col-6 d-flex gap-2">
+            <div class="w-50">
+              {% render_form form %}
+            </div>
+            <div class="">
+              <button type="submit" class="btn btn-primary btn-sm">
+                Open
+              </button>
+            </div>
+          </div>
+          <input type="hidden" value="none" name="refresh" id="refreshInput"/>
+          <input type="hidden" value="none" name="sync" id="syncInput"/>
+          <div class="col-6 text-end">
+            <div class="btn-group btn-group-sm" role="group">
+              <!-- {% if appliance_type == 'both' or appliance_type == 'pull'  %}
+                {% if connection_status == 'connected' %}
+                  <a name="sync"  class="btn btn-orange btn-sm mx-2" id="sync">{% trans "Sync" %}</a>
+                {% endif %}
+              {% endif %} -->
+              <select class="btn btn-sm btn-secondary result-type" id="result-type" name="result_type">
+                <option value="planning" {% if "result_type" not in request.GET or request.GET.result_type == 'planning' %}selected="selected"{% else %} {% endif %}>{% trans "Planning Result" %}</option>
+                <option value="template" {% if request.GET.result_type == 'template' %}selected="selected"{% else %} {% endif %}>{% trans "Template Result" %}</option>
+              </select>
+            </div>
+          </div>
+         
+        </div>
+      </form>
+
+      
+    </div>
+  </div>
+  <div class="row px-3">
+    <span>
+      <b>
+        {{result_status}} results 
+        {% if appliance_type == 'both' or appliance_type == 'pull'  %}
+          {% if result_status == 'Cached' %}
+            - <a id="refresh">Refresh data</a>
+          {% endif %}
+        {% endif %}
+      </b>
+      <b class="text-end cached_time">
+        {% if result_status == 'Cached' %}
+          {{ cached_time}}
+        {% endif %}
+      </b>
+    </span>
+    <div class="card">
+      <div class="card-body htmx-container" id="object_list">
+        {% include 'htmx/table.html' %}
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .plan-filter label {
+      display: none !important;
+    }
+    .plan-filter button {
+      height: 35px !important;
+    }
+
+    .result-type {
+      height: 33px !important;
+    }
+    #refresh { 
+      text-decoration: none;
+      cursor: pointer;
+      color: #0d6efd;
+    }
+
+    .cached_time {
+      position: absolute;
+      right: 24px;
+    }
+  </style>
+    
+  <script>
+    var selectElement = document.getElementById('result-type');
+    var form = document.getElementById('plan-form');
+    // Add an event listener for the 'change' event
+    selectElement.addEventListener('change', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      form.submit();
+    });
+
+    var refreshElement = document.getElementById('refresh');
+    var refreshInput = document.getElementById('refreshInput');
+
+    refreshElement.addEventListener('click', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      refreshInput.value = "refresh";
+      form.submit();
+    });
+
+
+    var syncElement = document.getElementById('sync');
+    var syncInput = document.getElementById('syncInput');
+
+    syncElement.addEventListener('click', function(event) {
+      // The event target is the select element, and its value is the selected option's value
+      syncInput.value = "sync";
+      form.submit();
+    });
+
+   
+  </script>
+{% endblock %}
+
+

@@ -1,0 +1,163 @@
+{% load buttons %}
+{% load i18n %}
+
+<div class=" show {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" id="new-device-list" role="tabpanel" aria-labelledby="new-device-list-tab">
+    {# Object table controls #}
+    {% include 'inc/table_controls_htmx.html' with table_modal="ObjectTable_config" %}
+    <form method="post" class="form form-horizontal">
+         <!-- sync button -->
+        {# Object table controls #}
+        {# Form buttons #}
+        <div class="noprint bulk-buttons">
+          <div class="bulk-button-group">
+              {% block bulk_buttons %}
+              <div class="" role="group">
+                  {% bulk_edit_button model query_params=request.GET %}
+
+                  {% if appliance_type == 'both' or appliance_type == 'pull'  %}
+                    {% if connection_status == 'connected' %}
+                      <!-- <a name="sync"  class="btn btn-orange btn-sm mx-2" href="{% url 'plugins:slurpit_netbox:import' %}"><i class="mdi mdi-sync" aria-hidden="true"></i> {% trans "Sync" %}</a> -->
+                      <button name="sync"  id="syncBtn" class="btn btn-orange me-2 protect-btn">
+                        <i class="mdi mdi-sync" aria-hidden="true"></i> 
+                        <span id="syncCaption">{% trans "Sync" %}</span>
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?return_url={% url 'plugins:slurpit_netbox:slurpitimporteddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-blue protect-btn">
+                    <i class="mdi mdi-plus" aria-hidden="true"></i> {% trans "Onboard" %}
+                  </button>
+                  <button type="submit" name="_rename" formaction="{% url 'plugins:slurpit_netbox:onboard' %}?remove=true&return_url={% url 'plugins:slurpit_netbox:slurpitimporteddevice_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-danger ms-2 protect-btn" >
+                    <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Remove" %}
+                  </button>
+              </div>
+              {% endblock %}
+          </div>
+        </div>
+        <p id="syncStatusCaption">
+        </p>
+      {% csrf_token %}
+      {# "Select all" form #}
+
+      <div id="select-all-box" class="d-none card noprint">
+        <div class="form col-md-12">
+          <div class="card-body">
+            <div class="float-end">
+              {% if 'bulk_edit' in actions %}
+                {% bulk_edit_button model query_params=request.GET %}
+              {% endif %}
+              {% if 'bulk_delete' in actions %}
+                {% bulk_delete_button model query_params=request.GET %}
+              {% endif %}
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
+              <label for="select-all" class="form-check-label">
+                {% blocktrans trimmed with count=table.rows|length object_type_plural=table.data.verbose_name_plural %}
+                  Select <strong>all of the {{ count }} {{ object_type_plural }}</strong>
+                {% endblocktrans %}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="form form-horizontal">
+        {% csrf_token %}
+        <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
+
+        {# Object table #}
+
+            {% if prerequisite_model %}
+              {% include 'inc/missing_prerequisites.html' %}
+            {% endif %}
+
+        <div class="card">
+          <div class="card-body htmx-container" id="object_list">
+            {% include 'htmx/table.html' %}
+          </div>
+        </div>
+
+        
+      </div>
+    </form>
+  </div>
+
+  <script>
+    var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    var syncButton = document.getElementById("syncBtn");
+    var syncCaptionElement = document.getElementById("syncCaption")
+    var statusCaptionElement = document.getElementById("syncStatusCaption")
+    var statusCaptionText = ""
+    var status = ""
+    var offset = 0
+    const apiUrl = '/plugins/slurpit/devices/import';
+
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken,
+    });
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: headers,
+    };
+
+
+    syncButton.addEventListener("click", function(event) {
+      event.preventDefault();
+      if(status != "") return;
+      status = "Importing Devices"
+      statusCaptionText = "Started to import devices from slurpit to netbox"
+      
+      syncCaptionElement.innerHTML = status;
+      statusCaptionElement.innerHTML = statusCaptionText;
+      offset = 0;
+      import_device();
+
+    });
+
+    function import_device(flag=true) {
+      var url = apiUrl+"?offset="+offset
+      if(!flag) url = apiUrl
+
+      fetch(url, fetchOptions)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        action = data["action"];
+        
+        if(action == 'error') {
+          location.reload();
+        }
+        else if(action == "import") {
+          newOffset = data["offset"];
+          
+          if(newOffset != offset) {
+            offset = newOffset;
+            statusCaptionText = "Imported "+newOffset+" devices from slurpit to netbox"
+            statusCaptionElement.innerHTML = statusCaptionText;
+
+            import_device();
+            
+          }else {
+            status = "Processing Devices"
+            syncCaptionElement.innerHTML = status;
+            import_device(false);
+          }
+        }else if(action == "process") {
+          location.reload();
+        }
+        
+      })
+      .catch(error => {
+        // console.error('Fetch error:', error);
+        location.reload();
+      });
+    }
+  </script>

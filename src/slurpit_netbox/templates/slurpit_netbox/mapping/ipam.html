@@ -1,0 +1,82 @@
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+{% load form_helpers %}
+
+<div class="row my-2">
+    <div class="col col-md-5">
+        <div class="card">
+        
+            <div class="card-body">
+                <h4>Sync your Slurp'it IPAM to NetBox</h4>
+                <span>
+                    After obtaining IPAM information from Slurp'it, Set default values for some values before inserting them into the NetBox.
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col col-md-5">
+            <div class="card">
+            <div class="card-body">
+                <div class="tab-pane show active ipam-tab-pane" id="edit-form" role="tabpanel" aria-labelledby="object-list-tab">
+                <form action="" method="post" enctype="multipart/form-data" class="form-object-edit">
+                    {% csrf_token %}
+                    <input type="hidden" value="ipam" name="mappingtype"/>
+                    <div id="form_fields">
+                    
+                    <div class="field-group my-2">
+                        {% render_field form.enable_reconcile %}
+                        {% render_field form.status %}
+                        {% render_field form.ignore_status %}
+                        {% render_field form.role %}
+                        {% render_field form.ignore_role %}
+                        {% render_field form.vrf %}
+                        <!-- {% render_field form.ignore_vrf %} -->
+                        {% render_field form.tenant_group %}
+                        {% render_field form.tenant %}
+                        {% render_field form.ignore_tenant %}
+                        {% render_field form.description %}
+                        {% render_field form.ignore_description %}
+                    </div>
+                    </div>
+            
+                    <div class="text-end mt-3">
+                    <button type="submit" name="_update" class="btn btn-primary protect-btn">
+                        {% trans "Save" %}
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+            
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+
+  .ipam-tab-pane label.text-lg-end {
+    text-align: left !important;
+  }
+  .ipam-tab-pane .offset-3 {
+    margin-bottom: 8px;
+  }
+
+  .ipam-tab-pane .mb-3 {
+    margin-bottom: 3px !important;
+  }
+
+  html[data-netbox-color-mode=dark] .ipam-tab-pane .mb-3 {
+    margin-bottom: 3px !important;
+  }
+
+  .ipam-tab-pane .form-text {
+    display: none !important;
+  }
+
+  .ipam-tab-pane .row:first-child .offset-3 {
+    margin-left: 0px !important;
+  }
+</style>

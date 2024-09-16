@@ -1,0 +1,84 @@
+{% extends 'base/layout.html' %}
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+
+{% block header %}
+  <div class="page-header m-0">
+    {{ block.super }}
+
+    {% block page-header %}
+      <div class="container-fluid mt-2 d-print-none">
+        <div class="d-flex justify-content-between">
+
+          {# Title #}
+          <div>
+            {% include "slurpit_netbox/logo.html" %}
+            <h2 class="page-title my-1">
+              {% block title %}
+                Data Mapping
+              {% endblock %}
+            </h2>
+            {% block subtitle %}{% endblock %}
+          </div>
+
+        </div>
+      </div>
+    {% endblock %}
+
+    {# Tabs #}
+    
+    <div class="page-tabs mt-3">
+      <div class="container-fluid">
+        {% block tabs %}
+          <ul class="nav nav-tabs">    
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'netbox_to_slurpit' or request.GET.tab is None  %}active{% endif %}" href="?tab=netbox_to_slurpit">
+                NetBox to Slurp’it
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'slurpit_to_netbox' %}active{% endif %}" href="?tab=slurpit_to_netbox">
+                Slurp’it to NetBox
+              </a>
+            </li>
+          </ul>
+        {% endblock %}
+      </div>
+    </div>
+
+  </div>
+{% endblock header %}
+
+
+{% block content %}
+  <div class="tab-content">
+    {% if request.GET.tab == 'slurpit_to_netbox'  %}
+      {% include "slurpit_netbox/mapping/slurpit_to_netbox.html" %}
+    {% elif request.GET.tab == 'netbox_to_slurpit' or request.GET.tab is None %}
+      {% include "slurpit_netbox/mapping/netbox_to_slurpit.html" %}
+    {% endif %}
+  </div> 
+
+  <script>
+    const projectButtons = document.querySelectorAll('.protect-btn');
+  
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
+  
+  </script>
+  
+{% endblock content %}
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    {% include "slurpit_netbox/footer.html" %}
+  {% endblock footer %}
+</footer>
+

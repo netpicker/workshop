@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "slurpit_netbox"
+version = "0.9.84"
+description = ""
+authors = ["Pieter <pieter@slurpit.io>"]
+readme = "README.md"
+packages = [{include = "slurpit_netbox", from = "src"}]
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+djangorestframework-bulk = "^0.2.1"
+
+
+[tool.poetry.group.develop.dependencies]
+django = "^4.2.6"
+djangorestframework = "^3.14.0"
+django-tables2 = "^2.6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B501"]

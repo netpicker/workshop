@@ -1,0 +1,104 @@
+{% extends 'generic/object_list.html' %}
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+
+
+{% block page-header %}
+  <div class="container-fluid mt-2 d-print-none">
+    <div class="d-flex justify-content-between">
+
+      {# Title #}
+      <div>
+        {% include "slurpit_netbox/logo.html" %}
+        <h2 class="page-title my-1">
+          {% block title %}
+            Onboard Devices
+          {% endblock %}
+        </h2>
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+    .greenLink a {
+      color: #0d6efd !important
+    }
+  </style>
+{% endblock page-header %}
+
+{% block tabs %}
+  <ul class="nav nav-tabs">
+        
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'new' or request.GET.tab is None %}active{% endif %}" href="?tab=new">
+        New {% badge to_onboard_count %}
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'migrate' %}active{% endif %}" href="?tab=migrate">
+        Migrate {% badge migrate_count %}
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.tab == 'conflicted' %}active{% endif %}" href="?tab=conflicted">
+        Conflict {% badge conflicted_count %}
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link  {% if request.GET.tab == 'onboarded' %}active{% endif %}" href="?tab=onboarded">
+        Onboarded {% badge onboarded_count %}
+      </a>
+    </li>
+    
+  </ul>
+{% endblock tabs %}
+
+{% block content %}
+  <div class="tab-content">
+    {% if request.GET.tab == 'new' or request.GET.tab is None %}
+      {% include "slurpit_netbox/onboard/new_device_list.html" %}
+    {% elif request.GET.tab == 'conflicted' %}
+      {% include "slurpit_netbox/onboard/conflict_device_list.html" %}
+    {% elif request.GET.tab == 'migrate' %}
+      {% include "slurpit_netbox/onboard/migrate_device_list.html" %}
+    {% elif request.GET.tab == 'onboarded' %}
+      {% include "slurpit_netbox/onboard/onboarded_device_list.html" %}
+    {% endif %}
+  </div> 
+
+  <script>
+    const projectButtons = document.querySelectorAll('.protect-btn');
+
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+      // Select all elements with the class 'd-print-none' within the #results element
+      const elements = document.querySelectorAll('#results .d-print-none');
+      
+      // Check if there is more than one element with the class 'd-print-none'
+      if (elements.length > 1) {
+        // Remove the class 'd-print-none' from the second element
+        elements[1].remove('d-print-none');
+        elements[2].remove('d-print-none');
+      }
+    });
+
+  </script>
+{% endblock content %}
+
+
+
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    {% include "slurpit_netbox/footer.html" %}
+  {% endblock footer %}
+</footer>

@@ -1,0 +1,464 @@
+{% extends 'base/layout.html' %}
+{% load buttons %}
+{% load helpers %}
+{% load plugins %}
+{% load render_table from django_tables2 %}
+{% load static %}
+{% load i18n %}
+
+{% comment %}
+Blocks:
+  extra_controls: Additional action buttons
+  bulk_buttons: Additional bulk action buttons to display beneath the objects
+    list
+
+Context:
+  model: The model class being listed
+  table: The table class used for rendering the list of objects
+  actions: A list of buttons to display. This template checks for add, import,
+    export, bulk_edit, and bulk_delete.
+  filter_form: The bound filterset form for filtering the objects list (optional)
+  return_url: Return URL to use for bulk actions (optional)
+{% endcomment %}
+
+{% block header %}
+  <div class="page-header m-0">
+    {{ block.super }}
+
+    {% block page-header %}
+      <div class="container-fluid mt-2 d-print-none">
+        <div class="d-flex justify-content-between">
+
+          {# Title #}
+          <div>
+            {% include "slurpit_netbox/logo.html" %}
+            <h2 class="page-title my-1">
+              {% block title %}
+                Reconcile
+              {% endblock title %}
+            </h2>
+            {% block subtitle %}{% endblock %}
+          </div>
+
+        </div>
+      </div>
+    {% endblock %}
+
+    {# Tabs #}
+    <div class="page-tabs mt-3">
+      <div class="container-fluid">
+        {% block tabs %}
+          <ul class="nav nav-tabs">    
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'ipam' or request.GET.tab is None %}active{% endif %}" href="?tab=ipam">
+                IPAM {% badge ipam_count %}
+              </a>
+            </li>
+          
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'interface' %}active{% endif %}" href="?tab=interface">
+                Interfaces {% badge interface_count %}
+              </a>
+            </li>
+            
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'prefix' %}active{% endif %}" href="?tab=prefix">
+                Prefixes {% badge prefix_count %}
+              </a>
+            </li>
+
+            <li class="nav-item" role="presentation">
+              <a class="nav-tab nav-link {% if request.GET.tab == 'vlan' %}active{% endif %}" href="?tab=vlan">
+                Vlans {% badge vlan_count %}
+              </a>
+            </li>
+          </ul>
+        {% endblock %}
+      </div>
+    </div>
+
+  </div>
+{% endblock header %}
+
+
+{% block content %}
+  <div class="tab-content">
+    <div class="show active">
+
+        <input type="hidden" results="5" name="q" id="quicksearch" class="form-control" placeholder="Quick search"
+              hx-get="{{ request.full_path }}" hx-target="#object_list" hx-trigger="keyup changed delay:500ms, search" />
+
+        {# Object table controls #}
+        {% include 'inc/table_controls_htmx.html' with table_modal="ObjectTable_config" %}
+        
+        <form method="post" class="form form-horizontal" id="reconcile_form">
+          {% csrf_token %}
+          <div id="select-all-box" class="d-none card noprint">
+            <div class="form col-md-12">
+              <div class="card-body">
+                <div class="form-check">
+                  <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
+                  <label for="select-all" class="form-check-label">
+                    {% blocktrans trimmed with count=table.rows|length object_type_plural=table.data.verbose_name_plural %}
+                      Select <strong>all of the {{ count }} {{ object_type_plural }}</strong>
+                    {% endblocktrans %}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+            <div class="noprint bulk-buttons">
+                <div class="bulk-button-group">
+                    <div class="mb-2" role="group">
+                        <a class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#acceptModal">
+                            <i class="mdi mdi-check" aria-hidden="true"></i> 
+                            <span id="syncCaption">{% trans "Accept" %}</span>
+                        </a>
+
+                        <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#declineModal">
+                          <i class="mdi mdi-close" aria-hidden="true"></i> {% trans "Decline" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form form-horizontal">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="accept" id="action_input" />
+                <input type="hidden" name="tab" value="{{ request.GET.tab }}" id="tab_input" />
+                <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
+        
+                {# Object table #}
+        
+                    {% if prerequisite_model %}
+                      {% include 'inc/missing_prerequisites.html' %}
+                    {% endif %}
+        
+                <div class="card">
+                  <div class="card-body htmx-container" id="object_list">
+                    {% include 'htmx/table.html' %}
+                  </div>
+                </div>
+        
+                <div class="btn-group" role="group">
+                  <button type="submit" name="_edit" formaction="{{edit_bulk_url}}" class="btn btn-yellow protect-btn">
+                    <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit Selected
+                  </button>
+                </div>
+
+              </div>
+              
+        </form>
+    </div>
+  </div> 
+
+  <div class="modal fade" tabindex="-1" id="declineModal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+  
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h6 class="modal-title">Are you sure to decline the selected records?</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <a class="btn btn-danger protect-btn" id="decline_btn">{% trans "Decline" %}</a>
+            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+        </div>
+  
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" tabindex="-1" id="acceptModal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+  
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h6 class="modal-title">Are you sure to accept the selected records?</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <a class="btn btn-success protect-btn" id="accept_btn">{% trans "Accept" %}</a>
+            <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+        </div>
+  
+        
+      </div>
+    </div>
+
+    
+  </div>
+
+  <div class="modal fade" tabindex="-1" id="reconcile-detail-modal" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-title">
+            <!-- {{ title }} | {{ object_type }}|  {{ action }}  -->
+          </h4>
+          <!-- <a type="button" class="btn-close" href="?{% if request.GET.tab %}tab={{request.GET.tab}}{% endif %}" aria-label="Close"></a> -->
+          <a type="button" class="btn-close" aria-label="Close" id="reconcile-close"></a>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3" style="align-items: stretch;">
+            <div class="col col-md-6">
+                <div class="card" style="height: 100%;">
+                    <h5 class="card-header">
+                        {% trans "Current state" %}
+                    </h5>
+                    <div class="card-body" id="current-card-body">
+                    </div>
+                </div>
+            </div>
+            <div class="col col-md-6">
+                <div class="card" style="height: 100%;">
+                    <h5 class="card-header">
+                        {% trans "Incomming change" %}
+                    </h5>
+                    <div class="card-body" id="incomming-card-body">
+                       
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col col-md-12">
+              <div class="card">
+                  <h5 class="card-header">
+                    {% trans "Difference" %}
+                  </h5>
+                  <div class="card-body" id="diff-card-body">
+                      
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Modal Body -->
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" id="modal-backdrop"></div>
+
+  <script>
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Select all elements with the class 'd-print-none' within the #results element
+      const elements = document.querySelectorAll('#results .d-print-none');
+      
+      // Check if there is more than one element with the class 'd-print-none'
+      if (elements.length > 1) {
+        // Remove the class 'd-print-none' from the second element
+        elements[1].remove('d-print-none');
+        elements[2].remove('d-print-none');
+      }
+    });
+
+    var tabInput = document.getElementById('tab_input')
+
+    const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfTokenInput.value;
+    const buttons = document.querySelectorAll('.reconcile-detail-btn');
+
+    // Find the button element on the page
+    var closeButton = document.getElementById('reconcile-close');
+    var reconcileDetailModal = document.getElementById('reconcile-detail-modal');
+    var modalBackdrop = document.getElementById('modal-backdrop')
+
+    modalBackdrop.style.display = 'none'
+
+    buttons.forEach(button => {
+      button.addEventListener('click', handleClick);
+    });
+
+    function removeWhitespace(html) {
+      return html.replace(/>\s+</g, '><').trim();
+    }
+
+    // Attach event listener to a parent element that exists when the page loads
+    document.addEventListener('click', function(event) {
+      // Check if the clicked element is one of our buttons
+      if (event.target.matches('.reconcile-detail-btn')) {
+        handleClick(event);
+      }
+    });
+
+    function handleClick(event) {
+      const pk = event.target.getAttribute('pk');
+      const currentUrl = window.location.href;
+      const url = new URL(currentUrl);
+      const urlWithoutParams = url.origin + url.pathname;
+      
+      const data = { 
+        pk: pk, tab: 
+        tabInput.value, 
+        action: "get"
+      };
+
+      const formData = new FormData();
+      for (let key in data) {
+        formData.append(key, data[key]);
+      }
+
+      fetch(urlWithoutParams, {
+
+        method: 'POST', // Specify the method
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        body: formData 
+      })
+      .then(response => {
+          return response.json();
+      })
+      .then(data => {
+        const title = data['title']
+        const objectType = data['object_type']
+
+        const action = data['action']
+        const currentState = data['current_state']
+        const incommingChange = data['incomming_change']
+        const diffRemoved = data['diff_removed']
+        const diffAdded = data['diff_added']
+        const modalTitle = document.getElementById('modal-title');
+        modalTitle.textContent = `${title} | ${objectType} | ${action}`
+
+        const currentCardBody = document.getElementById('current-card-body')
+        let currentContent = '<span class="text-muted">None</span>'
+
+        if(currentState) {
+          currentContent = '<pre class="change-data">'
+          for(const [k, v] of Object.entries(currentState)) {
+            if(diffRemoved && diffRemoved.hasOwnProperty(k)) 
+              currentContent += `<span class="removed">${k}: ${JSON.stringify(v, null, 4)}</span>`
+            else
+              currentContent += `<span>${k}: ${JSON.stringify(v, null, 4)}</span>`
+          }
+          currentContent += '</pre>'
+          currentContent = removeWhitespace(currentContent);
+        }
+        currentCardBody.innerHTML = currentContent
+
+        const incommingCardBody = document.getElementById('incomming-card-body')
+        
+        let incommingContent = '<span class="text-muted">None</span>'
+
+        if(incommingChange) {
+          incommingContent = '<pre class="change-data">'
+          for(const [k, v] of Object.entries(incommingChange)) {
+            console.log(k)
+            if(diffAdded && diffAdded.hasOwnProperty(k)) 
+              incommingContent += `<span class="added">${k}: ${JSON.stringify(v, null, 4)}</span>`
+            else
+              incommingContent += `<span>${k}: ${JSON.stringify(v, null, 4)}</span>`
+          }
+          incommingContent += '</pre>'
+          incommingContent = removeWhitespace(incommingContent);
+        }
+        incommingCardBody.innerHTML = incommingContent
+
+        const diffCardBody = document.getElementById('diff-card-body')
+        let diffContent = ''
+
+        if(diffAdded == diffRemoved) {
+          diffContent = `<span class="text-muted" style="margin-left: 10px;">None</span>`
+        }else{
+          diffContent = `<pre class="change-diff change-removed">${JSON.stringify(diffRemoved, null, 4)}</pre>`
+          diffContent += `<pre class="change-diff change-added">${JSON.stringify(diffAdded, null, 4)}</pre>`
+          diffContent = removeWhitespace(diffContent);
+        }
+        diffCardBody.innerHTML = diffContent
+
+        reconcileDetailModal.style.display = "block"
+        reconcileDetailModal.classList.add("show")
+        modalBackdrop.style.display = "block"
+      })
+      .catch(error => {
+        
+      });
+    }
+    
+    // reconcileDetailModal.style.display = 'block'
+    // Define the function to be called when the button is clicked
+    function handleCloseButtonClick(event) {
+      reconcileDetailModal.style.display = "none"
+      reconcileDetailModal.classList.remove("show")
+      modalBackdrop.style.display = "none"
+    }
+
+    // Add the event listener for the 'click' event
+    closeButton.addEventListener('click', handleCloseButtonClick);
+
+  </script>
+
+  <style>
+    pre.change-diff.change-added {
+        background-color: #2fb34433 !important;
+    }
+    pre.change-diff.change-removed {
+        background-color: #d639392e !important;
+    }
+    pre.change-data>span.removed {
+        background-color: #d639392e !important;
+    }
+    pre.change-data>span.added {
+        background-color: #2fb34433 !important;
+    }
+    .reconcile-detail-btn {
+      cursor: pointer;
+      text-decoration: none !important;
+    }
+  </style>
+
+  <script>
+    var reconcile_form = document.getElementById('reconcile_form')
+    var accept_btn = document.getElementById('accept_btn')
+    var decline_btn = document.getElementById('decline_btn')
+    var action_input = document.getElementById('action_input')
+
+    accept_btn.addEventListener("click", function(event) {
+      action_input.value = "accept"
+      reconcile_form.submit()
+    });
+
+    decline_btn.addEventListener("click", function(event) {
+      action_input.value = "decline"
+      reconcile_form.submit()
+    });
+
+    const projectButtons = document.querySelectorAll('.protect-btn');
+
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
+  </script>
+{% endblock content %}
+
+
+
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    {% include "slurpit_netbox/footer.html" %}
+  {% endblock footer %}
+</footer>
+
+
+
+   
+

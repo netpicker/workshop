@@ -1,0 +1,31 @@
+{% extends 'generic/object_list.html' %}
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+
+{% block title %}
+  Coming Soon
+{% endblock %}
+
+{% block page-header %}
+
+{% endblock page-header %}
+
+{% block tabs %}
+<h1 class="w-100 text-center" style="padding-top: 10%;">Coming Soon</h1>
+<p class="w-100 text-center fs-6">Sign up for our newsletter and we will inform you when the next new functionalities are released.<br><br>
+<a href="https://slurpit.io/getting-started/#subscribe" target="_blank" class="btn btn-primary">Subscribe</a></p>
+{% endblock tabs %}
+
+{% block content %}
+
+{% endblock content %}
+
+
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    {% include "slurpit_netbox/footer.html" %}
+  {% endblock footer %}
+</footer>

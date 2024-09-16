@@ -1,0 +1,237 @@
+{% load buttons %}
+{% load i18n %}
+{% load form_helpers %}
+
+<div class=" show {% if request.GET.tab == 'source' or request.GET.tab is None %}active{% endif %}">
+    <div class="row mb-3">
+        <div class="col col-md-6">
+          <form action="" method="get" id="appliance-type-form" class="form form-horizontal mb-3">
+            <div class="card">
+            
+              <div class="card-header" style="display:flex;justify-content: space-between;">
+                  <h4 class="my-auto">NetBox Server</h4>
+                  <button class="btn btn-blue  mx-3 px-3 protect-btns">
+                      {% trans "Save" %}
+                  </button>
+              </div>
+              <div class="card-body">
+                {% render_form form %}
+              
+                <div class="row">
+                  <div class="col-sm-3"></div>
+                  <div class="col">
+                    <p>Push: Data will be pushed from Slurp'it to NetBox</p>
+                    <p>Pull: Data can be pulled from Slurp'it</p>
+                    <p>Both: Pull & Push functionality are available</p>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-8 pt-3">
+                    <p>
+                      <b><a href="https://slurpit.io/online-courses/" target="_BLANK">Click here</a></b> to learn on how to use and configure the plugin.
+                    </p>
+                  </div>
+                </div>
+               
+              </div>
+            </div>
+          </form>
+          
+          {% if appliance_type == 'both' or appliance_type == 'push'  %}
+            <div class="card">
+              
+              <div class="card-header" style="display:flex;justify-content: space-between;">
+                  <h4 class="my-auto">Plugin API</h4>
+                  <a class="btn btn-blue  mx-3 px-3" href="/user/api-tokens/" target="_blank" >
+                      {% if push_api_key == '' %}
+                        {% trans "Generate" %}
+                      {% else %}
+                        {% trans "Show" %}
+                      {% endif %}
+                  </a>
+              </div>
+              <div class="card-body">
+                <table class="table table-hover attr-table">
+                  <tr>
+                    <th scope="row">API Key</th>
+                    <!-- <td>{{push_api_key}}</td> -->
+                    <td>
+                      {% if push_api_key == '' %}
+                        NO API KEY
+                      {% else %}
+                        *******************************************
+                      {% endif %}
+                    </td>
+                  </tr>
+                  
+                </table>
+                {% if debug == True %}
+                  <h4 class="mt-3">API calls:</h4>
+                  <table class="table table-hover attr-table">
+                    {% for item in slurpit_apis %}
+                      <tr>
+                        <th>
+                          <span class="badge {% if item.type == 'DELETE' %} text-bg-red{% elif item.type == 'GET' %}text-bg-blue{% else %}text-bg-green{% endif %}">
+                            {{item.type}}
+                          </span>
+                        </th>
+                        <td>{{ item.url}}</td>
+                      </tr>
+                    {% endfor %}
+                {% endif %}
+                </table>
+            </div>
+            </div>
+          {% endif %}
+          
+          {% if debug == True %}
+          <div class="card">
+            <div class="card-header" style="display:flex;justify-content: space-between;">
+                <h4 class="my-auto">Reset Plugin</h4>
+                <a class="btn btn-danger  mx-3 px-3" data-bs-toggle="modal" data-bs-target="#resetModal">
+                  {% trans "Reset" %}
+                </a>
+            </div>
+            <div class="card-body">
+              Remove all plugin data from the Slurp'it tables.
+            </div>
+          </div>
+          {% endif %}
+          
+        </div>
+        <div class="col col-md-6">
+          {% if appliance_type == 'both' or appliance_type == 'pull'  %}
+            <div class="card">
+
+                  <div class="card-header" style="display:flex;justify-content: space-between;">
+                    <h4 class="my-auto">Slurp'it Server</h4>
+                    <button class="btn btn-blue  mx-3 px-3" data-bs-toggle="modal" data-bs-target="#settingsEditModal">
+                        {% trans "Edit" %}
+                    </button>
+                </div>
+                
+                <div class="card-body">
+                  <table class="table table-hover attr-table">
+                    <tr>
+                      <th scope="row">Server URL</th>
+                      <td>{{setting.server_url}}</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">API Key</th>
+                      <td>{{setting.api_key}}</td>
+                    </tr>
+                    
+                  </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" style="display:flex;justify-content: space-between;">
+                    <h4 class="my-auto">Status</h4>
+                    <a name="Edit" class="btn btn-blue  mx-3 px-3 protect-btn" href="{% url 'plugins:slurpit_netbox:settings' %}?test=test"> {% trans "Test" %}</a>
+                </div>
+                <div class="card-body">
+                  <table class="table table-hover attr-table">
+                    <tr>
+                      <th scope="row">Server</th>
+                      <td>
+                        
+                        {% if connection_status == "connected" %}
+                          <span class="badge text-bg-green">connected</span>
+                        {% elif connection_status == "" %}
+                          <span></span>
+                        {% else %}
+                          <span class="badge text-bg-red">disconnected</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Last Synced</th>
+                      <td>{{setting.last_synced}}</td>
+                    </tr>
+                    
+                  </table>
+                </div>
+            </div>
+          {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="settingsEditModal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Settings</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form  method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+                <input type="hidden" class="form-control" name="setting_id" value="{{setting.id}}">
+                <div class="form-group">
+                    <label for="server_url">Server URL</label>
+                    <input type="text" class="form-control" name="server_url" placeholder="Enter your Slurp'it url" value="{{setting.server_url}}">
+                  </div>
+                  <div class="form-group pt-2">
+                    <label for="api_key">API Key</label>
+                    <input type="text" class="form-control" name="api_key" placeholder="Enter your Slurp'it API key" value="{{setting.api_key}}">
+                  </div>
+            </div>
+    
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-outline-success protect-btn" id="edit_setting_btn" >{% trans "Save" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </form>
+        <!-- Modal Body -->
+        
+      </div>
+    </div>
+</div>
+
+
+<div class="modal fade" tabindex="-1" id="resetModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h6 class="modal-title">Are you sure to reset the Slurp'it plugin?</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+          <a class="btn btn-danger protect-btn" id="" href="?reset=true" >{% trans "Reset" %}</a>
+          <button type="button" class="btn btn-secondary " data-bs-dismiss="modal">Close</button>
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+<style>
+  #id_appliance_type-ts-label {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+  }
+</style>
+
+<script>
+  const projectButtons = document.querySelectorAll('.protect-btn');
+
+  projectButtons.forEach(button => {
+    button.addEventListener('click', protectButton);
+  });
+  function protectButton(event) {
+    event.target.classList.add('disabled');
+    event.target.textContent = 'Please wait'
+  }
+
+</script>

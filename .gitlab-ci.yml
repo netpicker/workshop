@@ -1,0 +1,125 @@
+stages:
+- test
+- build
+
+test:
+  stage: test
+  image: python:latest
+  before_script:
+    - pip install bandit
+  script:
+    - bandit -c pyproject.toml -r ./src
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+
+build-main:
+  image: python:latest
+  stage: build
+  before_script:
+  - pip install poetry
+  script:
+    - poetry install
+    - poetry build
+    - poetry check
+    - poetry config pypi-token.pypi $PYPI_TOKEN
+    - poetry publish
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: '$CI_COMMIT_REF_NAME != "main"'
+      when: never
+    - when: on_success
+
+build-other:
+  image: python:latest
+  stage: build
+  before_script:
+  - pip install poetry
+  script:
+  - PROJECT_NAME=slurpit_netbox-${CI_COMMIT_REF_NAME}
+  - sed -i 's/name = "\(.*\)"/name = "'"$PROJECT_NAME"'"/' pyproject.toml
+  - API_ENDPOINT=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages
+  - poetry config repositories.gitlab $API_ENDPOINT/pypi
+  - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
+  - poetry publish --build --repository gitlab
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+
+integration_test_main:
+  image: docker:latest
+  stage: test
+  services:
+    - docker:dind
+  script:
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml pull
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml up -d --build
+    - sleep 300
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml run --rm test_container pytest --color=yes -v --durations 0 -rP
+  after_script:
+    - mkdir $CI_PROJECT_DIR/logs 
+    - |
+      for container_id in $(docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml ps -qa); do
+        container_name=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.service"}}' $container_id)
+        docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
+      done
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.yml down -v || true
+    - docker system prune --filter "until=24h" -f || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+      when: never
+    - if: '$CI_COMMIT_REF_NAME != "main"'
+      when: never
+    - when: always
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/logs/*
+    name: test-results
+    expire_in: 1 month
+
+integration_test_other:
+  image: docker:latest
+  stage: test
+  services:
+    - docker:dind
+  script:
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml pull
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml up -d --build
+    - sleep 300
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml run --rm test_container pytest --color=yes -v --durations 0 -rP
+  after_script:
+    - mkdir $CI_PROJECT_DIR/logs 
+    - |
+      for container_id in $(docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml ps -qa); do
+        container_name=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.service"}}' $container_id)
+        docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml logs $container_name > $CI_PROJECT_DIR/logs/logs_${container_name}.txt 2>&1 || true
+      done
+    - docker compose -f $CI_PROJECT_DIR/tests/docker-compose.branch.yml down -v || true
+    - docker system prune --filter "until=24h" -f || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request" || $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+      when: never
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: never
+    - when: always
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/logs/*
+    name: test-results
+    expire_in: 1 month
+    

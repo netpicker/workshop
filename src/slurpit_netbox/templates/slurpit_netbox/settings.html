@@ -1,0 +1,67 @@
+{% extends 'base/layout.html' %}
+{% load buttons %}
+{% load helpers %}
+{% load perms %}
+
+
+{% block header %}
+  <div class="page-header m-0">
+    {{ block.super }}
+
+    {% block page-header %}
+      <div class="container-fluid mt-2 d-print-none">
+        <div class="d-flex justify-content-between">
+
+          {# Title #}
+          <div>
+            {% include "slurpit_netbox/logo.html" %}
+            <h2 class="page-title my-1">
+              {% block title %}
+                Settings
+              {% endblock title %}
+            </h2>
+            {% block subtitle %}{% endblock %}
+          </div>
+
+        </div>
+      </div>
+    {% endblock %}
+
+    {# Tabs #}
+    <div class="page-tabs mt-3">
+      <div class="container-fluid">
+        {% block tabs %}
+          <ul class="nav nav-tabs">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {% if request.GET.tab == 'source' or request.GET.tab is None %}active{% endif %}" href="?tab=source">General</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if request.GET.tab == 'data_tabs' %}active{% endif %}" href="?tab=data_tabs">Data tabs</a>
+            </li>
+          </ul>
+        {% endblock %}
+      </div>
+    </div>
+
+  </div>
+{% endblock header %}
+
+
+
+{% block content %}
+    <div class="tab-content">
+        {% if request.GET.tab == 'source' or request.GET.tab is None %}
+            {% include "slurpit_netbox/settings/general.html" %}
+        {% elif request.GET.tab == 'data_tabs' %}
+            {% include "slurpit_netbox/settings/data_tabs.html" %}
+        {% endif %}
+  </div> 
+
+{% endblock content %}
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    {% include "slurpit_netbox/footer.html" %}
+  {% endblock footer %}
+</footer>
+

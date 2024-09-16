@@ -1,0 +1,500 @@
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load static %}
+{% load form_helpers %}
+
+<ul class="nav nav-tabs sub-nav">    
+
+  <li class="nav-item" role="presentation">
+    <a class="nav-tab nav-link {% if request.GET.subtab == 'device' or request.GET.subtab is None %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=device">
+      Devices
+    </a>
+  </li>
+
+  <!-- {% if appliance_type != 'push' %}
+    <li class="nav-item" role="presentation">
+      <a class="nav-tab nav-link {% if request.GET.subtab == 'ipam' %}active{% endif %}" href="?tab=netbox_to_slurpit&subtab=ipam">
+        IPAM
+      </a>
+    </li>
+  {% endif %} -->
+</ul>
+
+<div class="tab-content">
+  <div class=" show {% if request.GET.tab == 'netbox_to_slurpit' %}active{% endif %}">
+    {% if appliance_type != 'push' %}
+      <!-- <a name="sync"  class="btn btn-sm btn-orange my-2" href="{% url 'plugins:slurpit_netbox:data_mapping_list' %}?sync=true{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">
+          <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+      </a> -->
+      <a name="sync"  id="sync-btn" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#syncStatusModal">
+        <i class="mdi mdi-sync"></i> {% trans "Sync" %}
+      </a>
+    {% endif %}
+
+    {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+      <div class="row my-2">
+        <div class="col col-md-6">
+          <div class="card">
+            
+            <div class="card-body">
+                <h4>Sync your NetBox devices to Slurp'it</h4>
+                <span>
+                  In case you already have a filled NetBox system, and you want to sync those to Slurp'it to start collecting data then this is the page you are looking for.
+                  Below on the left you see the required attributes for in Slurp'it and on the right you can map those against your data from NetBox. If you need more information we can advise you to <a href="https://slurpit.io/online-courses/" target="_BLANK">
+                  click here</a> for our online course.
+                </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% elif request.GET.subtab == 'ipam'  %}
+    {% endif %}
+    <div class="row mt-1">
+      <div class="col col-md-6">
+        <div class="card management-status-card">
+          
+          <div class="card-body">
+            <h4>Management status</h4>
+            <div class="my-1">
+              Select here the device status you want to sync.
+            </div>
+            {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+              {% render_form device_status_form %}
+            {% elif request.GET.subtab == 'ipam' %}
+              {% render_form iprange_status_form %}
+            {% endif %}
+            
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col col-md-6">
+            <form action="?tab=netbox_to_slurpit" method="post" id="mapping-form" class="form form-horizontal mb-3">
+                
+                <div class="card mt-2">
+                
+                  <div class="card-header" style="display:flex;justify-content: space-between;">
+                      <h4 class="my-auto">Mapping Fields</h4>
+                      <div class="action">
+                        
+                        <a class="btn btn-purple btn-sm px-3" data-bs-toggle="modal" data-bs-target="#testMapModal">
+                          {% trans "Test" %}
+                        </a>
+                        <button class="btn btn-blue btn-sm px-3 protect-btn">
+                            {% trans "Save" %}
+                        </button>
+                      </div>
+                  </div>
+                  <div class="card-body">
+                    {% csrf_token %}
+                    {% if request.GET.subtab is None %}
+                      <input type="hidden" name="subtab" value="device"/>
+                    {% else %}
+                      <input type="hidden" name="subtab" value="{{ request.GET.subtab }}"/>
+                    {% endif %}
+
+                    <input type="hidden" name="action" value="save" id="actionInput" />
+
+                    {% for choice_item in form %}
+                      <div class="d-flex map-item mb-1">
+                        <input type="checkbox" name="pk" value="{{ choice_item.choice }}"/>
+                        <input type="hidden" name="source_field" value="{{ choice_item.choice }}"/>
+                        {% render_form choice_item.form %}
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="card-footer">
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addMapModal">
+                        <i class="mdi mdi-plus-thick"></i> Add
+                    </button>
+                    <button id="delete-btn" class="btn btn-danger btn-sm protect-btn">
+                        <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Selected
+                    </button>
+                  </div>
+                </div>
+              </form>
+        </div>
+    </div>
+  </div>
+  
+</div>
+
+
+
+<div class="modal fade" tabindex="-1" id="addMapModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title">Create a mapping</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form  method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            {% if request.GET.subtab is None %}
+              <input type="hidden" name="subtab" value="device"/>
+            {% else %}
+              <input type="hidden" name="subtab" value="{{ request.GET.subtab }}"/>
+            {% endif %}
+
+            {% render_form new_form %}
+          </div>
+  
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+              <button type="submit" class="btn btn-outline-primary protect-btn" id="add_btn" >{% trans "Add" %}</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+      </form>
+      <!-- Modal Body -->
+      
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="testMapModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+            Test Device Mapping
+          {% elif request.GET.subtab == 'ipam'  %}
+            Test IP Range Mapping
+          {% endif %}
+        </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form  method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="mapping_form" style="display:flex;justify-content: space-between; margin-bottom: 15px;">
+              <div class="" style="width: 60%;">
+                {% if request.GET.subtab == 'device' or request.GET.subtab is None %}
+                  {% render_form device_form %}
+                {% elif request.GET.subtab == 'ipam'  %}
+                  {% render_form iprange_form %}
+                {% endif %}
+                
+                
+              </div>
+              {% if appliance_type != 'push' %}
+                <a class="btn btn-outline-primary" style="height:35px;width:100px;" id="push_btn" >{% trans "Push" %}</a>
+              {% endif %}
+            </div>
+            
+            <textarea id="payload-result" name="payload-result" cols="40" rows="10" class=" form-control mb-2" placeholder="Payload Result" id="payload-result" style="height: 200px;"></textarea>
+            {% if appliance_type != 'push' %}
+              <textarea id="push-result" name="push-result" cols="40" rows="10" class=" form-control" placeholder="Push Result" id="push-result" style="height: 100px;"></textarea>
+            {% endif %}
+          </div>
+  
+      </form>
+      <!-- Modal Body -->
+      
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" tabindex="-1" data-bs-backdrop="static" id="syncStatusModal" role="dialog" aria-hidden="true" >
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form  method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="circle-container">
+              <svg width="160" height="160">
+                <circle class="circle-bg"
+                        cx="80" cy="80" r="70"
+                        fill="none" stroke="#ddd" stroke-width="20"/>
+                <circle class="circle-bar"
+                        cx="80" cy="80" r="70"
+                        fill="none" stroke="#4CAF50" stroke-width="20"
+                        stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+              </svg>
+              <div class="progress-text" id="progressText">
+                Sending devices <br> from Netbox to Slurp'it<br><span class="sync-percent" id="percent">0%</span><br>
+                <span> Total Devices: <span id="total-cnt">100</span></span><br>
+                <span> Done Devices: <span id="done-cnt">30</span></span><br>
+                <span> Failed Devices: <span id="failed-cnt">10</span></span>
+              </div>
+            </div>
+            <textarea  name="logs" cols="40" rows="10" class=" form-control mb-2" placeholder="Logs" id="logs" style="height: 80px;"></textarea>
+            <p>Don't <b>refresh</b> or close the modal before 100%</p>
+          </div>
+          
+      </form>
+      <!-- Modal Body -->
+      
+    </div>
+  </div>
+</div>
+
+
+
+<style>
+  .map-item {
+    width: 100% !important;
+    gap: 100px;
+  }
+  .map-item .mb-3 {
+    margin-bottom: 0px !important;
+    width: 100% !important;
+  }
+  html[data-netbox-color-mode=dark] .mb-3 {
+    margin-bottom: 0px !important;
+  }
+  .mapping_form label.text-lg-end {
+    text-align: left !important;
+    width: 85px !important;
+  }
+
+  .circle-container {
+    position: relative;
+    width: 320px;
+    height: 350px;
+    margin: auto;
+    text-align: center;
+  }
+
+  .circle-bar {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  .progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 23px;
+  }
+  .circle-container  span {
+    font-weight: 500 !important;
+    font-size: 15px !important
+  }
+
+  span.sync-percent {
+    font-size: 25px !important;
+    font-weight: 700 !important;
+    line-height: 33px !important;
+    color: #4CAF50
+  }
+
+  .management-status-card label {
+    display: none !important;
+  }
+
+  .sub-nav .nav-tab.nav-link.active {
+    border: 0px !important;
+    border-bottom: 2px solid #0d6efd !important;
+    font-weight: bold !important;
+  }
+
+  .sub-tab-content {
+    padding: 1rem 0 !important;
+  }
+  .sub-nav {
+    background: transparent !important;
+  }
+</style>
+
+<script>
+  var delElement = document.getElementById('delete-btn');
+  var form = document.getElementById('mapping-form');
+  var actionInput = document.getElementById('actionInput');
+  var payloadResultTextarea = document.getElementById('payload-result');
+  var pushResultTextarea = document.getElementById('push-result');
+  var percentElement = document.getElementById('percent');
+
+  function setProgress(percent) {
+      const circle = document.querySelector('.circle-bar');
+      const textElem = document.getElementById("progressText");
+      const maxOffset = 2 * Math.PI * circle.getAttribute('r');
+      const offset = ((100 - percent) / 100) * maxOffset;
+      circle.style.strokeDashoffset = offset;
+  }
+  // setProgress(75);
+
+  delElement.addEventListener('click', function(event) {
+    const checkboxes = document.querySelectorAll('input[name="pk"]');
+    
+    // Check if all checkboxes are unchecked
+    const allUnchecked = Array.from(checkboxes).every(checkbox => !checkbox.checked);
+
+    actionInput.value = "delete";
+    form.submit()
+    event.preventDefault()
+  });
+  
+
+  var mappingElement = document.querySelector('select[name="device"]');
+  var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  var subtab = document.querySelector('input[name="subtab"]').value;
+  var managementStatus;
+
+  // Then, add an event listener for the 'change' event.
+  mappingElement.addEventListener('change', function(event) {
+    var mapping_id = this.value; // or event.target.value
+    var data = new URLSearchParams();
+    data.append('csrfmiddlewaretoken', csrfToken);
+    data.append('device_id', mapping_id);
+    data.append('subtab', subtab)
+    
+    fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      const deviceRequestBody = JSON.stringify(res, null, 4); 
+      payloadResultTextarea.value = deviceRequestBody;
+
+    }).catch(function(error) {
+
+    });
+  });
+
+  var pushButton = document.getElementById('push_btn');
+  
+  pushButton.addEventListener('click', function(event) {
+    var item_id = (mappingElement.value == undefined ) ? "": mappingElement.value; // or event.target.value
+    var data = new URLSearchParams();
+    data.append('csrfmiddlewaretoken', csrfToken);
+    data.append('device_id', item_id);
+    data.append('test', 'test')
+    data.append('subtab', subtab)
+
+    fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      const deviceRequestBody = JSON.stringify(res, null, 4); 
+      pushResultTextarea.value = deviceRequestBody;
+
+    }).catch(function(error) {
+
+    });
+  });
+
+  var syncButton = document.getElementById("sync-btn");
+  var totalElement = document.getElementById("total-cnt");
+  var doneElement = document.getElementById("done-cnt");
+  var failedElement = document.getElementById("failed-cnt");
+  var logsElement = document.getElementById("logs");
+
+  var total_count = 0;
+  var failed_count = 0;
+  var done_count = 0;
+  var percent = 0;
+  var items;
+  var current_cnt = 0;
+  var url = '/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit';
+
+  function update_status() {
+    if(total_count == 0) percent = 0;
+    else percent = Math.round(100* current_cnt / total_count);
+
+    totalElement.innerHTML = total_count;
+    doneElement.innerHTML = done_count;
+    failedElement.innerHTML = failed_count;
+    percentElement.innerHTML = percent+"%";
+    setProgress(percent);
+
+  }
+
+  syncButton.addEventListener("click", function(event) {
+    total_count = 0;
+    failed_count = 0;
+    done_count = 0;
+    percent = 0;
+    items = [];
+    current_cnt = 0;
+    logsElement.innerHTML = "";
+    update_status()
+    managementStatus = document.querySelector('select[name="device_status"]').value;
+
+    var data = new URLSearchParams();
+    data.append('action', 'sync')
+    data.append('csrfmiddlewaretoken', csrfToken);
+    data.append('status', managementStatus);
+    data.append('subtab', subtab)
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      items = res["device"];
+      total_count = items.length;
+      update_status();
+      send_device();
+
+    }).catch(function(error) {
+
+    });
+
+  });
+
+  function send_device() {
+    if(current_cnt >= items.length) return;
+
+    var data = new URLSearchParams();
+    data.append('action', 'send')
+    data.append('csrfmiddlewaretoken', csrfToken);
+
+    data.append('device_id', items[current_cnt]);
+    data.append('test', 'test')
+
+    fetch('/plugins/slurpit/data_mapping/?tab=netbox_to_slurpit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: data
+    }).then(function(response) {
+      return response.json();
+    }).then(function(res){
+      
+      console.log(res)
+      if(res["status"] == undefined && res['error'] == undefined) done_count++;  
+      else {
+        failed_count++;
+        logsElement.append("Failed to import "+res["device_name"]+"\n")
+      }
+      current_cnt++;
+      update_status();  
+      send_device();
+    }).catch(function(error) {
+      failed_count++;
+      current_cnt++;
+      update_status();
+      send_device();
+    });
+    
+  }
+
+</script>

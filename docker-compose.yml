@@ -1,0 +1,94 @@
+services:
+  netbox: &netbox
+    #image: registry.gitlab.com/slurpit.io/slurpit-netbox-docker:latest
+    build: 
+      context: ./
+      dockerfile: Dockerfile.dev
+    depends_on:
+    - postgres
+    - redis
+    - redis-cache
+    env_file: docker/env/netbox.env
+    user: 'unit:root'
+    healthcheck:
+      start_period: 300s
+      timeout: 3s
+      interval: 15s
+      test: "curl -f http://localhost:8080/api/ || exit 1"
+    volumes:
+    - ./volumes/netbox-media-files:/opt/netbox/netbox/media:rw
+    - ./volumes/netbox-reports-files:/opt/netbox/netbox/reports:rw
+    - ./volumes/netbox-scripts-files:/opt/netbox/netbox/scripts:rw
+    - ./src/slurpit_netbox:/opt/netbox/netbox/slurpit_netbox:r
+    networks:
+      - slurpit_slurpit-network
+    
+  netbox-worker:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+    - /opt/netbox/venv/bin/python
+    - /opt/netbox/netbox/manage.py
+    - rqworker
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q rqworker || exit 1"
+    networks:
+      - slurpit_slurpit-network
+
+  netbox-housekeeping:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+    - /opt/netbox/housekeeping.sh
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
+    networks:
+      - slurpit_slurpit-network
+
+  # postgres
+  postgres:
+    image: docker.io/postgres:15-alpine
+    env_file: docker/env/postgres.env
+    volumes:
+    - ./volumes/netbox-postgres-data:/var/lib/postgresql/data
+    networks:
+    - slurpit_slurpit-network
+
+  # redis
+  redis:
+    image: docker.io/redis:7-alpine
+    command:
+    - sh
+    - -c # this is to evaluate the $REDIS_PASSWORD from the env
+    - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: docker/env/redis.env
+    volumes:
+    - ./volumes/netbox-redis-data:/data
+    networks:
+    - slurpit_slurpit-network
+  redis-cache:
+    image: docker.io/redis:7-alpine
+    command:
+    - sh
+    - -c # this is to evaluate the $REDIS_PASSWORD from the env
+    - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: docker/env/redis-cache.env
+    volumes:
+    - ./volumes/netbox-redis-cache-data:/data
+    networks:
+    - slurpit_slurpit-network
+
+networks:
+  slurpit_slurpit-network:
+    external: true
+

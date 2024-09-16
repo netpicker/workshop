@@ -1,0 +1,14 @@
+#!/bin/sh
+echo "executing pre-commit"
+# count number of commits
+current_version=$(sed -n '/version/ s/.*"[0-9]\+\.[0-9]\+\.\([0-9]\+\)".*/\1/p' pyproject.toml)
+new_version=$((current_version + 1))
+sed -i '/version/s/\("[0-9]\+\.[0-9]\+\.\)[0-9]\+"/\1'"$new_version"'"/' pyproject.toml
+
+full_version=$(sed -n 's/version = "\(.*\)"/\1/p' pyproject.toml)
+sed -i "s/version='\(.*\)'/version='$full_version'/" src/setup.py
+sed -i "s/version = '\(.*\)'/version = '$full_version'/" src/slurpit_netbox/__init__.py
+
+git add 'pyproject.toml'
+git add 'src/setup.py'
+git add 'src/slurpit_netbox/__init__.py'

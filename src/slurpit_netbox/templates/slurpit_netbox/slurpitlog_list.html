@@ -1,0 +1,67 @@
+{% extends 'generic/object_list.html' %}
+{% load buttons %}
+{% load i18n %}
+{% load helpers %}
+{% load django_tables2 %}
+{% load render_table from django_tables2 %}
+
+{% block page-header %}
+  <div class="container-fluid mt-2 d-print-none">
+    <div class="d-flex justify-content-between">
+
+      {# Title #}
+      <div>
+        {% include "slurpit_netbox/logo.html" %}
+        <h2 class="page-title my-1">{% block title %}Logging{% endblock title %}</h2>
+        {% block subtitle %}{% endblock %}
+      </div>
+
+      {# Controls #}
+      <div class="d-print-none my-auto">
+        {% block controls %}
+          <div class="btn-list">
+            {% block control-buttons %}
+              <a type="submit" class="btn btn-danger protect-btn" href="?clear=true">
+                <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Clear all logging
+              </a>
+            {% endblock %}
+          </div>
+        {% endblock controls %}
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const projectButtons = document.querySelectorAll('.protect-btn');
+  
+    projectButtons.forEach(button => {
+      button.addEventListener('click', protectButton);
+    });
+    function protectButton(event) {
+      event.target.classList.add('disabled');
+      event.target.textContent = 'Please wait'
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+      // Select all elements with the class 'd-print-none' within the #results element
+      const elements = document.querySelectorAll('#results .d-print-none');
+      
+      // Check if there is more than one element with the class 'd-print-none'
+      if (elements.length > 1) {
+        // Remove the class 'd-print-none' from the second element
+        elements[1].remove('d-print-none');
+        elements[2].remove('d-print-none');
+      }
+    });
+
+  </script>
+{% endblock page-header %}
+
+
+<footer class="footer container-fluid">
+  {% block footer %}
+    {% include "slurpit_netbox/footer.html" %}
+  {% endblock footer %}
+</footer>
+

@@ -1,0 +1,98 @@
+name: netbox-test
+services:
+  test_container:
+    build: .
+    container_name: netbox-test_container
+    env_file: ../docker/env-test/netbox.env
+    networks:
+    - slurpit-netbox-test-network
+
+  netbox: &netbox
+    build: 
+      context: ../
+      dockerfile: Dockerfile.test
+    depends_on:
+    - postgres_test
+    - redis_test
+    - redis-cache_test
+    env_file: ../docker/env-test/netbox.env
+    user: 'unit:root'
+    healthcheck:
+      start_period: 360s
+      timeout: 3s
+      interval: 15s
+      test: "curl -f http://localhost:8080/api/ || exit 1"
+    environment:
+      BRANCH: ${CI_COMMIT_REF_NAME:-dev}
+    networks:
+    - slurpit-netbox-test-network
+    
+  netbox-worker_test:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+    - /opt/netbox/venv/bin/python
+    - /opt/netbox/netbox/manage.py
+    - rqworker
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q rqworker || exit 1"
+    environment:
+      BRANCH: ${CI_COMMIT_REF_NAME:-dev}
+    networks:
+    - slurpit-netbox-test-network
+
+  netbox-housekeeping_test:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+    - /opt/netbox/housekeeping.sh
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
+    environment:
+      BRANCH: ${CI_COMMIT_REF_NAME:-dev}
+    networks:
+    - slurpit-netbox-test-network
+
+  # postgres
+  postgres_test:
+    image: docker.io/postgres:15-alpine
+    env_file: ../docker/env-test/postgres.env
+    networks:
+    - slurpit-netbox-test-network
+
+  # redis
+  redis_test:
+    image: docker.io/redis:7-alpine
+    command:
+    - sh
+    - -c # this is to evaluate the $REDIS_PASSWORD from the env
+    - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: ../docker/env-test/redis.env
+    networks:
+    - slurpit-netbox-test-network
+
+  redis-cache_test:
+    image: docker.io/redis:7-alpine
+    command:
+    - sh
+    - -c # this is to evaluate the $REDIS_PASSWORD from the env
+    - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: ../docker/env-test/redis-cache.env
+    networks:
+    - slurpit-netbox-test-network
+
+networks:
+  slurpit-netbox-test-network:
+    driver: bridge
+
+
